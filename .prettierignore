@@ -1,0 +1,27 @@
+# Build outputs
+dist/
+storybook-static/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.d.ts
+
+# Cache
+.cache/
+.vitest/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
