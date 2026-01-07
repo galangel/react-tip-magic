@@ -1,0 +1,120 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+<div className="tip-magic-welcome">
+
+<div className="tip-magic-hero">
+  <h1>✨ React Tip Magic</h1>
+  <p className="subtitle">Sophisticated, elegant, and performant tooltips for React</p>
+</div>
+
+<span className="tip-magic-badge wip">🚧 Work in Progress</span>
+
+## Welcome
+
+**React Tip Magic** is a modern tooltip library designed with both user experience and developer experience in mind. It provides a simple way to add beautiful, accessible tooltips to your React applications with minimal configuration.
+
+### Key Features
+
+<div className="tip-magic-features">
+  <div className="tip-magic-feature">
+    <h3>🎯 Zero Config</h3>
+    <p>Just add <code>data-tip="Hello"</code> to any element. No wrapper components needed.</p>
+  </div>
+
+<div className="tip-magic-feature">
+  <h3>🚀 High Performance</h3>
+  <p>Single global instance with event delegation. Minimal re-renders and memory footprint.</p>
+</div>
+
+<div className="tip-magic-feature">
+  <h3>🎨 Smooth Transitions</h3>
+  <p>Tooltips gracefully animate between elements when hovering from one to another.</p>
+</div>
+
+<div className="tip-magic-feature">
+  <h3>🤖 Intelligent Helper</h3>
+  <p>
+    Optional floating assistant with multiple states for onboarding, actions, and contextual help.
+  </p>
+</div>
+
+<div className="tip-magic-feature">
+  <h3>📱 Fully Accessible</h3>
+  <p>Keyboard navigation, screen reader support, and respects reduced motion preferences.</p>
+</div>
+
+  <div className="tip-magic-feature">
+    <h3>🎭 Customizable</h3>
+    <p>Extensive theming via CSS custom properties. Light, dark, and auto themes included.</p>
+  </div>
+</div>
+
+## Quick Start
+
+### Installation
+
+```bash
+npm install react-tip-magic
+```
+
+### Basic Setup
+
+```tsx
+import { TipMagicProvider } from 'react-tip-magic';
+import 'react-tip-magic/styles.css';
+
+function App() {
+  return (
+    <TipMagicProvider>
+      <YourApp />
+    </TipMagicProvider>
+  );
+}
+```
+
+### Simple Tooltip
+
+```tsx
+<button data-tip="Click to save your changes">Save</button>
+```
+
+### With Keyboard Shortcuts
+
+```tsx
+<button data-tip="Copy; ⌘+C">Copy</button>
+```
+
+## Architecture
+
+React Tip Magic uses a **global singleton pattern** where:
+
+1. A single `<TipMagicProvider>` is mounted at your app's root
+2. Elements opt-in via `data-tip` attributes
+3. Event delegation handles all hover/focus interactions
+4. A single tooltip instance moves between targets
+
+This approach ensures:
+
+- ✅ Minimal DOM nodes
+- ✅ Smooth transitions between tooltips
+- ✅ Works with dynamically added elements
+- ✅ No wrapper components polluting your JSX
+
+## What's Next?
+
+Explore the sidebar to learn more:
+
+- **Getting Started** - Detailed setup and configuration
+- **Components** - Tooltip and Helper components
+- **Hooks** - The `useTipMagic` hook API
+- **Examples** - Real-world usage patterns
+
+---
+
+<p style={{ textAlign: 'center', color: 'var(--tip-magic-text-muted)', marginTop: '3rem' }}>
+  Made with ❤️ for the React community
+</p>
+
+</div>

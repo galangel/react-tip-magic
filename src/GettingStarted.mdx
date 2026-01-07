@@ -1,0 +1,175 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Getting Started" />
+
+# Getting Started
+
+This guide will help you set up React Tip Magic in your project.
+
+## Installation
+
+```bash
+npm install react-tip-magic
+```
+
+## Setup
+
+### 1. Add the Provider
+
+Wrap your application with `TipMagicProvider` at the root level:
+
+```tsx
+// App.tsx
+import { TipMagicProvider } from 'react-tip-magic';
+import 'react-tip-magic/styles.css';
+
+function App() {
+  return (
+    <TipMagicProvider>
+      <Router>
+        <Layout>
+          <Routes />
+        </Layout>
+      </Router>
+    </TipMagicProvider>
+  );
+}
+```
+
+### 2. Add Tooltips to Elements
+
+Simply add the `data-tip` attribute to any element:
+
+```tsx
+<button data-tip="Save your changes">
+  Save
+</button>
+
+<span data-tip="Last updated 2 hours ago">
+  Updated recently
+</span>
+
+<a href="/help" data-tip="Get help and documentation">
+  <HelpIcon />
+</a>
+```
+
+That's it! Tooltips will automatically show on hover.
+
+## Configuration Options
+
+The provider accepts optional configuration:
+
+```tsx
+<TipMagicProvider
+  options={{
+    showDelay: 200, // ms before showing tooltip
+    hideDelay: 100, // ms before hiding tooltip
+    placement: 'top', // default placement
+    offset: 8, // distance from target (px)
+    theme: 'auto', // 'light' | 'dark' | 'auto'
+    enableHelper: true, // enable helper system
+  }}
+>
+  <App />
+</TipMagicProvider>
+```
+
+## Data Attributes Reference
+
+| Attribute            | Type    | Description                        |
+| -------------------- | ------- | ---------------------------------- |
+| `data-tip`           | string  | Tooltip content (required)         |
+| `data-tip-id`        | string  | Unique ID for programmatic control |
+| `data-tip-placement` | string  | Position: top, bottom, left, right |
+| `data-tip-delay`     | number  | Show delay override (ms)           |
+| `data-tip-disabled`  | boolean | Disable this tooltip               |
+| `data-tip-ellipsis`  | boolean | Truncate long content              |
+| `data-tip-max-lines` | number  | Max lines before truncation        |
+| `data-tip-max-width` | number  | Max tooltip width (px)             |
+
+## Keyboard Shortcuts
+
+Add keyboard shortcuts to your tooltips with a semicolon separator:
+
+```tsx
+<button data-tip="Copy; ⌘+C">Copy</button>
+<button data-tip="Paste; ⌘+V">Paste</button>
+<button data-tip="Save; ⌘+S">Save</button>
+```
+
+The library automatically styles the shortcut portion.
+
+## Programmatic Control
+
+Use the `useTipMagic` hook for advanced control:
+
+```tsx
+import { useTipMagic } from 'react-tip-magic';
+
+function MyComponent() {
+  const { tooltip, helper } = useTipMagic();
+
+  const showWelcome = () => {
+    tooltip.show('welcome-element', 'Welcome to our app!');
+  };
+
+  return (
+    <div>
+      <button data-tip-id="welcome-element">Start Tour</button>
+      <button onClick={showWelcome}>Show Welcome</button>
+    </div>
+  );
+}
+```
+
+## Helper System
+
+The Helper is an optional floating element for onboarding and contextual actions:
+
+```tsx
+const { helper } = useTipMagic();
+
+// Show an informative message
+helper.show({
+  state: 'informative',
+  message: 'Click here to create your first project',
+  targetId: 'create-button',
+});
+
+// Start an onboarding flow
+helper.startFlow([
+  {
+    targetId: 'nav-dashboard',
+    message: 'This is your dashboard',
+    actions: [{ label: 'Next', action: 'next' }],
+  },
+  {
+    targetId: 'nav-projects',
+    message: 'View your projects here',
+    actions: [{ label: 'Got it!', action: 'complete' }],
+  },
+]);
+```
+
+## Theming
+
+Customize the appearance with CSS custom properties:
+
+```css
+:root {
+  --tip-magic-bg: #1a1a1a;
+  --tip-magic-text: #ffffff;
+  --tip-magic-border-radius: 6px;
+  --tip-magic-padding: 8px 12px;
+  --tip-magic-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+```
+
+See the [API documentation](/docs/api--docs) for the full list of CSS variables.
+
+## Next Steps
+
+- Explore the **Components** section for detailed component documentation
+- Check out **Examples** for real-world usage patterns
+- Read the **API Reference** for complete configuration options

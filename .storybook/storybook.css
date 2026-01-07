@@ -1,0 +1,125 @@
+/* Storybook custom styles */
+
+:root {
+  --tip-magic-primary: #6366f1;
+  --tip-magic-primary-dark: #4f46e5;
+  --tip-magic-secondary: #8b5cf6;
+  --tip-magic-accent: #f59e0b;
+  --tip-magic-success: #10b981;
+  --tip-magic-error: #ef4444;
+  --tip-magic-text: #1f2937;
+  --tip-magic-text-muted: #6b7280;
+  --tip-magic-bg: #ffffff;
+  --tip-magic-bg-subtle: #f9fafb;
+  --tip-magic-border: #e5e7eb;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tip-magic-text: #f9fafb;
+    --tip-magic-text-muted: #9ca3af;
+    --tip-magic-bg: #1a1a2e;
+    --tip-magic-bg-subtle: #16213e;
+    --tip-magic-border: #374151;
+  }
+}
+
+/* Welcome page styles */
+.tip-magic-welcome {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+.tip-magic-hero {
+  text-align: center;
+  padding: 3rem 0;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  border-radius: 16px;
+  color: white;
+  margin-bottom: 3rem;
+}
+
+.tip-magic-hero h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.tip-magic-hero .subtitle {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.tip-magic-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.tip-magic-feature {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: var(--tip-magic-bg-subtle);
+  border: 1px solid var(--tip-magic-border);
+}
+
+.tip-magic-feature h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: var(--tip-magic-primary);
+}
+
+.tip-magic-feature p {
+  margin: 0;
+  color: var(--tip-magic-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.tip-magic-code-block {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-family: 'Fira Code', 'Monaco', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.tip-magic-code-block code {
+  color: #d4d4d4;
+}
+
+.tip-magic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tip-magic-badge.wip {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tip-magic-badge.stable {
+  background: #d1fae5;
+  color: #065f46;
+}

@@ -45,3 +45,5 @@ pnpm-lock.yaml
 # Test artifacts
 .vitest/
 
+
+*storybook.log

@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook';
+
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import react from 'eslint-plugin-react';
@@ -8,15 +11,9 @@ import globals from 'globals';
 
 export default tseslint.config(
   // Base JS recommended rules
-  js.configs.recommended,
-
-  // TypeScript recommended rules
-  ...tseslint.configs.recommended,
-
-  // Prettier config to disable conflicting rules
-  prettierConfig,
-
-  // Main configuration for TS/TSX files
+  js.configs.recommended, // TypeScript recommended rules
+  ...tseslint.configs.recommended, // Prettier config to disable conflicting rules
+  prettierConfig, // Main configuration for TS/TSX files
   {
     files: ['**/*.{ts,tsx}'],
     plugins: {
@@ -75,9 +72,7 @@ export default tseslint.config(
       'prefer-const': 'error',
       'no-var': 'error',
     },
-  },
-
-  // JavaScript files config
+  }, // JavaScript files config
   {
     files: ['**/*.{js,mjs,cjs}'],
     plugins: {
@@ -86,18 +81,14 @@ export default tseslint.config(
     rules: {
       'prettier/prettier': 'error',
     },
-  },
-
-  // Test files - more relaxed rules
+  }, // Test files - more relaxed rules
   {
     files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/tests/**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       'no-console': 'off',
     },
-  },
-
-  // Ignore patterns
+  }, // Ignore patterns
   {
     ignores: [
       'dist/**',
@@ -108,5 +99,6 @@ export default tseslint.config(
       '*.config.ts',
       '.storybook/**',
     ],
-  }
+  },
+  storybook.configs['flat/recommended']
 );
