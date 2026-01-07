@@ -105,10 +105,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/react-tip-magic.git"
+    "url": "git+https://github.com/galangel/react-tip-magic.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/react-tip-magic/issues"
+    "url": "https://github.com/galangel/react-tip-magic/issues"
   },
-  "homepage": "https://github.com/your-username/react-tip-magic#readme"
+  "homepage": "https://github.com/galangel/react-tip-magic#readme"
 }
