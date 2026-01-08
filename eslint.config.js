@@ -8,6 +8,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 export default tseslint.config(
   // Base JS recommended rules
@@ -20,6 +21,7 @@ export default tseslint.config(
       react,
       'react-hooks': reactHooks,
       prettier,
+      'unused-imports': unusedImports,
     },
     languageOptions: {
       ecmaVersion: 2022,
@@ -54,14 +56,20 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 
-      // TypeScript rules
-      '@typescript-eslint/no-unused-vars': [
-        'error',
+      // Unused imports - auto-fixable
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
         {
-          argsIgnorePattern: '^_',
+          vars: 'all',
           varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
         },
       ],
+
+      // TypeScript rules (disable no-unused-vars as unused-imports handles it)
+      '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
