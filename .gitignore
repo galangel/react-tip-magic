@@ -9,7 +9,6 @@ storybook-static/
 coverage/
 
 # Editor
-.vscode/
 .idea/
 *.swp
 *.swo
