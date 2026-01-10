@@ -47,10 +47,11 @@ export const Default: Story = {
     maxWidth: 300,
     html: false,
     interactive: false,
-    transitionBehavior: 'move',
+    transitionBehavior: 'jump',
     moveTransitionDuration: 100,
     showArrow: true,
     contentSeparator: ';',
+    showOnFocus: false,
   },
   argTypes: {
     tip: {
@@ -134,6 +135,10 @@ export const Default: Story = {
       control: 'text',
       description:
         'Character(s) to separate main text from keyboard shortcut (e.g., "Save; ⌘S" uses ";")',
+    },
+    showOnFocus: {
+      control: 'boolean',
+      description: 'Show tooltip when element receives keyboard focus (Tab navigation)',
     },
   },
   render: (args) => {

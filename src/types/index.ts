@@ -96,6 +96,12 @@ export interface TipMagicOptions {
    * @example 'tour-highlight'
    */
   tourHighlightClass?: string;
+  /**
+   * Whether to show tooltips when elements receive keyboard focus.
+   * When true, pressing Tab to focus an element will show its tooltip.
+   * @default false
+   */
+  showOnFocus?: boolean;
 }
 
 /**

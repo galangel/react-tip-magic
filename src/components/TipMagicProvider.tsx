@@ -226,10 +226,16 @@ function TipMagicEventHandler() {
 
       const target = (event.target as Element).closest(DEFAULT_SELECTOR);
       if (target) {
-        showTooltip(target);
+        // Check if showOnFocus is enabled for this element or globally
+        const parsedData = parseDataAttributes(target);
+        const shouldShowOnFocus = parsedData.showOnFocus || config.showOnFocus;
+
+        if (shouldShowOnFocus) {
+          showTooltip(target);
+        }
       }
     },
-    [showTooltip]
+    [showTooltip, config.showOnFocus]
   );
 
   // Handle blur event
@@ -243,20 +249,30 @@ function TipMagicEventHandler() {
       const target = (event.target as Element).closest(DEFAULT_SELECTOR);
       const relatedTarget = event.relatedTarget as Element | null;
 
-      // Don't hide if moving focus to another tooltip target
+      // Don't hide if moving focus to another tooltip target that also has showOnFocus
       if (relatedTarget?.closest(DEFAULT_SELECTOR)) {
-        return;
+        const relatedParsedData = parseDataAttributes(relatedTarget.closest(DEFAULT_SELECTOR)!);
+        const relatedShowOnFocus = relatedParsedData.showOnFocus || config.showOnFocus;
+        if (relatedShowOnFocus) {
+          return;
+        }
       }
 
       if (target) {
-        // Use per-element hide delay if set, otherwise use provider config (use ref)
-        const hideDelay = parsedDataRef.current?.hideDelay ?? config.hideDelay;
-        hideTimeoutRef.current = setTimeout(() => {
-          hideTooltip();
-        }, hideDelay);
+        // Check if showOnFocus is enabled for this element or globally
+        const parsedData = parseDataAttributes(target);
+        const shouldShowOnFocus = parsedData.showOnFocus || config.showOnFocus;
+
+        if (shouldShowOnFocus) {
+          // Use per-element hide delay if set, otherwise use provider config (use ref)
+          const hideDelay = parsedDataRef.current?.hideDelay ?? config.hideDelay;
+          hideTimeoutRef.current = setTimeout(() => {
+            hideTooltip();
+          }, hideDelay);
+        }
       }
     },
-    [config.hideDelay, hideTooltip]
+    [config.hideDelay, config.showOnFocus, hideTooltip]
   );
 
   // Handle escape key to dismiss

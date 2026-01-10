@@ -173,17 +173,23 @@ export const ProgrammaticControl: SimpleStory = {
 };
 
 /**
- * Demonstrates keyboard navigation triggering tooltips.
+ * Demonstrates keyboard navigation triggering tooltips using `showOnFocus`.
  *
  * Press **Tab** to move focus between elements. When an element receives focus,
- * its tooltip appears automatically. Focus is trapped within this demo area.
+ * its tooltip appears automatically.
  *
- * This is important for accessibility - users who navigate with keyboard
- * should still be able to discover tooltip content.
+ * **Configuration options:**
+ * - `data-tip-show-on-focus` - Enable per-element
+ * - Provider option `showOnFocus: true` - Enable globally
+ *
+ * By default, tooltips only appear on hover. This feature is important for
+ * accessibility - users who navigate with keyboard should be able to discover
+ * tooltip content.
  */
 const KeyboardNavigationDemo = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Focus trap to keep Tab navigation within the demo
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key !== 'Tab') return;
 
@@ -201,13 +207,11 @@ const KeyboardNavigationDemo = () => {
     const lastElement = focusableArray[focusableArray.length - 1];
 
     if (e.shiftKey) {
-      // Shift+Tab: if on first element, go to last
       if (document.activeElement === firstElement) {
         e.preventDefault();
         lastElement.focus();
       }
     } else {
-      // Tab: if on last element, go to first
       if (document.activeElement === lastElement) {
         e.preventDefault();
         firstElement.focus();
@@ -225,26 +229,32 @@ const KeyboardNavigationDemo = () => {
       <p className="story-description">
         Press{' '}
         <kbd style={{ padding: '2px 6px', background: '#e5e7eb', borderRadius: '4px' }}>Tab</kbd> to
-        navigate between buttons. Tooltips appear on focus.
-        <br />
-        Focus is trapped within this demo area.
+        navigate between buttons. Tooltips appear on focus because <code>showOnFocus: true</code> is
+        set on the provider.
       </p>
-      <div className="story-button-group">
-        <button className="story-button" data-tip="First action - Save your work">
-          Save
-        </button>
-        <button className="story-button" data-tip="Second action - Edit content">
-          Edit
-        </button>
-        <button className="story-button" data-tip="Third action - Delete item">
-          Delete
-        </button>
-        <button className="story-button" data-tip="Fourth action - Share with others">
-          Share
-        </button>
+
+      <div style={{ marginBottom: '24px' }}>
+        <h4 style={{ margin: '0 0 12px', color: '#6b7280', fontSize: '14px' }}>
+          Provider-level showOnFocus (all buttons)
+        </h4>
+        <div className="story-button-group">
+          <button className="story-button" data-tip="First action - Save your work">
+            Save
+          </button>
+          <button className="story-button" data-tip="Second action - Edit content">
+            Edit
+          </button>
+          <button className="story-button" data-tip="Third action - Delete item">
+            Delete
+          </button>
+          <button className="story-button" data-tip="Fourth action - Share with others">
+            Share
+          </button>
+        </div>
       </div>
-      <p className="story-info" style={{ marginTop: '16px', fontSize: '12px', color: '#6b7280' }}>
-        💡 Try pressing Tab repeatedly - focus will loop through the buttons
+
+      <p className="story-info" style={{ fontSize: '12px', color: '#6b7280' }}>
+        💡 Focus is trapped within this demo - Tab will loop through the buttons
       </p>
     </div>
   );
@@ -252,8 +262,40 @@ const KeyboardNavigationDemo = () => {
 
 export const KeyboardNavigation: SimpleStory = {
   render: () => (
-    <TipMagicProvider>
+    <TipMagicProvider options={{ showOnFocus: true }}>
       <KeyboardNavigationDemo />
+    </TipMagicProvider>
+  ),
+};
+
+/**
+ * Shows how to enable showOnFocus per-element using `data-tip-show-on-focus`.
+ * Only elements with this attribute will show tooltips on focus.
+ */
+export const ShowOnFocusPerElement: SimpleStory = {
+  render: () => (
+    <TipMagicProvider>
+      <div className="story-container">
+        <p className="story-description">
+          Only some buttons have <code>data-tip-show-on-focus</code> set.
+          <br />
+          Tab through to see which ones show tooltips on focus.
+        </p>
+        <div className="story-button-group">
+          <button className="story-button" data-tip="Shows on focus!" data-tip-show-on-focus>
+            Focus enabled ✓
+          </button>
+          <button className="story-button" data-tip="Only shows on hover">
+            Hover only
+          </button>
+          <button className="story-button" data-tip="Shows on focus!" data-tip-show-on-focus>
+            Focus enabled ✓
+          </button>
+          <button className="story-button" data-tip="Only shows on hover">
+            Hover only
+          </button>
+        </div>
+      </div>
     </TipMagicProvider>
   ),
 };

@@ -17,7 +17,7 @@ type Story = StoryObj;
 
 /**
  * Demonstrates the move vs jump transition behavior.
- * - **Move** (default): Tooltip smoothly animates from one target to another
+ * - **Move**: Tooltip smoothly animates from one target to another
  * - **Jump**: Tooltip fades out and reappears at the new position
  *
  * Use `data-tip-move` or `data-tip-jump` to override per-element.
@@ -27,11 +27,11 @@ export const MoveVsJump: Story = {
     <TipMagicProvider>
       <div className="story-container">
         <p className="story-description">
-          Compare how the tooltip moves vs jumps between targets. The default behavior is 'move'.
+          Compare how the tooltip moves vs jumps between targets. The default behavior is 'jump'.
         </p>
 
         <div style={{ marginBottom: '30px' }}>
-          <h4 style={{ margin: '0 0 12px', color: '#6b7280' }}>Move Behavior (default)</h4>
+          <h4 style={{ margin: '0 0 12px', color: '#6b7280' }}>Move Behavior</h4>
           <div className="story-button-group">
             <button className="story-button" data-tip="Move to me!" data-tip-move>
               Move 1
@@ -46,7 +46,7 @@ export const MoveVsJump: Story = {
         </div>
 
         <div>
-          <h4 style={{ margin: '0 0 12px', color: '#6b7280' }}>Jump Behavior</h4>
+          <h4 style={{ margin: '0 0 12px', color: '#6b7280' }}>Jump Behavior (default)</h4>
           <div className="story-button-group">
             <button
               className="story-button story-button-secondary"

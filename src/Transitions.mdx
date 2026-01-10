@@ -13,7 +13,7 @@ When a user moves their cursor from one tooltip target to another, React Tip Mag
 - **Move**: Smoothly animate the tooltip from one position to another
 - **Jump**: Fade out at the old position and fade in at the new position
 
-The default behavior is `move`, which creates a polished, fluid experience.
+The default behavior is `jump`, which provides instant repositioning without animation.
 
 **Key features:**
 
@@ -26,20 +26,20 @@ The default behavior is `move`, which creates a polished, fluid experience.
 
 ## Quick Start
 
-By default, tooltips smoothly move between targets:
+By default, tooltips jump (fade out/in) between targets. To enable smooth move transitions:
 
 ```tsx
-<TipMagicProvider>
+<TipMagicProvider options={{ transitionBehavior: 'move' }}>
   <button data-tip="First">Button 1</button>
   <button data-tip="Second">Button 2</button>
   <button data-tip="Third">Button 3</button>
 </TipMagicProvider>
 ```
 
-To make a specific element use jump behavior instead:
+Or enable move behavior per-element:
 
 ```tsx
-<button data-tip="I will jump!" data-tip-jump>Jump</button>
+<button data-tip="I will move smoothly!" data-tip-move>Move</button>
 ```
 
 ---
@@ -61,7 +61,7 @@ To make a specific element use jump behavior instead:
     <tr>
       <td><code>transitionBehavior</code></td>
       <td><code>'move' | 'jump'</code></td>
-      <td><code>'move'</code></td>
+      <td><code>'jump'</code></td>
       <td>Default transition behavior when moving between targets</td>
     </tr>
     <tr>
@@ -82,7 +82,7 @@ To make a specific element use jump behavior instead:
 ```tsx
 <TipMagicProvider
   options={{
-    transitionBehavior: 'jump',      // Change default to jump
+    transitionBehavior: 'move',      // Enable smooth move transitions
     moveTransitionDuration: 300,     // Slower move animation
     respectReducedMotion: true,      // Respect accessibility preferences
   }}

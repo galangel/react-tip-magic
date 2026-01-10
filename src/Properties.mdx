@@ -115,6 +115,12 @@ React Tip Magic uses data attributes on elements to control tooltip behavior. Th
       <td>—</td>
       <td>Identifier for programmatic targeting</td>
     </tr>
+    <tr>
+      <td><code>data-tip-show-on-focus</code></td>
+      <td>boolean</td>
+      <td><code>false</code></td>
+      <td>Show tooltip when element receives focus</td>
+    </tr>
   </tbody>
 </table>
 
@@ -185,6 +191,51 @@ Control when tooltips appear and disappear.
 When moving between elements:
 - If the new element's show delay is **shorter** than the hide delay → tooltip moves smoothly
 - If the new element's show delay is **longer** than the hide delay → tooltip hides first, then reappears
+
+---
+
+## Focus Behavior
+
+Control whether tooltips appear when elements receive keyboard focus.
+
+By default, tooltips only appear on hover. Enable `showOnFocus` to make tooltips appear when users Tab to elements — important for keyboard accessibility.
+
+### Provider-Level (Global)
+
+Enable for all tooltips:
+
+```tsx
+<TipMagicProvider options={{ showOnFocus: true }}>
+  <button data-tip="Shows on focus">Button 1</button>
+  <button data-tip="Shows on focus">Button 2</button>
+</TipMagicProvider>
+```
+
+### Per-Element
+
+Enable for specific elements only:
+
+```tsx
+<TipMagicProvider>
+  {/* Shows on focus */}
+  <button data-tip="Accessible!" data-tip-show-on-focus>
+    Focus enabled
+  </button>
+  
+  {/* Only shows on hover */}
+  <button data-tip="Hover only">
+    Hover only
+  </button>
+</TipMagicProvider>
+```
+
+### When to Use
+
+- **Forms**: Help users understand input fields
+- **Toolbars**: Keyboard users can discover button actions
+- **Navigation**: Screen reader users benefit from focus-based hints
+
+> **Note:** When a flow/tour is active, focus-based tooltips are automatically disabled to prevent interference.
 
 ---
 
@@ -491,6 +542,12 @@ Set default values at the provider level:
       <td><code>document.body</code></td>
       <td>Portal mount target</td>
     </tr>
+    <tr>
+      <td><code>showOnFocus</code></td>
+      <td>boolean</td>
+      <td><code>false</code></td>
+      <td>Show tooltips when elements receive keyboard focus</td>
+    </tr>
   </tbody>
 </table>
 
@@ -520,13 +577,14 @@ This generates the appropriate `data-tip-*` attributes with full type checking.
 
 ## Accessibility
 
-Tooltips are accessible by default:
+Tooltips support accessibility features:
 
-- **Keyboard navigation** — Tooltips appear on focus, not just hover
+- **Keyboard navigation** — Enable `showOnFocus` to show tooltips when users Tab to elements
 - **Screen reader support** — Content is announced appropriately
 - **Reduced motion** — Animations respect `prefers-reduced-motion`
 
 For best practices:
+- Enable `showOnFocus` for important tooltips that keyboard users should discover
 - Keep tooltip content concise
 - Don't put critical information only in tooltips
 - Ensure interactive tooltips are keyboard accessible
@@ -539,4 +597,5 @@ For best practices:
 - See the **[Show Delay](?path=/story/tooltip-properties--show-delay)** story for timing examples
 - See the **[Text Handling](?path=/story/tooltip-properties--text-handling)** story for text options
 - See the **[Programmatic Control](?path=/story/tooltip-properties--programmatic-control)** story for API usage
-- See the **[Keyboard Navigation](?path=/story/tooltip-properties--keyboard-navigation)** story for accessibility
+- See the **[Keyboard Navigation](?path=/story/tooltip-properties--keyboard-navigation)** story for focus behavior (provider-level)
+- See the **[Show On Focus Per Element](?path=/story/tooltip-properties--show-on-focus-per-element)** story for per-element focus behavior

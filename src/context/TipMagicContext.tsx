@@ -40,6 +40,8 @@ export interface ParsedTooltipData {
   contentSeparator?: string;
   /** Group identifier for controlling move transitions between grouped elements */
   group?: string;
+  /** Whether to show tooltip when element receives focus */
+  showOnFocus?: boolean;
 }
 
 /**

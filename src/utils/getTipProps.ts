@@ -43,6 +43,8 @@ export interface TipPropsOptions {
   showArrow?: boolean;
   /** Override content separator for keyboard shortcuts (default: ';') */
   contentSeparator?: string;
+  /** Show tooltip when element receives keyboard focus */
+  showOnFocus?: boolean;
 }
 
 /**
@@ -67,6 +69,7 @@ export interface TipPropsResult {
   'data-tip-move-duration'?: string;
   'data-tip-no-arrow'?: '';
   'data-tip-separator'?: string;
+  'data-tip-show-on-focus'?: '';
 }
 
 /**
@@ -164,6 +167,10 @@ export function getTipProps(options: TipPropsOptions): TipPropsResult {
 
   if (options.contentSeparator !== undefined) {
     result['data-tip-separator'] = options.contentSeparator;
+  }
+
+  if (options.showOnFocus) {
+    result['data-tip-show-on-focus'] = '';
   }
 
   return result;
