@@ -1,0 +1,186 @@
+/**
+ * TipMagic Tooltip Styles
+ */
+
+/* Tooltip container */
+.tip-magic-tooltip {
+  --tip-magic-bg: #1f2937;
+  --tip-magic-text: #f9fafb;
+  --tip-magic-shortcut-bg: rgba(255, 255, 255, 0.15);
+  --tip-magic-shortcut-text: #e5e7eb;
+  --tip-magic-arrow-size: 8px;
+  --tip-magic-border-radius: 6px;
+  --tip-magic-padding-x: 10px;
+  --tip-magic-padding-y: 6px;
+  --tip-magic-font-size: 13px;
+  --tip-magic-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--tip-magic-bg);
+  color: var(--tip-magic-text);
+  padding: var(--tip-magic-padding-y) var(--tip-magic-padding-x);
+  border-radius: var(--tip-magic-border-radius);
+  font-size: var(--tip-magic-font-size);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.4;
+  box-shadow: var(--tip-magic-shadow);
+  pointer-events: none;
+  white-space: nowrap;
+  contain: layout style paint;
+
+  /* Animation - only opacity, no transform to avoid conflicting with Floating UI positioning */
+  opacity: 0;
+  transition: opacity var(--animation-duration, 150ms) ease-out;
+}
+
+/* Visible state */
+.tip-magic-tooltip.tip-magic-visible {
+  opacity: 1;
+}
+
+/* Hidden state */
+.tip-magic-tooltip.tip-magic-hidden {
+  opacity: 0;
+}
+
+/* Transitioning between targets with 'jump' behavior - instant position change */
+.tip-magic-tooltip.tip-magic-transitioning {
+  transition: opacity var(--animation-duration, 100ms) ease-out;
+}
+
+/* Transitioning between targets with 'move' behavior - smooth position animation */
+.tip-magic-tooltip.tip-magic-moving {
+  transition:
+    opacity var(--animation-duration, 150ms) ease-out,
+    transform var(--move-duration, 200ms) ease-out;
+}
+
+/* Interactive tooltip - allows hovering over the tooltip */
+.tip-magic-tooltip.tip-magic-interactive {
+  pointer-events: auto;
+  cursor: auto;
+  user-select: text;
+}
+
+/* Word wrap - allow text to wrap to multiple lines */
+.tip-magic-tooltip.tip-magic-word-wrap {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* When using ellipsis, we need word wrap enabled */
+.tip-magic-tooltip.tip-magic-ellipsis {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Content wrapper */
+.tip-magic-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Ellipsis mode - switch to block layout for line clamping */
+.tip-magic-tooltip.tip-magic-ellipsis .tip-magic-content {
+  display: block;
+}
+
+/* Text content with ellipsis - truncate text */
+.tip-magic-tooltip.tip-magic-ellipsis .tip-magic-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--max-lines, 1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Text break behavior - break in middle of words */
+.tip-magic-tooltip.tip-magic-text-break-break-all {
+  word-break: break-all;
+}
+
+/* Text break behavior - keep CJK characters together */
+.tip-magic-tooltip.tip-magic-text-break-keep-all {
+  word-break: keep-all;
+}
+
+/* Keyboard shortcut styling */
+.tip-magic-shortcut {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 5px;
+  margin-left: 4px;
+  background: var(--tip-magic-shortcut-bg);
+  color: var(--tip-magic-shortcut-text);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Arrow */
+.tip-magic-arrow {
+  position: absolute;
+  width: var(--tip-magic-arrow-size);
+  height: var(--tip-magic-arrow-size);
+  background: var(--tip-magic-bg);
+  transform: rotate(45deg);
+}
+
+/* Arrow positioning based on placement */
+.tip-magic-tooltip[data-placement^='top'] .tip-magic-arrow {
+  bottom: calc(var(--tip-magic-arrow-size) / -2);
+}
+
+.tip-magic-tooltip[data-placement^='bottom'] .tip-magic-arrow {
+  top: calc(var(--tip-magic-arrow-size) / -2);
+}
+
+.tip-magic-tooltip[data-placement^='left'] .tip-magic-arrow {
+  right: calc(var(--tip-magic-arrow-size) / -2);
+}
+
+.tip-magic-tooltip[data-placement^='right'] .tip-magic-arrow {
+  left: calc(var(--tip-magic-arrow-size) / -2);
+}
+
+/* Light theme */
+@media (prefers-color-scheme: light) {
+  .tip-magic-tooltip[data-theme='auto'] {
+    --tip-magic-bg: #ffffff;
+    --tip-magic-text: #1f2937;
+    --tip-magic-shortcut-bg: rgba(0, 0, 0, 0.08);
+    --tip-magic-shortcut-text: #4b5563;
+    --tip-magic-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.tip-magic-tooltip[data-theme='light'] {
+  --tip-magic-bg: #ffffff;
+  --tip-magic-text: #1f2937;
+  --tip-magic-shortcut-bg: rgba(0, 0, 0, 0.08);
+  --tip-magic-shortcut-text: #4b5563;
+  --tip-magic-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.tip-magic-tooltip[data-theme='dark'] {
+  --tip-magic-bg: #1f2937;
+  --tip-magic-text: #f9fafb;
+  --tip-magic-shortcut-bg: rgba(255, 255, 255, 0.15);
+  --tip-magic-shortcut-text: #e5e7eb;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .tip-magic-tooltip {
+    transition: none;
+  }
+}

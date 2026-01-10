@@ -1,0 +1,237 @@
+/* Story container styles */
+.story-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px;
+  min-width: 400px;
+}
+
+.story-description {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.story-info {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+}
+
+/* Button styles */
+.story-button {
+  position: relative;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+  box-shadow: 0 2px 8px -2px rgba(99, 102, 241, 0.4);
+}
+
+.story-button:hover {
+  box-shadow: 0 4px 16px -2px rgba(99, 102, 241, 0.6);
+  filter: brightness(1.05);
+}
+
+.story-button:active {
+  box-shadow: 0 2px 6px -2px rgba(99, 102, 241, 0.4);
+  filter: brightness(0.98);
+}
+
+.story-button-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.story-button-secondary:hover {
+  background: #e5e7eb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* Button group */
+.story-button-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Icon button */
+.story-icon-button {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: none;
+  border-radius: 8px;
+  background: #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.story-icon-button:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+/* Toolbar styles */
+.story-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Placement grid */
+.story-placement-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 40px;
+}
+
+.story-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+/* Various elements */
+.story-various-elements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-badge {
+  padding: 4px 12px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: default;
+}
+
+.story-link {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.story-link:hover {
+  text-decoration: underline;
+}
+
+.story-card {
+  padding: 16px 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  cursor: default;
+}
+
+.story-card h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: #111827;
+}
+
+.story-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.story-icon {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.story-abbr {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
+/* Editor toolbar */
+.story-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.story-toolbar-group {
+  display: flex;
+  gap: 2px;
+}
+
+.story-toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: #e5e7eb;
+  margin: 0 8px;
+}
+
+.story-toolbar-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.story-toolbar-btn:hover {
+  background: #e5e7eb;
+}
+
+.story-toolbar-btn:active {
+  background: #d1d5db;
+}
+
+/* Code block */
+.story-code {
+  margin-top: 24px;
+  padding: 16px;
+  background: #1f2937;
+  color: #e5e7eb;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 500px;
+}

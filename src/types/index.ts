@@ -41,6 +41,21 @@ export type HelperPosition =
   | 'center';
 
 /**
+ * Tooltip transition behavior when moving between targets
+ * - 'move': Smoothly animate position from one target to another
+ * - 'jump': Instantly appear at new position (fade out/in)
+ */
+export type TooltipTransitionBehavior = 'move' | 'jump';
+
+/**
+ * Text break behavior for tooltips
+ * - 'normal': Break at normal word boundaries (default)
+ * - 'break-all': Can break in the middle of words (useful for long URLs, codes)
+ * - 'keep-all': Don't break CJK characters (useful for Asian languages)
+ */
+export type TextBreak = 'normal' | 'break-all' | 'keep-all';
+
+/**
  * Configuration options for TipMagicProvider
  */
 export interface TipMagicOptions {
@@ -72,6 +87,10 @@ export interface TipMagicOptions {
   enableShortcutStyle?: boolean;
   /** Respect prefers-reduced-motion */
   respectReducedMotion?: boolean;
+  /** Default transition behavior when moving between targets */
+  transitionBehavior?: TooltipTransitionBehavior;
+  /** Duration of move transition (ms) */
+  moveTransitionDuration?: number;
 }
 
 /**
