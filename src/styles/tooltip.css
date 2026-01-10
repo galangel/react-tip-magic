@@ -1,20 +1,15 @@
 /**
  * TipMagic Tooltip Styles
+ *
+ * Core styles for tooltip positioning, layout, and behavior.
+ * For themable CSS variables, see ./variables.css
  */
 
-/* Tooltip container */
-.tip-magic-tooltip {
-  --tip-magic-bg: #1f2937;
-  --tip-magic-text: #f9fafb;
-  --tip-magic-shortcut-bg: rgba(255, 255, 255, 0.15);
-  --tip-magic-shortcut-text: #e5e7eb;
-  --tip-magic-arrow-size: 8px;
-  --tip-magic-border-radius: 6px;
-  --tip-magic-padding-x: 10px;
-  --tip-magic-padding-y: 6px;
-  --tip-magic-font-size: 13px;
-  --tip-magic-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25);
+/* ==========================================================================
+   TOOLTIP CONTAINER
+   ========================================================================== */
 
+.tip-magic-tooltip {
   position: absolute;
   top: 0;
   left: 0;
@@ -23,8 +18,7 @@
   padding: var(--tip-magic-padding-y) var(--tip-magic-padding-x);
   border-radius: var(--tip-magic-border-radius);
   font-size: var(--tip-magic-font-size);
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--tip-magic-font-family);
   line-height: 1.4;
   box-shadow: var(--tip-magic-shadow);
   pointer-events: none;
@@ -36,15 +30,21 @@
   transition: opacity var(--animation-duration, 150ms) ease-out;
 }
 
-/* Visible state */
+/* ==========================================================================
+   VISIBILITY STATES
+   ========================================================================== */
+
 .tip-magic-tooltip.tip-magic-visible {
   opacity: 1;
 }
 
-/* Hidden state */
 .tip-magic-tooltip.tip-magic-hidden {
   opacity: 0;
 }
+
+/* ==========================================================================
+   TRANSITION STATES
+   ========================================================================== */
 
 /* Transitioning between targets with 'jump' behavior - instant position change */
 .tip-magic-tooltip.tip-magic-transitioning {
@@ -57,6 +57,10 @@
     opacity var(--animation-duration, 150ms) ease-out,
     transform var(--move-duration, 200ms) ease-out;
 }
+
+/* ==========================================================================
+   BEHAVIOR MODIFIERS
+   ========================================================================== */
 
 /* Interactive tooltip - allows hovering over the tooltip */
 .tip-magic-tooltip.tip-magic-interactive {
@@ -79,7 +83,10 @@
   overflow-wrap: break-word;
 }
 
-/* Content wrapper */
+/* ==========================================================================
+   CONTENT LAYOUT
+   ========================================================================== */
+
 .tip-magic-content {
   display: flex;
   align-items: center;
@@ -90,6 +97,10 @@
 .tip-magic-tooltip.tip-magic-ellipsis .tip-magic-content {
   display: block;
 }
+
+/* ==========================================================================
+   TEXT HANDLING
+   ========================================================================== */
 
 /* Text content with ellipsis - truncate text */
 .tip-magic-tooltip.tip-magic-ellipsis .tip-magic-text {
@@ -110,7 +121,10 @@
   word-break: keep-all;
 }
 
-/* Keyboard shortcut styling */
+/* ==========================================================================
+   KEYBOARD SHORTCUTS
+   ========================================================================== */
+
 .tip-magic-shortcut {
   display: inline-flex;
   align-items: center;
@@ -126,7 +140,10 @@
   letter-spacing: 0.02em;
 }
 
-/* Arrow */
+/* ==========================================================================
+   ARROW
+   ========================================================================== */
+
 .tip-magic-arrow {
   position: absolute;
   width: var(--tip-magic-arrow-size);
@@ -152,33 +169,10 @@
   left: calc(var(--tip-magic-arrow-size) / -2);
 }
 
-/* Light theme */
-@media (prefers-color-scheme: light) {
-  .tip-magic-tooltip[data-theme='auto'] {
-    --tip-magic-bg: #ffffff;
-    --tip-magic-text: #1f2937;
-    --tip-magic-shortcut-bg: rgba(0, 0, 0, 0.08);
-    --tip-magic-shortcut-text: #4b5563;
-    --tip-magic-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  }
-}
+/* ==========================================================================
+   ACCESSIBILITY
+   ========================================================================== */
 
-.tip-magic-tooltip[data-theme='light'] {
-  --tip-magic-bg: #ffffff;
-  --tip-magic-text: #1f2937;
-  --tip-magic-shortcut-bg: rgba(0, 0, 0, 0.08);
-  --tip-magic-shortcut-text: #4b5563;
-  --tip-magic-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-
-.tip-magic-tooltip[data-theme='dark'] {
-  --tip-magic-bg: #1f2937;
-  --tip-magic-text: #f9fafb;
-  --tip-magic-shortcut-bg: rgba(255, 255, 255, 0.15);
-  --tip-magic-shortcut-text: #e5e7eb;
-}
-
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .tip-magic-tooltip {
     transition: none;

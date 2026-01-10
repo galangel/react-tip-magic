@@ -3,9 +3,8 @@
  * Main entry point for all styles
  */
 
-@import './tooltip.css';
+/* Variables must be imported first (themable properties) */
+@import './variables.css';
 
-/* Future imports:
-@import './helper.css';
-@import './animations.css';
-*/
+/* Core component styles */
+@import './tooltip.css';

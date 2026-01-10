@@ -6,26 +6,15 @@ import type {
 } from '../types';
 
 /**
- * Default configuration values
+ * Animation timing
  */
-export const DEFAULT_OPTIONS: Required<TipMagicOptions> = {
-  showDelay: 200,
-  hideDelay: 700,
-  animationDuration: 150,
-  placement: 'top' as Placement,
-  offset: 8,
-  enableHelper: true,
-  helperPosition: 'bottom-right' as HelperPosition,
-  theme: 'auto',
-  zIndex: 9999,
-  disabled: false,
-  portalContainer: null as unknown as HTMLElement,
-  contentSeparator: ';',
-  enableShortcutStyle: true,
-  respectReducedMotion: true,
-  transitionBehavior: 'move' as TooltipTransitionBehavior,
-  moveTransitionDuration: 100,
-};
+export const ANIMATION = {
+  TOOLTIP_SHOW: 150,
+  TOOLTIP_HIDE: 100,
+  POSITION_MOVE: 100,
+  CONTENT_CHANGE: 150,
+  HELPER_STATE: 300,
+} as const;
 
 /**
  * Data attribute selectors
@@ -67,17 +56,27 @@ export const CSS_CLASSES = {
 } as const;
 
 /**
- * Animation timing
- */
-export const ANIMATION = {
-  TOOLTIP_SHOW: 150,
-  TOOLTIP_HIDE: 100,
-  POSITION_MOVE: 200,
-  CONTENT_CHANGE: 150,
-  HELPER_STATE: 300,
-} as const;
-
-/**
  * Default selector for tooltip targets
  */
 export const DEFAULT_SELECTOR = '[data-tip]';
+
+/**
+ * Default configuration values
+ */
+export const DEFAULT_OPTIONS: Required<TipMagicOptions> = {
+  showDelay: 200,
+  hideDelay: 700,
+  animationDuration: ANIMATION.TOOLTIP_SHOW,
+  placement: 'top' as Placement,
+  offset: 8,
+  enableHelper: true,
+  helperPosition: 'bottom-right' as HelperPosition,
+  zIndex: 9999,
+  disabled: false,
+  portalContainer: null as unknown as HTMLElement,
+  contentSeparator: ';',
+  enableShortcutStyle: true,
+  respectReducedMotion: true,
+  transitionBehavior: 'move' as TooltipTransitionBehavior,
+  moveTransitionDuration: ANIMATION.POSITION_MOVE,
+};

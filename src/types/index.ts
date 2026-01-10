@@ -73,8 +73,6 @@ export interface TipMagicOptions {
   enableHelper?: boolean;
   /** Default helper position */
   helperPosition?: HelperPosition;
-  /** Custom theme */
-  theme?: 'light' | 'dark' | 'auto';
   /** Z-index for tooltip layer */
   zIndex?: number;
   /** Disable all tooltips globally */
