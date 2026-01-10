@@ -204,6 +204,7 @@ export function tipMagicReducer(state: TipMagicState, action: TipMagicAction): T
         ...state,
         tooltip: {
           ...state.tooltip,
+          visible: true, // Ensure visibility when moving (in case tooltip was hidden)
           target: action.payload.target,
           content: action.payload.content,
           parsedData: action.payload.parsedData,

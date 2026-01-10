@@ -25,6 +25,12 @@ function TipMagicEventHandler() {
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentTargetRef = useRef<Element | null>(null);
+  // Refs to track current state (avoids stale closure issues in timeouts)
+  const isVisibleRef = useRef(tooltip.visible);
+  isVisibleRef.current = tooltip.visible;
+  // Track parsed data for hide delay (to avoid useEffect re-runs)
+  const parsedDataRef = useRef(tooltip.parsedData);
+  parsedDataRef.current = tooltip.parsedData;
 
   // Clear all timeouts
   const clearTimeouts = useCallback(() => {
@@ -53,13 +59,16 @@ function TipMagicEventHandler() {
         return;
       }
 
+      // Use ref for current visibility to avoid stale closure issues
+      const isCurrentlyVisible = isVisibleRef.current;
+
       // If tooltip is already visible, move it instead of show/hide
-      if (tooltip.visible && currentTargetRef.current !== target) {
+      if (isCurrentlyVisible && currentTargetRef.current !== target) {
         dispatch({
           type: 'MOVE_TOOLTIP',
           payload: { target, content, parsedData },
         });
-      } else if (!tooltip.visible) {
+      } else if (!isCurrentlyVisible) {
         dispatch({
           type: 'SHOW_TOOLTIP',
           payload: { target, content, parsedData },
@@ -68,7 +77,7 @@ function TipMagicEventHandler() {
 
       currentTargetRef.current = target;
     },
-    [config.disabled, tooltip.visible, dispatch]
+    [config.disabled, dispatch]
   );
 
   // Hide the tooltip
@@ -83,14 +92,6 @@ function TipMagicEventHandler() {
       const target = (event.target as Element).closest(DEFAULT_SELECTOR);
       const isOverTooltip = (event.target as Element).closest('.tip-magic-tooltip');
 
-      // Only clear hide timeout if entering a tooltip target or the tooltip itself
-      if (target || isOverTooltip) {
-        if (hideTimeoutRef.current) {
-          clearTimeout(hideTimeoutRef.current);
-          hideTimeoutRef.current = null;
-        }
-      }
-
       if (target && target !== currentTargetRef.current) {
         // Clear existing show timeout
         if (showTimeoutRef.current) {
@@ -101,18 +102,47 @@ function TipMagicEventHandler() {
         const parsedData = parseDataAttributes(target);
         const delay = parsedData.delay ?? config.showDelay;
 
-        // If tooltip is already visible, show immediately for smooth transition
-        if (tooltip.visible) {
-          showTooltip(target);
-        } else {
-          // Schedule showing with delay
-          showTimeoutRef.current = setTimeout(() => {
+        // Use ref for current visibility to avoid stale closure issues
+        if (isVisibleRef.current) {
+          // Tooltip is already visible - handle transition to new target
+          if (delay === 0) {
+            // No delay: clear hide timeout and show immediately (smooth transition)
+            if (hideTimeoutRef.current) {
+              clearTimeout(hideTimeoutRef.current);
+              hideTimeoutRef.current = null;
+            }
             showTooltip(target);
-          }, delay);
+          } else {
+            // Has delay: keep hide timeout running, schedule show
+            // Whichever fires first wins (hide or show)
+            showTimeoutRef.current = setTimeout(() => {
+              // Clear any pending hide timeout when showing new target
+              if (hideTimeoutRef.current) {
+                clearTimeout(hideTimeoutRef.current);
+                hideTimeoutRef.current = null;
+              }
+              showTooltip(target);
+            }, delay);
+          }
+        } else {
+          // Tooltip not visible - just schedule showing with delay
+          if (delay === 0) {
+            showTooltip(target);
+          } else {
+            showTimeoutRef.current = setTimeout(() => {
+              showTooltip(target);
+            }, delay);
+          }
+        }
+      } else if (isOverTooltip) {
+        // Hovering over the tooltip itself - cancel hide
+        if (hideTimeoutRef.current) {
+          clearTimeout(hideTimeoutRef.current);
+          hideTimeoutRef.current = null;
         }
       }
     },
-    [config.showDelay, tooltip.visible, showTooltip]
+    [config.showDelay, showTooltip]
   );
 
   // Handle mouseout event
@@ -150,9 +180,10 @@ function TipMagicEventHandler() {
       }
 
       // Schedule hide with delay if leaving a tooltip target or the tooltip itself
-      if (tooltip.visible && (isLeavingTarget || isLeavingTooltip)) {
+      // Use refs to avoid stale closures and prevent useEffect from re-running
+      if (isVisibleRef.current && (isLeavingTarget || isLeavingTooltip)) {
         // Use per-element hide delay if set, otherwise use provider config
-        const hideDelay = tooltip.parsedData?.hideDelay ?? config.hideDelay;
+        const hideDelay = parsedDataRef.current?.hideDelay ?? config.hideDelay;
 
         // Clear any existing hide timeout first
         if (hideTimeoutRef.current) {
@@ -163,7 +194,7 @@ function TipMagicEventHandler() {
         }, hideDelay);
       }
     },
-    [config.hideDelay, tooltip.visible, tooltip.parsedData?.hideDelay, hideTooltip]
+    [config.hideDelay, hideTooltip]
   );
 
   // Handle focus event for accessibility
@@ -189,25 +220,25 @@ function TipMagicEventHandler() {
       }
 
       if (target) {
-        // Use per-element hide delay if set, otherwise use provider config
-        const hideDelay = tooltip.parsedData?.hideDelay ?? config.hideDelay;
+        // Use per-element hide delay if set, otherwise use provider config (use ref)
+        const hideDelay = parsedDataRef.current?.hideDelay ?? config.hideDelay;
         hideTimeoutRef.current = setTimeout(() => {
           hideTooltip();
         }, hideDelay);
       }
     },
-    [config.hideDelay, tooltip.parsedData?.hideDelay, hideTooltip]
+    [config.hideDelay, hideTooltip]
   );
 
   // Handle escape key to dismiss
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && tooltip.visible) {
+      if (event.key === 'Escape' && isVisibleRef.current) {
         clearTimeouts();
         hideTooltip();
       }
     },
-    [tooltip.visible, clearTimeouts, hideTooltip]
+    [clearTimeouts, hideTooltip]
   );
 
   // Set up event delegation
