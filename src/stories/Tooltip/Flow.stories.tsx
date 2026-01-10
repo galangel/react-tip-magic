@@ -3,6 +3,7 @@ import React from 'react';
 import { TipMagicProvider } from '../../components/TipMagicProvider';
 import { useTipMagic } from '../../hooks/useTipMagic';
 import '../../styles/index.css';
+import { FlowStep } from '../../types';
 import './tooltip-stories.css';
 
 const meta: Meta = {
@@ -262,28 +263,38 @@ const InteractiveTourDemo = () => {
   const [tourActive, setTourActive] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(0);
 
-  const steps = [
+  const steps: FlowStep[] = [
     {
+      id: 'step-1',
+      actions: [],
       targetId: 'tour-sidebar',
       title: 'Navigation Sidebar',
       message: 'Access all your main sections from here. Click on any item to navigate.',
     },
     {
+      id: 'step-2',
+      actions: [],
       targetId: 'tour-search',
       title: 'Search Bar',
       message: 'Quickly find anything in your workspace. Supports filters and advanced queries.',
     },
     {
+      id: 'step-3',
+      actions: [],
       targetId: 'tour-stats',
       title: 'Statistics Overview',
       message: 'Monitor your key metrics at a glance. Click any card for detailed analytics.',
     },
     {
+      id: 'step-4',
+      actions: [],
       targetId: 'tour-actions',
       title: 'Quick Actions',
       message: 'Common actions are just one click away. Customize these in settings.',
     },
     {
+      id: 'step-5',
+      actions: [],
       targetId: 'tour-profile',
       title: 'Your Profile',
       message: "You're all set! Access your account settings and preferences here.",

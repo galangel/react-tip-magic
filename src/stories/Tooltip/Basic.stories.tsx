@@ -48,7 +48,7 @@ export const Default: Story = {
     html: false,
     interactive: false,
     transitionBehavior: 'move',
-    moveTransitionDuration: 200,
+    moveTransitionDuration: 100,
     showArrow: true,
     contentSeparator: ';',
   },

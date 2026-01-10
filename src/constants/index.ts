@@ -24,7 +24,7 @@ export const DEFAULT_OPTIONS: Required<TipMagicOptions> = {
   enableShortcutStyle: true,
   respectReducedMotion: true,
   transitionBehavior: 'move' as TooltipTransitionBehavior,
-  moveTransitionDuration: 200,
+  moveTransitionDuration: 100,
 };
 
 /**

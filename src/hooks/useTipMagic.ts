@@ -1,16 +1,16 @@
 import { useCallback, useMemo } from 'react';
 import type { ParsedTooltipData } from '../context/TipMagicContext';
 import { useTipMagicContext } from '../context/TipMagicContext';
-import { parseDataAttributes } from '../utils/parseDataAttributes';
 import type {
-  UseTipMagicReturn,
-  TooltipAPI,
+  FlowStep,
   HelperAPI,
   HelperShowOptions,
   HelperState,
-  FlowStep,
+  TooltipAPI,
   TooltipShowOptions,
+  UseTipMagicReturn,
 } from '../types';
+import { parseDataAttributes } from '../utils/parseDataAttributes';
 
 /**
  * Main hook to interact with TipMagic programmatically
@@ -106,14 +106,30 @@ export function useTipMagic(): UseTipMagicReturn {
       };
 
       if (state.tooltip.visible) {
-        dispatch({
-          type: 'MOVE_TOOLTIP',
-          payload: {
-            target: element,
-            content: tooltipContent,
-            parsedData: mergedData,
-          },
-        });
+        // Check if we're updating the same target (content change, not position change)
+        const isSameTarget = state.tooltip.target === element;
+
+        if (isSameTarget) {
+          // Same target - just update content without move transition
+          dispatch({
+            type: 'SHOW_TOOLTIP',
+            payload: {
+              target: element,
+              content: tooltipContent,
+              parsedData: mergedData,
+            },
+          });
+        } else {
+          // Different target - use move transition
+          dispatch({
+            type: 'MOVE_TOOLTIP',
+            payload: {
+              target: element,
+              content: tooltipContent,
+              parsedData: mergedData,
+            },
+          });
+        }
       } else {
         dispatch({
           type: 'SHOW_TOOLTIP',
@@ -125,7 +141,7 @@ export function useTipMagic(): UseTipMagicReturn {
         });
       }
     },
-    [state.tooltip.visible, dispatch]
+    [state.tooltip.visible, state.tooltip.target, dispatch]
   );
 
   const tooltipHide = useCallback(() => {
