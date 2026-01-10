@@ -5,6 +5,7 @@ import './tooltip-stories.css';
 
 const meta: Meta = {
   title: 'Tooltip/Placement',
+  tags: ['!autodocs'],
   parameters: {
     layout: 'centered',
   },

@@ -5,6 +5,7 @@ import './tooltip-stories.css';
 
 const meta: Meta = {
   title: 'Tooltip/Delay',
+  tags: ['!autodocs'],
   parameters: {
     layout: 'centered',
   },

@@ -18,6 +18,7 @@ import './tooltip-stories.css';
  */
 const meta: Meta = {
   title: 'Tooltip/Basic',
+  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
   },

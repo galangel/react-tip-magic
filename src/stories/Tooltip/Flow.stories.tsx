@@ -7,6 +7,7 @@ import './tooltip-stories.css';
 
 const meta: Meta = {
   title: 'Tooltip/Flow & Tours',
+  tags: ['!autodocs'],
   parameters: {
     layout: 'centered',
   },

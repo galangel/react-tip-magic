@@ -6,6 +6,7 @@ import './tooltip-stories.css';
 
 const meta: Meta = {
   title: 'Tooltip/Programmatic',
+  tags: ['!autodocs'],
   parameters: {
     layout: 'centered',
   },
