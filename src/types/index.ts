@@ -94,11 +94,47 @@ export interface TipMagicOptions {
 }
 
 /**
+ * Options for programmatically showing a tooltip
+ */
+export interface TooltipShowOptions {
+  /** Tooltip content (overrides element's data-tip) */
+  content?: string;
+  /** Tooltip placement */
+  placement?: Placement;
+  /** Show delay (ms) */
+  showDelay?: number;
+  /** Hide delay (ms) */
+  hideDelay?: number;
+  /** Enable ellipsis truncation */
+  ellipsis?: boolean;
+  /** Maximum lines before truncation */
+  maxLines?: number;
+  /** Enable word wrapping */
+  wordWrap?: boolean;
+  /** Text break behavior */
+  textBreak?: TextBreak;
+  /** Maximum width in pixels */
+  maxWidth?: number;
+  /** Parse content as HTML */
+  html?: boolean;
+  /** Keep tooltip visible when hovering */
+  interactive?: boolean;
+  /** Transition behavior */
+  transitionBehavior?: TooltipTransitionBehavior;
+  /** Move transition duration (ms) */
+  moveTransitionDuration?: number;
+  /** Show/hide arrow */
+  showArrow?: boolean;
+  /** Content separator for keyboard shortcuts */
+  contentSeparator?: string;
+}
+
+/**
  * Tooltip API returned by useTipMagic hook
  */
 export interface TooltipAPI {
-  /** Show tooltip for a specific element */
-  show: (target: Element | string, content?: string) => void;
+  /** Show tooltip for a specific element with optional content and options */
+  show: (target: Element | string, contentOrOptions?: string | TooltipShowOptions) => void;
   /** Hide the current tooltip */
   hide: () => void;
   /** Check if tooltip is visible */
@@ -187,6 +223,8 @@ export interface FlowStep {
   onExit?: () => void;
   /** Conditional display */
   condition?: () => boolean;
+  /** Tooltip display options for this step */
+  tooltipOptions?: Omit<TooltipShowOptions, 'content'>;
 }
 
 /**

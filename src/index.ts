@@ -33,6 +33,7 @@ export type {
   TextBreak,
   TipMagicOptions,
   TooltipAPI,
+  TooltipShowOptions,
   TooltipTransitionBehavior,
   UseTipMagicReturn,
 } from './types';

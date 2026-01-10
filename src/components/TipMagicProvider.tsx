@@ -19,7 +19,7 @@ export interface TipMagicProviderProps {
  */
 function TipMagicEventHandler() {
   const { state, dispatch } = useTipMagicContext();
-  const { config, tooltip } = state;
+  const { config, tooltip, flow } = state;
 
   // Refs for timeout management
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -31,6 +31,9 @@ function TipMagicEventHandler() {
   // Track parsed data for hide delay (to avoid useEffect re-runs)
   const parsedDataRef = useRef(tooltip.parsedData);
   parsedDataRef.current = tooltip.parsedData;
+  // Track flow active state to disable hover tooltips during tours
+  const isFlowActiveRef = useRef(flow.active);
+  isFlowActiveRef.current = flow.active;
 
   // Clear all timeouts
   const clearTimeouts = useCallback(() => {
@@ -89,6 +92,11 @@ function TipMagicEventHandler() {
   // Handle mouseover event
   const handleMouseOver = useCallback(
     (event: MouseEvent) => {
+      // Disable hover tooltips when a flow/tour is active
+      if (isFlowActiveRef.current) {
+        return;
+      }
+
       const target = (event.target as Element).closest(DEFAULT_SELECTOR);
       const isOverTooltip = (event.target as Element).closest('.tip-magic-tooltip');
 
@@ -148,6 +156,11 @@ function TipMagicEventHandler() {
   // Handle mouseout event
   const handleMouseOut = useCallback(
     (event: MouseEvent) => {
+      // Disable hover tooltips when a flow/tour is active
+      if (isFlowActiveRef.current) {
+        return;
+      }
+
       const target = event.target as Element;
       const relatedTarget = event.relatedTarget as Element | null;
       const isLeavingTooltip = target.closest('.tip-magic-tooltip');
@@ -200,6 +213,11 @@ function TipMagicEventHandler() {
   // Handle focus event for accessibility
   const handleFocusIn = useCallback(
     (event: FocusEvent) => {
+      // Disable focus tooltips when a flow/tour is active
+      if (isFlowActiveRef.current) {
+        return;
+      }
+
       const target = (event.target as Element).closest(DEFAULT_SELECTOR);
       if (target) {
         showTooltip(target);
@@ -211,6 +229,11 @@ function TipMagicEventHandler() {
   // Handle blur event
   const handleFocusOut = useCallback(
     (event: FocusEvent) => {
+      // Disable focus tooltips when a flow/tour is active
+      if (isFlowActiveRef.current) {
+        return;
+      }
+
       const target = (event.target as Element).closest(DEFAULT_SELECTOR);
       const relatedTarget = event.relatedTarget as Element | null;
 
@@ -270,6 +293,15 @@ function TipMagicEventHandler() {
     handleKeyDown,
     clearTimeouts,
   ]);
+
+  // Clear any pending timeouts when a flow/tour starts
+  // This prevents the regular tooltip hide delay from affecting tour tooltips
+  useEffect(() => {
+    if (flow.active) {
+      clearTimeouts();
+      currentTargetRef.current = null;
+    }
+  }, [flow.active, clearTimeouts]);
 
   return null;
 }
