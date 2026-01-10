@@ -1,0 +1,10 @@
+/**
+ * TipMagic Styles
+ * Main entry point for all styles
+ */
+
+/* Variables must be imported first (themable properties) */
+@import './variables.css';
+
+/* Core component styles */
+@import './tooltip.css';

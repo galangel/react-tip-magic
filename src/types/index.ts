@@ -41,6 +41,21 @@ export type HelperPosition =
   | 'center';
 
 /**
+ * Tooltip transition behavior when moving between targets
+ * - 'move': Smoothly animate position from one target to another
+ * - 'jump': Instantly appear at new position (fade out/in)
+ */
+export type TooltipTransitionBehavior = 'move' | 'jump';
+
+/**
+ * Text break behavior for tooltips
+ * - 'normal': Break at normal word boundaries (default)
+ * - 'break-all': Can break in the middle of words (useful for long URLs, codes)
+ * - 'keep-all': Don't break CJK characters (useful for Asian languages)
+ */
+export type TextBreak = 'normal' | 'break-all' | 'keep-all';
+
+/**
  * Configuration options for TipMagicProvider
  */
 export interface TipMagicOptions {
@@ -58,8 +73,6 @@ export interface TipMagicOptions {
   enableHelper?: boolean;
   /** Default helper position */
   helperPosition?: HelperPosition;
-  /** Custom theme */
-  theme?: 'light' | 'dark' | 'auto';
   /** Z-index for tooltip layer */
   zIndex?: number;
   /** Disable all tooltips globally */
@@ -72,14 +85,54 @@ export interface TipMagicOptions {
   enableShortcutStyle?: boolean;
   /** Respect prefers-reduced-motion */
   respectReducedMotion?: boolean;
+  /** Default transition behavior when moving between targets */
+  transitionBehavior?: TooltipTransitionBehavior;
+  /** Duration of move transition (ms) */
+  moveTransitionDuration?: number;
+}
+
+/**
+ * Options for programmatically showing a tooltip
+ */
+export interface TooltipShowOptions {
+  /** Tooltip content (overrides element's data-tip) */
+  content?: string;
+  /** Tooltip placement */
+  placement?: Placement;
+  /** Show delay (ms) */
+  showDelay?: number;
+  /** Hide delay (ms) */
+  hideDelay?: number;
+  /** Enable ellipsis truncation */
+  ellipsis?: boolean;
+  /** Maximum lines before truncation */
+  maxLines?: number;
+  /** Enable word wrapping */
+  wordWrap?: boolean;
+  /** Text break behavior */
+  textBreak?: TextBreak;
+  /** Maximum width in pixels */
+  maxWidth?: number;
+  /** Parse content as HTML */
+  html?: boolean;
+  /** Keep tooltip visible when hovering */
+  interactive?: boolean;
+  /** Transition behavior */
+  transitionBehavior?: TooltipTransitionBehavior;
+  /** Move transition duration (ms) */
+  moveTransitionDuration?: number;
+  /** Show/hide arrow */
+  showArrow?: boolean;
+  /** Content separator for keyboard shortcuts */
+  contentSeparator?: string;
 }
 
 /**
  * Tooltip API returned by useTipMagic hook
  */
 export interface TooltipAPI {
-  /** Show tooltip for a specific element */
-  show: (target: Element | string, content?: string) => void;
+  /** Show tooltip for a specific element with optional content and options */
+  show: (target: Element | string, contentOrOptions?: string | TooltipShowOptions) => void;
   /** Hide the current tooltip */
   hide: () => void;
   /** Check if tooltip is visible */
@@ -127,20 +180,6 @@ export interface HelperShowOptions {
 }
 
 /**
- * Flow step action
- */
-export interface FlowStepAction {
-  /** Button label */
-  label: string;
-  /** Action type */
-  action: 'next' | 'prev' | 'complete' | 'skip' | 'custom';
-  /** Custom handler (for action: 'custom') */
-  onClick?: () => void;
-  /** Button variant */
-  variant?: 'primary' | 'secondary';
-}
-
-/**
  * Flow step definition
  */
 export interface FlowStep {
@@ -152,8 +191,6 @@ export interface FlowStep {
   title?: string;
   /** Main message content */
   message: string;
-  /** Action buttons */
-  actions: FlowStepAction[];
   /** Helper state for this step */
   state?: HelperState;
   /** Delay before showing (ms) */
@@ -168,6 +205,8 @@ export interface FlowStep {
   onExit?: () => void;
   /** Conditional display */
   condition?: () => boolean;
+  /** Tooltip display options for this step */
+  tooltipOptions?: Omit<TooltipShowOptions, 'content'>;
 }
 
 /**

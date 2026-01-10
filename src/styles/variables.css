@@ -1,0 +1,120 @@
+/**
+ * TipMagic CSS Variables
+ *
+ * This file contains all customizable CSS variables for theming TipMagic tooltips.
+ * Override these variables in your own stylesheet to customize the appearance.
+ *
+ * ============================================================================
+ * HOW TO CUSTOMIZE
+ * ============================================================================
+ *
+ * Option 1: Override globally
+ *   :root {
+ *     --tip-magic-bg: #your-color;
+ *   }
+ *
+ * Option 2: Override on the tooltip class
+ *   .tip-magic-tooltip {
+ *     --tip-magic-bg: #your-color;
+ *   }
+ *
+ * Option 3: Create a theme class
+ *   .tip-magic-tooltip.my-theme {
+ *     --tip-magic-bg: #your-color;
+ *   }
+ *
+ * ============================================================================
+ */
+
+/* ==========================================================================
+   TOOLTIP VARIABLES
+   ========================================================================== */
+
+.tip-magic-tooltip {
+  /* --------------------------------------------------------------------------
+     COLORS
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Background color of the tooltip
+   * @default #1f2937 (dark gray)
+   */
+  --tip-magic-bg: #1f2937;
+
+  /**
+   * Text color of the tooltip content
+   * @default #f9fafb (off-white)
+   */
+  --tip-magic-text: #f9fafb;
+
+  /**
+   * Box shadow for the tooltip
+   * @default Subtle shadow with 25% opacity
+   */
+  --tip-magic-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25);
+
+  /* --------------------------------------------------------------------------
+     TYPOGRAPHY
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Font family for tooltip text
+   * @default System font stack
+   */
+  --tip-magic-font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /**
+   * Font size for tooltip text
+   * @default 13px
+   */
+  --tip-magic-font-size: 13px;
+
+  /* --------------------------------------------------------------------------
+     SPACING
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Horizontal padding (left and right)
+   * @default 10px
+   */
+  --tip-magic-padding-x: 10px;
+
+  /**
+   * Vertical padding (top and bottom)
+   * @default 6px
+   */
+  --tip-magic-padding-y: 6px;
+
+  /**
+   * Border radius for rounded corners
+   * @default 6px
+   */
+  --tip-magic-border-radius: 6px;
+
+  /* --------------------------------------------------------------------------
+     ARROW
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Size of the arrow pointer
+   * @default 8px
+   */
+  --tip-magic-arrow-size: 8px;
+
+  /* --------------------------------------------------------------------------
+     KEYBOARD SHORTCUTS
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Background color for keyboard shortcut badges
+   * @default Semi-transparent white (15% opacity)
+   */
+  --tip-magic-shortcut-bg: rgba(255, 255, 255, 0.15);
+
+  /**
+   * Text color for keyboard shortcut badges
+   * @default #e5e7eb (light gray)
+   */
+  --tip-magic-shortcut-text: #e5e7eb;
+}

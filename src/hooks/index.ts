@@ -1,0 +1,1 @@
+export { useTipMagic } from './useTipMagic';
