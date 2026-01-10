@@ -38,6 +38,8 @@ export interface ParsedTooltipData {
   showArrow: boolean;
   /** Override content separator for keyboard shortcuts (default: ';') */
   contentSeparator?: string;
+  /** Group identifier for controlling move transitions between grouped elements */
+  group?: string;
 }
 
 /**
@@ -51,6 +53,8 @@ export interface TooltipState {
   placement: Placement;
   isTransitioning: boolean;
   parsedData: ParsedTooltipData | null;
+  /** Group of the previous tooltip (for group-based move transitions) */
+  previousGroup?: string;
 }
 
 /**
@@ -96,6 +100,7 @@ const initialTooltipState: TooltipState = {
   placement: 'top',
   isTransitioning: false,
   parsedData: null,
+  previousGroup: undefined,
 };
 
 /**
@@ -158,6 +163,7 @@ export type TipMagicAction =
         target: Element;
         content: string;
         parsedData: ParsedTooltipData;
+        previousGroup?: string;
       };
     }
   | {
@@ -211,6 +217,7 @@ export function tipMagicReducer(state: TipMagicState, action: TipMagicAction): T
           content: action.payload.content,
           parsedData: action.payload.parsedData,
           isTransitioning: true,
+          previousGroup: action.payload.previousGroup,
         },
       };
 

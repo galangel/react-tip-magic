@@ -4,6 +4,7 @@ import { TipMagicProvider } from '../../components/TipMagicProvider';
 import { useTipMagic } from '../../hooks/useTipMagic';
 import '../../styles/index.css';
 import { FlowStep } from '../../types';
+import { MockDashboard } from './MockDashboard';
 import './tooltip-stories.css';
 
 const meta: Meta = {
@@ -38,75 +39,64 @@ type Story = StoryObj;
 const FlowDemo = () => {
   const { helper, tooltip } = useTipMagic();
   const [flowActive, setFlowActive] = React.useState(false);
+  const [currentStep, setCurrentStep] = React.useState(0);
 
-  const steps = [
+  const steps: FlowStep[] = [
     {
       id: 'step-1',
-      targetId: 'flow-target-1',
-      title: 'Welcome!',
-      message: 'This is the first step of the tour. Click Next to continue.',
-      state: 'informative' as const,
-      tooltipOptions: {
-        maxWidth: 280,
-        wordWrap: true,
-        maxLines: 3,
-        ellipsis: true,
-        placement: 'bottom' as const,
-      },
+      targetId: 'guided-sidebar',
+      title: 'Navigation Sidebar',
+      message: 'Access all your main sections from here. Click on any item to navigate.',
     },
     {
       id: 'step-2',
-      targetId: 'flow-target-2',
-      title: 'Settings',
-      message:
-        'Here you can configure your preferences including theme, notifications, privacy settings, and more advanced options.',
-      state: 'success' as const,
-      tooltipOptions: {
-        maxWidth: 300,
-        wordWrap: true,
-        maxLines: 3,
-        ellipsis: true,
-        placement: 'bottom' as const,
-      },
+      targetId: 'guided-search',
+      title: 'Search Bar',
+      message: 'Quickly find anything in your workspace. Supports filters and advanced queries.',
     },
     {
       id: 'step-3',
-      targetId: 'flow-target-3',
-      title: 'Profile',
-      message: 'Manage your profile and account settings here.',
-      state: 'informative' as const,
-      tooltipOptions: {
-        placement: 'bottom' as const,
-        interactive: true,
-        wordWrap: true,
-        maxLines: 3,
-        ellipsis: true,
-      },
+      targetId: 'tab-overview',
+      title: 'Content Tabs',
+      message: 'Switch between different views using these tabs. Each tab shows relevant content.',
     },
     {
       id: 'step-4',
-      targetId: 'flow-target-4',
-      title: 'All Done!',
-      message: "You've completed the tour. Click Finish to exit.",
-      state: 'success' as const,
-      tooltipOptions: {
-        maxWidth: 250,
-        wordWrap: true,
-        maxLines: 3,
-        ellipsis: true,
-        placement: 'bottom' as const,
-      },
+      targetId: 'guided-stats',
+      title: 'Statistics Overview',
+      message: 'Monitor your key metrics at a glance. Click any card for detailed analytics.',
+    },
+    {
+      id: 'step-5',
+      targetId: 'guided-actions',
+      title: 'Quick Actions',
+      message: 'Common actions are just one click away. Customize these in settings.',
+    },
+    {
+      id: 'step-6',
+      targetId: 'guided-profile',
+      title: 'Your Profile',
+      message: "You're all set! Access your account settings and preferences here.",
     },
   ];
+
+  // Map step index to highlighted element ID
+  const getHighlightedId = (stepIndex: number): string | undefined => {
+    const step = steps[stepIndex];
+    return step?.targetId;
+  };
 
   const showStepTooltip = (stepIndex: number) => {
     const step = steps[stepIndex];
     const target = document.querySelector(`[data-tip-id="${step.targetId}"]`);
     if (target) {
       tooltip.show(target, {
-        content: `Step ${stepIndex + 1}: ${step.title}\n${step.message}`,
-        ...step.tooltipOptions,
+        content: `${step.title}: ${step.message}`,
+        maxWidth: 300,
+        wordWrap: true,
+        placement: 'bottom',
       });
+      setCurrentStep(stepIndex);
     }
   };
 
@@ -116,8 +106,8 @@ const FlowDemo = () => {
     showStepTooltip(0);
   };
 
-  const handleNextStep = () => {
-    const nextIndex = helper.currentStep + 1;
+  const handleNext = () => {
+    const nextIndex = currentStep + 1;
     if (nextIndex >= steps.length) {
       handleEndFlow();
       return;
@@ -126,115 +116,66 @@ const FlowDemo = () => {
     showStepTooltip(nextIndex);
   };
 
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      showStepTooltip(currentStep - 1);
+    }
+  };
+
   const handleEndFlow = () => {
     helper.endFlow();
     tooltip.hide();
     setFlowActive(false);
+    setCurrentStep(0);
   };
 
-  return (
-    <div className="story-container">
-      <p className="story-description">
-        The Flow API enables creating guided tours that highlight elements sequentially.
-        <br />
-        Click "Start Tour" to begin the demonstration.
-      </p>
+  const isFirst = currentStep === 0;
+  const isLast = currentStep === steps.length - 1;
 
-      {/* Flow Control */}
-      <div className="flow-controls">
+  return (
+    <div className="tour-demo-container">
+      {/* Start/Control Buttons */}
+      <div className="tour-controls">
         {!flowActive ? (
-          <button className="story-button story-button-primary" onClick={handleStartFlow}>
-            🚀 Start Tour
+          <button className="tour-start-btn" onClick={handleStartFlow}>
+            🚀 Start Guided Tour
           </button>
         ) : (
-          <>
-            <span className="flow-step-indicator">
-              Step {helper.currentStep + 1} of {steps.length}
+          <div className="tour-control-buttons">
+            <span className="tour-step-indicator">
+              Step {currentStep + 1} of {steps.length}
             </span>
-            <button className="story-button" onClick={handleNextStep}>
-              {helper.currentStep >= steps.length - 1 ? '✓ Finish' : 'Next →'}
+            <button
+              disabled={isFirst}
+              className="tour-control-btn tour-control-btn-secondary"
+              onClick={handlePrev}
+            >
+              ← Back
             </button>
-            <button className="story-button story-button-secondary" onClick={handleEndFlow}>
-              ✕ Exit Tour
+            <button className="tour-control-btn tour-control-btn-primary" onClick={handleNext}>
+              {isLast ? '✓ Finish' : 'Next →'}
             </button>
-          </>
+            <button className="tour-control-btn tour-control-btn-ghost" onClick={handleEndFlow}>
+              ✕ Exit
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Target Elements */}
-      <div className="flow-targets">
-        <div
-          className={`flow-target ${flowActive && helper.currentStep === 0 ? 'flow-target-active' : ''}`}
-          data-tip-id="flow-target-1"
-          data-tip="Welcome to the app!"
-        >
-          <span className="flow-target-icon">🏠</span>
-          <span>Home</span>
-        </div>
-
-        <div
-          className={`flow-target ${flowActive && helper.currentStep === 1 ? 'flow-target-active' : ''}`}
-          data-tip-id="flow-target-2"
-          data-tip="Configure your settings"
-        >
-          <span className="flow-target-icon">⚙️</span>
-          <span>Settings</span>
-        </div>
-
-        <div
-          className={`flow-target ${flowActive && helper.currentStep === 2 ? 'flow-target-active' : ''}`}
-          data-tip-id="flow-target-3"
-          data-tip="View your profile"
-        >
-          <span className="flow-target-icon">👤</span>
-          <span>Profile</span>
-        </div>
-
-        <div
-          className={`flow-target ${flowActive && helper.currentStep === 3 ? 'flow-target-active' : ''}`}
-          data-tip-id="flow-target-4"
-          data-tip="Get help and support"
-        >
-          <span className="flow-target-icon">❓</span>
-          <span>Help</span>
-        </div>
-      </div>
-
-      {/* Code example */}
-      <pre className="story-code">
-        {`const { helper, tooltip } = useTipMagic();
-
-const steps = [
-  {
-    id: 'step-1',
-    targetId: 'my-element',
-    title: 'Welcome!',
-    message: 'This is the first step.',
-    actions: [{ label: 'Next', action: 'next' }],
-    // Customize tooltip for this step
-    tooltipOptions: {
-      maxWidth: 300,
-      maxLines: 2,
-      ellipsis: true,
-      wordWrap: true,
-      placement: 'bottom',
-    },
-  },
-];
-
-// Show tooltip with options
-tooltip.show('#my-element', {
-  content: 'Tooltip with options',
-  maxLines: 2,
-  ellipsis: true,
-  wordWrap: true,
-});
-
-// Start flow
-helper.startFlow(steps);
-helper.nextStep();
-helper.endFlow();`}
-      </pre>
+      {/* Mock Dashboard UI */}
+      <MockDashboard
+        contentTitle="Project Overview"
+        contentDescription="Welcome to your dashboard. Start the tour to learn about the features."
+        tabDataTipId
+        elementIds={{
+          sidebar: 'guided-sidebar',
+          search: 'guided-search',
+          profile: 'guided-profile',
+          stats: 'guided-stats',
+          actions: 'guided-actions',
+        }}
+        highlightedId={flowActive ? getHighlightedId(currentStep) : undefined}
+      />
     </div>
   );
 };
@@ -274,26 +215,35 @@ const InteractiveTourDemo = () => {
     },
     {
       id: 'step-3',
+      targetId: 'tab-overview',
+      title: 'Content Tabs',
+      message: 'Switch between different views using these tabs. Each tab shows relevant content.',
+    },
+    {
+      id: 'step-4',
       targetId: 'tour-stats',
       title: 'Statistics Overview',
       message: 'Monitor your key metrics at a glance. Click any card for detailed analytics.',
     },
     {
-      id: 'step-4',
+      id: 'step-5',
       targetId: 'tour-actions',
       title: 'Quick Actions',
       message: 'Common actions are just one click away. Customize these in settings.',
     },
     {
-      id: 'step-5',
+      id: 'step-6',
       targetId: 'tour-profile',
       title: 'Your Profile',
       message: "You're all set! Access your account settings and preferences here.",
-      tooltipOptions: {
-        moveTransitionDuration: 1000,
-      },
     },
   ];
+
+  // Map step index to highlighted element ID
+  const getHighlightedId = (stepIndex: number): string | undefined => {
+    const step = steps[stepIndex];
+    return step?.targetId;
+  };
 
   const buildTooltipContent = (stepIndex: number) => {
     const step = steps[stepIndex];
@@ -387,75 +337,19 @@ const InteractiveTourDemo = () => {
       </button>
 
       {/* Mock Dashboard UI */}
-      <div className="mock-dashboard">
-        {/* Sidebar */}
-        <aside
-          className={`mock-sidebar ${tourActive && currentStep === 0 ? 'tour-highlight' : ''}`}
-          data-tip-id="tour-sidebar"
-        >
-          <div className="mock-logo">📊 Dashboard</div>
-          <nav className="mock-nav">
-            <a className="mock-nav-item active">🏠 Home</a>
-            <a className="mock-nav-item">📈 Analytics</a>
-            <a className="mock-nav-item">📁 Projects</a>
-            <a className="mock-nav-item">👥 Team</a>
-            <a className="mock-nav-item">⚙️ Settings</a>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="mock-main">
-          {/* Header */}
-          <header className="mock-header">
-            <div
-              className={`mock-search ${tourActive && currentStep === 1 ? 'tour-highlight' : ''}`}
-              data-tip-id="tour-search"
-            >
-              <span className="mock-search-icon">🔍</span>
-              <input type="text" placeholder="Search..." className="mock-search-input" />
-            </div>
-            <div
-              className={`mock-profile ${tourActive && currentStep === 4 ? 'tour-highlight' : ''}`}
-              data-tip-id="tour-profile"
-            >
-              <span className="mock-avatar">👤</span>
-              <span className="mock-username">John Doe</span>
-            </div>
-          </header>
-
-          {/* Stats Cards */}
-          <div
-            className={`mock-stats ${tourActive && currentStep === 2 ? 'tour-highlight' : ''}`}
-            data-tip-id="tour-stats"
-          >
-            <div className="mock-stat-card">
-              <span className="mock-stat-value">1,234</span>
-              <span className="mock-stat-label">Total Users</span>
-            </div>
-            <div className="mock-stat-card">
-              <span className="mock-stat-value">567</span>
-              <span className="mock-stat-label">Active Now</span>
-            </div>
-            <div className="mock-stat-card">
-              <span className="mock-stat-value">89%</span>
-              <span className="mock-stat-label">Satisfaction</span>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div
-            className={`mock-actions ${tourActive && currentStep === 3 ? 'tour-highlight' : ''}`}
-            data-tip-id="tour-actions"
-          >
-            <h3 className="mock-section-title">Quick Actions</h3>
-            <div className="mock-action-buttons">
-              <button className="mock-action-btn">+ New Project</button>
-              <button className="mock-action-btn">📤 Export Data</button>
-              <button className="mock-action-btn">📧 Send Report</button>
-            </div>
-          </div>
-        </main>
-      </div>
+      <MockDashboard
+        contentTitle="Project Overview"
+        contentDescription="Welcome to your dashboard. Start the tour to learn about the features."
+        tabDataTipId
+        elementIds={{
+          sidebar: 'tour-sidebar',
+          search: 'tour-search',
+          profile: 'tour-profile',
+          stats: 'tour-stats',
+          actions: 'tour-actions',
+        }}
+        highlightedId={tourActive ? getHighlightedId(currentStep) : undefined}
+      />
     </div>
   );
 };

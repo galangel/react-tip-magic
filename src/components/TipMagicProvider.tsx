@@ -67,9 +67,15 @@ function TipMagicEventHandler() {
 
       // If tooltip is already visible, move it instead of show/hide
       if (isCurrentlyVisible && currentTargetRef.current !== target) {
+        // Get the previous tooltip's group for group-based transition logic
+        const previousParsedData = currentTargetRef.current
+          ? parseDataAttributes(currentTargetRef.current)
+          : null;
+        const previousGroup = previousParsedData?.group;
+
         dispatch({
           type: 'MOVE_TOOLTIP',
-          payload: { target, content, parsedData },
+          payload: { target, content, parsedData, previousGroup },
         });
       } else if (!isCurrentlyVisible) {
         dispatch({

@@ -64,6 +64,41 @@ function App() {
 </p>
 ```
 
+### Transition Behavior
+
+Control how tooltips transition when moving between elements:
+
+```tsx
+{/* Smooth move transition (default) */}
+<button data-tip="Moves smoothly" data-tip-move>Button 1</button>
+<button data-tip="Moves smoothly" data-tip-move>Button 2</button>
+
+{/* Jump transition (fade out/in) */}
+<button data-tip="Jumps" data-tip-jump>Button 3</button>
+```
+
+### Tooltip Groups
+
+Use `data-tip-group` to control move transitions between grouped elements. Tooltips will only smoothly move between elements in the **same group**:
+
+```tsx
+{/* Group A - tooltips move smoothly within this group */}
+<button data-tip="Group A" data-tip-move data-tip-group="A">A1</button>
+<button data-tip="Group A" data-tip-move data-tip-group="A">A2</button>
+
+{/* Group B - tooltips move smoothly within this group */}
+<button data-tip="Group B" data-tip-move data-tip-group="B">B1</button>
+<button data-tip="Group B" data-tip-move data-tip-group="B">B2</button>
+
+{/* Moving from Group A to Group B will jump, not move */}
+```
+
+**Group transition rules:**
+
+- **Same group** → Smooth move transition
+- **Different groups** → Jump transition (tooltip appears at new position)
+- **Grouped to ungrouped** (or vice versa) → Smooth move transition
+
 ## Helper System
 
 The Helper is an optional floating element that provides contextual information and actions.
