@@ -34,6 +34,8 @@ export interface ParsedTooltipData {
   transitionBehavior?: TooltipTransitionBehavior;
   /** Override move transition duration for this specific tooltip (ms) */
   moveTransitionDuration?: number;
+  /** Show or hide the arrow (default: true) */
+  showArrow: boolean;
 }
 
 /**

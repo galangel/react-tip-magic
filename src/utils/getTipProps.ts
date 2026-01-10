@@ -39,6 +39,8 @@ export interface TipPropsOptions {
   transitionBehavior?: TooltipTransitionBehavior;
   /** Duration of move transition animation (ms) */
   moveTransitionDuration?: number;
+  /** Show or hide the arrow (default: true) */
+  showArrow?: boolean;
 }
 
 /**
@@ -61,6 +63,7 @@ export interface TipPropsResult {
   'data-tip-move'?: '';
   'data-tip-jump'?: '';
   'data-tip-move-duration'?: string;
+  'data-tip-no-arrow'?: '';
 }
 
 /**
@@ -150,6 +153,10 @@ export function getTipProps(options: TipPropsOptions): TipPropsResult {
 
   if (options.moveTransitionDuration !== undefined) {
     result['data-tip-move-duration'] = String(options.moveTransitionDuration);
+  }
+
+  if (options.showArrow === false) {
+    result['data-tip-no-arrow'] = '';
   }
 
   return result;

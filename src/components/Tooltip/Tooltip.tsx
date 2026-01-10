@@ -1,17 +1,17 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
 import {
-  useFloating,
-  offset,
-  flip,
-  shift,
   arrow,
   autoUpdate,
+  flip,
+  offset,
+  shift,
+  useFloating,
   type Placement,
 } from '@floating-ui/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ANIMATION, CSS_CLASSES } from '../../constants';
 import { useTipMagicContext } from '../../context/TipMagicContext';
-import { parseContent } from '../../utils/parseDataAttributes';
-import { CSS_CLASSES, ANIMATION } from '../../constants';
 import type { TooltipTransitionBehavior } from '../../types';
+import { parseContent } from '../../utils/parseDataAttributes';
 
 /**
  * Main Tooltip component - renders a single tooltip instance
@@ -112,6 +112,7 @@ export function Tooltip() {
   const ellipsis = tooltip.parsedData?.ellipsis ?? false;
   const maxLines = tooltip.parsedData?.maxLines ?? 1;
   const textBreak = tooltip.parsedData?.textBreak ?? 'normal';
+  const showArrow = tooltip.parsedData?.showArrow ?? true;
 
   // Build class names
   const classNames = [
@@ -162,15 +163,17 @@ export function Tooltip() {
           <kbd className={CSS_CLASSES.TOOLTIP_SHORTCUT}>{parsedContent.shortcut}</kbd>
         )}
       </div>
-      <div
-        ref={arrowRef}
-        className={CSS_CLASSES.TOOLTIP_ARROW}
-        style={{
-          left: arrowX != null ? `${arrowX}px` : '',
-          top: arrowY != null ? `${arrowY}px` : '',
-          [staticSide]: '-4px',
-        }}
-      />
+      {showArrow && (
+        <div
+          ref={arrowRef}
+          className={CSS_CLASSES.TOOLTIP_ARROW}
+          style={{
+            left: arrowX != null ? `${arrowX}px` : '',
+            top: arrowY != null ? `${arrowY}px` : '',
+            [staticSide]: '-4px',
+          }}
+        />
+      )}
     </div>
   );
 }

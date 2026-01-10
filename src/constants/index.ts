@@ -47,6 +47,7 @@ export const DATA_ATTRIBUTES = {
   TIP_MOVE: 'data-tip-move',
   TIP_JUMP: 'data-tip-jump',
   TIP_MOVE_DURATION: 'data-tip-move-duration',
+  TIP_NO_ARROW: 'data-tip-no-arrow',
 } as const;
 
 /**

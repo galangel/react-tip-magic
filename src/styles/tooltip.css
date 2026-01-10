@@ -29,7 +29,7 @@
   box-shadow: var(--tip-magic-shadow);
   pointer-events: none;
   white-space: nowrap;
-  contain: layout style paint;
+  overflow: visible;
 
   /* Animation - only opacity, no transform to avoid conflicting with Floating UI positioning */
   opacity: 0;

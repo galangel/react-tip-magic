@@ -62,6 +62,7 @@ export const Basic: Story = {
     interactive: false,
     transitionBehavior: 'move',
     moveTransitionDuration: 200,
+    showArrow: true,
   },
   argTypes: {
     tip: {
@@ -136,6 +137,10 @@ export const Basic: Story = {
     moveTransitionDuration: {
       control: { type: 'number', min: 0, max: 1000, step: 50 },
       description: 'Duration of move transition animation (ms)',
+    },
+    showArrow: {
+      control: 'boolean',
+      description: 'Show or hide the tooltip arrow',
     },
   },
   render: (args) => {
