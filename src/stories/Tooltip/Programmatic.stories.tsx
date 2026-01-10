@@ -38,13 +38,18 @@ const ProgrammaticDemo = () => {
       <div className="story-button-group" style={{ marginTop: '20px' }}>
         <button
           className="story-button story-button-secondary"
-          onClick={() => tooltip.show('#programmatic-target')}
+          onClick={() => tooltip.show('#programmatic-target', { hideDelay: 999999999 })}
         >
           Show Tooltip
         </button>
         <button
           className="story-button story-button-secondary"
-          onClick={() => tooltip.show('#programmatic-target', 'Custom content!')}
+          onClick={() =>
+            tooltip.show('#programmatic-target', {
+              content: 'Custom content!',
+              hideDelay: 999999999,
+            })
+          }
         >
           Show Custom Content
         </button>
@@ -62,7 +67,7 @@ const ProgrammaticDemo = () => {
 
 export const ProgrammaticControl: Story = {
   render: () => (
-    <TipMagicProvider options={{ hideDelay: 999999999 }}>
+    <TipMagicProvider>
       <ProgrammaticDemo />
     </TipMagicProvider>
   ),
