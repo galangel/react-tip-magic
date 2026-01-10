@@ -23,7 +23,6 @@ export type {
 // Types
 export type {
   FlowStep,
-  FlowStepAction,
   HelperAPI,
   HelperAction,
   HelperPosition,

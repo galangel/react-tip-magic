@@ -182,20 +182,6 @@ export interface HelperShowOptions {
 }
 
 /**
- * Flow step action
- */
-export interface FlowStepAction {
-  /** Button label */
-  label: string;
-  /** Action type */
-  action: 'next' | 'prev' | 'complete' | 'skip' | 'custom';
-  /** Custom handler (for action: 'custom') */
-  onClick?: () => void;
-  /** Button variant */
-  variant?: 'primary' | 'secondary';
-}
-
-/**
  * Flow step definition
  */
 export interface FlowStep {
@@ -207,8 +193,6 @@ export interface FlowStep {
   title?: string;
   /** Main message content */
   message: string;
-  /** Action buttons */
-  actions: FlowStepAction[];
   /** Helper state for this step */
   state?: HelperState;
   /** Delay before showing (ms) */
