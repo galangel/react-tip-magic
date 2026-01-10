@@ -5,13 +5,6 @@ import './tooltip-stories.css';
 
 const meta: Meta = {
   title: 'Tooltip/Keyboard Shortcuts',
-  decorators: [
-    (Story) => (
-      <TipMagicProvider>
-        <Story />
-      </TipMagicProvider>
-    ),
-  ],
   parameters: {
     layout: 'centered',
   },
@@ -34,32 +27,34 @@ type Story = StoryObj;
  */
 export const WithShortcuts: Story = {
   render: () => (
-    <div className="story-container">
-      <p className="story-description">
-        Use a semicolon <code>;</code> to separate tooltip text from keyboard shortcuts.
-        <br />
-        Example: <code>data-tip="Copy; ⌘C"</code> → "Copy" + styled shortcut badge
-      </p>
-      <div className="story-toolbar">
-        <button className="story-icon-button" data-tip="Copy; ⌘C" aria-label="Copy">
-          📋
-        </button>
-        <button className="story-icon-button" data-tip="Paste; ⌘V" aria-label="Paste">
-          📄
-        </button>
-        <button className="story-icon-button" data-tip="Cut; ⌘X" aria-label="Cut">
-          ✂️
-        </button>
-        <button className="story-icon-button" data-tip="Undo; ⌘Z" aria-label="Undo">
-          ↩️
-        </button>
-        <button className="story-icon-button" data-tip="Save; ⌘S" aria-label="Save">
-          💾
-        </button>
+    <TipMagicProvider>
+      <div className="story-container">
+        <p className="story-description">
+          Use a semicolon <code>;</code> to separate tooltip text from keyboard shortcuts.
+          <br />
+          Example: <code>data-tip="Copy; ⌘C"</code> → "Copy" + styled shortcut badge
+        </p>
+        <div className="story-toolbar">
+          <button className="story-icon-button" data-tip="Copy; ⌘C" aria-label="Copy">
+            📋
+          </button>
+          <button className="story-icon-button" data-tip="Paste; ⌘V" aria-label="Paste">
+            📄
+          </button>
+          <button className="story-icon-button" data-tip="Cut; ⌘X" aria-label="Cut">
+            ✂️
+          </button>
+          <button className="story-icon-button" data-tip="Undo; ⌘Z" aria-label="Undo">
+            ↩️
+          </button>
+          <button className="story-icon-button" data-tip="Save; ⌘S" aria-label="Save">
+            💾
+          </button>
+        </div>
+        <p className="story-info">
+          💡 Without a semicolon, the entire text is shown as the main content (no shortcut badge).
+        </p>
       </div>
-      <p className="story-info">
-        💡 Without a semicolon, the entire text is shown as the main content (no shortcut badge).
-      </p>
-    </div>
+    </TipMagicProvider>
   ),
 };

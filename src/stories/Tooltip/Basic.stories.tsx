@@ -18,13 +18,6 @@ import './tooltip-stories.css';
  */
 const meta: Meta = {
   title: 'Tooltip/Basic',
-  decorators: [
-    (Story) => (
-      <TipMagicProvider>
-        <Story />
-      </TipMagicProvider>
-    ),
-  ],
   parameters: {
     layout: 'centered',
   },
@@ -146,24 +139,26 @@ export const Default: Story = {
     const tipProps = getTipProps(args);
 
     return (
-      <div className="story-container">
-        <p className="story-description">
-          Using <code>getTipProps()</code> for typed tooltip configuration.
-          <br />
-          Adjust the controls below to see different tooltip behaviors.
-        </p>
-        <button className="story-button" {...tipProps}>
-          Hover me
-        </button>
-        <button className="story-button" {...tipProps}>
-          Hover me
-        </button>
-        <pre className="story-code">
-          {`const tipProps = getTipProps(${JSON.stringify(args, null, 2)});
+      <TipMagicProvider>
+        <div className="story-container">
+          <p className="story-description">
+            Using <code>getTipProps()</code> for typed tooltip configuration.
+            <br />
+            Adjust the controls below to see different tooltip behaviors.
+          </p>
+          <button className="story-button" {...tipProps}>
+            Hover me
+          </button>
+          <button className="story-button" {...tipProps}>
+            Hover me
+          </button>
+          <pre className="story-code">
+            {`const tipProps = getTipProps(${JSON.stringify(args, null, 2)});
 
 <button {...tipProps}>Hover me</button>`}
-        </pre>
-      </div>
+          </pre>
+        </div>
+      </TipMagicProvider>
     );
   },
 };

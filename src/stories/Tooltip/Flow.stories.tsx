@@ -7,13 +7,6 @@ import './tooltip-stories.css';
 
 const meta: Meta = {
   title: 'Tooltip/Flow & Tours',
-  decorators: [
-    (Story) => (
-      <TipMagicProvider>
-        <Story />
-      </TipMagicProvider>
-    ),
-  ],
   parameters: {
     layout: 'centered',
   },
@@ -249,7 +242,11 @@ helper.endFlow();`}
 };
 
 export const GuidedFlow: Story = {
-  render: () => <FlowDemo />,
+  render: () => (
+    <TipMagicProvider>
+      <FlowDemo />
+    </TipMagicProvider>
+  ),
 };
 
 /**
@@ -454,5 +451,9 @@ const InteractiveTourDemo = () => {
 };
 
 export const InteractiveTour: Story = {
-  render: () => <InteractiveTourDemo />,
+  render: () => (
+    <TipMagicProvider>
+      <InteractiveTourDemo />
+    </TipMagicProvider>
+  ),
 };

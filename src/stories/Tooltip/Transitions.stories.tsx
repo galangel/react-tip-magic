@@ -5,18 +5,6 @@ import './tooltip-stories.css';
 
 const meta: Meta = {
   title: 'Tooltip/Transitions',
-  decorators: [
-    (Story, context) => {
-      if (context.parameters.skipDefaultProvider) {
-        return <Story />;
-      }
-      return (
-        <TipMagicProvider>
-          <Story />
-        </TipMagicProvider>
-      );
-    },
-  ],
   parameters: {
     layout: 'centered',
   },
@@ -31,26 +19,28 @@ type Story = StoryObj;
  */
 export const SmoothTransitions: Story = {
   render: () => (
-    <div className="story-container">
-      <p className="story-description">
-        Move your mouse between the buttons below - notice how the tooltip smoothly transitions
-        instead of flickering!
-      </p>
-      <div className="story-button-group">
-        <button className="story-button" data-tip="First button tooltip">
-          Button 1
-        </button>
-        <button className="story-button" data-tip="Second button tooltip">
-          Button 2
-        </button>
-        <button className="story-button" data-tip="Third button tooltip">
-          Button 3
-        </button>
-        <button className="story-button" data-tip="Fourth button tooltip">
-          Button 4
-        </button>
+    <TipMagicProvider>
+      <div className="story-container">
+        <p className="story-description">
+          Move your mouse between the buttons below - notice how the tooltip smoothly transitions
+          instead of flickering!
+        </p>
+        <div className="story-button-group">
+          <button className="story-button" data-tip="First button tooltip">
+            Button 1
+          </button>
+          <button className="story-button" data-tip="Second button tooltip">
+            Button 2
+          </button>
+          <button className="story-button" data-tip="Third button tooltip">
+            Button 3
+          </button>
+          <button className="story-button" data-tip="Fourth button tooltip">
+            Button 4
+          </button>
+        </div>
       </div>
-    </div>
+    </TipMagicProvider>
   ),
 };
 
@@ -63,53 +53,55 @@ export const SmoothTransitions: Story = {
  */
 export const MoveVsJump: Story = {
   render: () => (
-    <div className="story-container">
-      <p className="story-description">
-        Compare how the tooltip moves vs jumps between targets. The default behavior is 'move'.
-      </p>
+    <TipMagicProvider>
+      <div className="story-container">
+        <p className="story-description">
+          Compare how the tooltip moves vs jumps between targets. The default behavior is 'move'.
+        </p>
 
-      <div style={{ marginBottom: '30px' }}>
-        <h4 style={{ margin: '0 0 12px', color: '#6b7280' }}>Move Behavior (default)</h4>
-        <div className="story-button-group">
-          <button className="story-button" data-tip="Move to me!" data-tip-move>
-            Move 1
-          </button>
-          <button className="story-button" data-tip="Smooth transition!" data-tip-move>
-            Move 2
-          </button>
-          <button className="story-button" data-tip="Slides over!" data-tip-move>
-            Move 3
-          </button>
+        <div style={{ marginBottom: '30px' }}>
+          <h4 style={{ margin: '0 0 12px', color: '#6b7280' }}>Move Behavior (default)</h4>
+          <div className="story-button-group">
+            <button className="story-button" data-tip="Move to me!" data-tip-move>
+              Move 1
+            </button>
+            <button className="story-button" data-tip="Smooth transition!" data-tip-move>
+              Move 2
+            </button>
+            <button className="story-button" data-tip="Slides over!" data-tip-move>
+              Move 3
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h4 style={{ margin: '0 0 12px', color: '#6b7280' }}>Jump Behavior</h4>
+          <div className="story-button-group">
+            <button
+              className="story-button story-button-secondary"
+              data-tip="Jump to me!"
+              data-tip-jump
+            >
+              Jump 1
+            </button>
+            <button
+              className="story-button story-button-secondary"
+              data-tip="Instant appear!"
+              data-tip-jump
+            >
+              Jump 2
+            </button>
+            <button
+              className="story-button story-button-secondary"
+              data-tip="No animation!"
+              data-tip-jump
+            >
+              Jump 3
+            </button>
+          </div>
         </div>
       </div>
-
-      <div>
-        <h4 style={{ margin: '0 0 12px', color: '#6b7280' }}>Jump Behavior</h4>
-        <div className="story-button-group">
-          <button
-            className="story-button story-button-secondary"
-            data-tip="Jump to me!"
-            data-tip-jump
-          >
-            Jump 1
-          </button>
-          <button
-            className="story-button story-button-secondary"
-            data-tip="Instant appear!"
-            data-tip-jump
-          >
-            Jump 2
-          </button>
-          <button
-            className="story-button story-button-secondary"
-            data-tip="No animation!"
-            data-tip-jump
-          >
-            Jump 3
-          </button>
-        </div>
-      </div>
-    </div>
+    </TipMagicProvider>
   ),
 };
 
@@ -118,32 +110,24 @@ export const MoveVsJump: Story = {
  * All tooltips will jump unless explicitly set to move.
  */
 export const JumpAsDefault: Story = {
-  parameters: {
-    skipDefaultProvider: true,
-  },
-  decorators: [
-    (Story) => (
-      <TipMagicProvider options={{ transitionBehavior: 'jump' }}>
-        <Story />
-      </TipMagicProvider>
-    ),
-  ],
   render: () => (
-    <div className="story-container">
-      <p className="story-description">
-        This story uses 'jump' as the default transition behavior at the provider level.
-      </p>
-      <div className="story-button-group">
-        <button className="story-button" data-tip="Jumps by default">
-          Button 1
-        </button>
-        <button className="story-button" data-tip="Also jumps">
-          Button 2
-        </button>
-        <button className="story-button" data-tip="This one moves!" data-tip-move>
-          Button 3 (override)
-        </button>
+    <TipMagicProvider options={{ transitionBehavior: 'jump' }}>
+      <div className="story-container">
+        <p className="story-description">
+          This story uses 'jump' as the default transition behavior at the provider level.
+        </p>
+        <div className="story-button-group">
+          <button className="story-button" data-tip="Jumps by default">
+            Button 1
+          </button>
+          <button className="story-button" data-tip="Also jumps">
+            Button 2
+          </button>
+          <button className="story-button" data-tip="This one moves!" data-tip-move>
+            Button 3 (override)
+          </button>
+        </div>
       </div>
-    </div>
+    </TipMagicProvider>
   ),
 };
