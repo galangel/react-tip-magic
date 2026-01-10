@@ -18,7 +18,7 @@ import './tooltip-stories.css';
  * - **TypeScript support**: Use `getTipProps()` for typed tooltip configuration
  */
 const meta: Meta = {
-  title: 'Components/Tooltip',
+  title: 'Tooltip',
   decorators: [
     (Story, context) => {
       // Skip the default provider if the story provides its own
@@ -63,6 +63,7 @@ export const Basic: Story = {
     transitionBehavior: 'move',
     moveTransitionDuration: 200,
     showArrow: true,
+    contentSeparator: ';',
   },
   argTypes: {
     tip: {
@@ -142,6 +143,11 @@ export const Basic: Story = {
       control: 'boolean',
       description: 'Show or hide the tooltip arrow',
     },
+    contentSeparator: {
+      control: 'text',
+      description:
+        'Character(s) to separate main text from keyboard shortcut (e.g., "Save; ⌘S" uses ";")',
+    },
   },
   render: (args) => {
     const tipProps = getTipProps(args);
@@ -199,12 +205,25 @@ export const SmoothTransitions: Story = {
 };
 
 /**
- * Keyboard shortcuts can be added using the `;` separator.
- * The shortcut is displayed in a special styled badge.
+ * Tooltips can display keyboard shortcuts alongside the main content.
+ *
+ * **How it works:**
+ * - Use the `contentSeparator` (default: `;`) to separate text from the shortcut
+ * - Format: `"Main text; Shortcut"` → displays "Main text" with a styled `[Shortcut]` badge
+ * - The shortcut is rendered in a `<kbd>` element with special styling
+ *
+ * **Customization:**
+ * - Change separator: `<TipMagicProvider options={{ contentSeparator: '|' }}>`
+ * - Disable shortcut styling: `<TipMagicProvider options={{ enableShortcutStyle: false }}>`
  */
 export const WithKeyboardShortcuts: Story = {
   render: () => (
     <div className="story-container">
+      <p className="story-description">
+        Use a semicolon <code>;</code> to separate tooltip text from keyboard shortcuts.
+        <br />
+        Example: <code>data-tip="Copy; ⌘C"</code> → "Copy" + styled shortcut badge
+      </p>
       <div className="story-toolbar">
         <button className="story-icon-button" data-tip="Copy; ⌘C" aria-label="Copy">
           📋
@@ -222,6 +241,9 @@ export const WithKeyboardShortcuts: Story = {
           💾
         </button>
       </div>
+      <p className="story-info">
+        💡 Without a semicolon, the entire text is shown as the main content (no shortcut badge).
+      </p>
     </div>
   ),
 };

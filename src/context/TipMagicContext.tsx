@@ -36,6 +36,8 @@ export interface ParsedTooltipData {
   moveTransitionDuration?: number;
   /** Show or hide the arrow (default: true) */
   showArrow: boolean;
+  /** Override content separator for keyboard shortcuts (default: ';') */
+  contentSeparator?: string;
 }
 
 /**

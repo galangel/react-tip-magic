@@ -87,8 +87,9 @@ export function Tooltip() {
     return null;
   }
 
-  // Parse content to extract shortcut
-  const parsedContent = parseContent(tooltip.content, config.contentSeparator);
+  // Parse content to extract shortcut (per-element separator overrides provider default)
+  const separator = tooltip.parsedData?.contentSeparator ?? config.contentSeparator;
+  const parsedContent = parseContent(tooltip.content, separator);
 
   // Calculate arrow position based on placement
   const arrowX = middlewareData.arrow?.x;

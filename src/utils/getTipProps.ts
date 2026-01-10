@@ -41,6 +41,8 @@ export interface TipPropsOptions {
   moveTransitionDuration?: number;
   /** Show or hide the arrow (default: true) */
   showArrow?: boolean;
+  /** Override content separator for keyboard shortcuts (default: ';') */
+  contentSeparator?: string;
 }
 
 /**
@@ -64,6 +66,7 @@ export interface TipPropsResult {
   'data-tip-jump'?: '';
   'data-tip-move-duration'?: string;
   'data-tip-no-arrow'?: '';
+  'data-tip-separator'?: string;
 }
 
 /**
@@ -157,6 +160,10 @@ export function getTipProps(options: TipPropsOptions): TipPropsResult {
 
   if (options.showArrow === false) {
     result['data-tip-no-arrow'] = '';
+  }
+
+  if (options.contentSeparator !== undefined) {
+    result['data-tip-separator'] = options.contentSeparator;
   }
 
   return result;

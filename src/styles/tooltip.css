@@ -120,8 +120,8 @@
   color: var(--tip-magic-shortcut-text);
   border-radius: 4px;
   font-size: 11px;
-  font-family:
-    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
   font-weight: 500;
   letter-spacing: 0.02em;
 }
