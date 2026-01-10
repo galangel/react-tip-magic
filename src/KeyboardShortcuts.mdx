@@ -53,16 +53,26 @@ The library automatically:
   </thead>
   <tbody>
     <tr>
-      <td><code>contentSeparator</code></td>
+      <td>
+        <code>contentSeparator</code>
+      </td>
       <td>string</td>
-      <td><code>';'</code></td>
+      <td>
+        <code>';'</code>
+      </td>
       <td>Character(s) used to separate main text from keyboard shortcut</td>
     </tr>
     <tr>
-      <td><code>enableShortcutStyle</code></td>
+      <td>
+        <code>enableShortcutStyle</code>
+      </td>
       <td>boolean</td>
-      <td><code>true</code></td>
-      <td>Whether to render shortcuts with styled <code>&lt;kbd&gt;</code> badges</td>
+      <td>
+        <code>true</code>
+      </td>
+      <td>
+        Whether to render shortcuts with styled <code>&lt;kbd&gt;</code> badges
+      </td>
     </tr>
   </tbody>
 </table>
@@ -70,8 +80,8 @@ The library automatically:
 ```tsx
 <TipMagicProvider
   options={{
-    contentSeparator: '|',        // Change separator to pipe
-    enableShortcutStyle: false,   // Disable shortcut styling
+    contentSeparator: '|', // Change separator to pipe
+    enableShortcutStyle: false, // Disable shortcut styling
   }}
 >
   <App />
@@ -89,26 +99,34 @@ The library automatically:
   </thead>
   <tbody>
     <tr>
-      <td><code>data-tip</code></td>
-      <td>Tooltip content. Format: <code>"Main text; Shortcut"</code></td>
+      <td>
+        <code>data-tip</code>
+      </td>
+      <td>
+        Tooltip content. Format: <code>"Main text; Shortcut"</code>
+      </td>
     </tr>
     <tr>
-      <td><code>data-tip-separator</code></td>
+      <td>
+        <code>data-tip-separator</code>
+      </td>
       <td>Override the separator for this element only</td>
     </tr>
   </tbody>
 </table>
 
 ```tsx
-{/* Uses custom separator for this element only */}
+{
+  /* Uses custom separator for this element only */
+}
 <button data-tip="Copy | ⌘C" data-tip-separator="|">
   Copy
-</button>
+</button>;
 
-{/* Still uses default semicolon separator */}
-<button data-tip="Paste; ⌘V">
-  Paste
-</button>
+{
+  /* Still uses default semicolon separator */
+}
+<button data-tip="Paste; ⌘V">Paste</button>;
 ```
 
 ### CSS Classes
@@ -122,8 +140,12 @@ The library automatically:
   </thead>
   <tbody>
     <tr>
-      <td><code>.tip-magic-shortcut</code></td>
-      <td>Applied to the <code>&lt;kbd&gt;</code> element containing the shortcut</td>
+      <td>
+        <code>.tip-magic-shortcut</code>
+      </td>
+      <td>
+        Applied to the <code>&lt;kbd&gt;</code> element containing the shortcut
+      </td>
     </tr>
   </tbody>
 </table>
@@ -140,13 +162,21 @@ The library automatically:
   </thead>
   <tbody>
     <tr>
-      <td><code>--tip-magic-shortcut-bg</code></td>
-      <td><code>rgba(255, 255, 255, 0.15)</code></td>
+      <td>
+        <code>--tip-magic-shortcut-bg</code>
+      </td>
+      <td>
+        <code>rgba(255, 255, 255, 0.15)</code>
+      </td>
       <td>Background color of the shortcut badge</td>
     </tr>
     <tr>
-      <td><code>--tip-magic-shortcut-text</code></td>
-      <td><code>#e5e7eb</code></td>
+      <td>
+        <code>--tip-magic-shortcut-text</code>
+      </td>
+      <td>
+        <code>#e5e7eb</code>
+      </td>
       <td>Text color of the shortcut badge</td>
     </tr>
   </tbody>
@@ -206,44 +236,76 @@ Common keyboard symbols for use in shortcuts:
   </thead>
   <tbody>
     <tr>
-      <td><code>⌘</code></td>
+      <td>
+        <code>⌘</code>
+      </td>
       <td>Command (Mac)</td>
-      <td><code>⌘C</code> for copy</td>
+      <td>
+        <code>⌘C</code> for copy
+      </td>
     </tr>
     <tr>
-      <td><code>⌥</code></td>
+      <td>
+        <code>⌥</code>
+      </td>
       <td>Option/Alt (Mac)</td>
-      <td><code>⌥Tab</code> for switch</td>
+      <td>
+        <code>⌥Tab</code> for switch
+      </td>
     </tr>
     <tr>
-      <td><code>⇧</code></td>
+      <td>
+        <code>⇧</code>
+      </td>
       <td>Shift</td>
-      <td><code>⇧Enter</code> for new line</td>
+      <td>
+        <code>⇧Enter</code> for new line
+      </td>
     </tr>
     <tr>
-      <td><code>⌃</code></td>
+      <td>
+        <code>⌃</code>
+      </td>
       <td>Control (Mac)</td>
-      <td><code>⌃Space</code> for autocomplete</td>
+      <td>
+        <code>⌃Space</code> for autocomplete
+      </td>
     </tr>
     <tr>
-      <td><code>↵</code></td>
+      <td>
+        <code>↵</code>
+      </td>
       <td>Enter/Return</td>
-      <td><code>↵</code> to submit</td>
+      <td>
+        <code>↵</code> to submit
+      </td>
     </tr>
     <tr>
-      <td><code>⎋</code></td>
+      <td>
+        <code>⎋</code>
+      </td>
       <td>Escape</td>
-      <td><code>⎋</code> to cancel</td>
+      <td>
+        <code>⎋</code> to cancel
+      </td>
     </tr>
     <tr>
-      <td><code>⌫</code></td>
+      <td>
+        <code>⌫</code>
+      </td>
       <td>Backspace/Delete</td>
-      <td><code>⌫</code> to delete</td>
+      <td>
+        <code>⌫</code> to delete
+      </td>
     </tr>
     <tr>
-      <td><code>↑↓←→</code></td>
+      <td>
+        <code>↑↓←→</code>
+      </td>
       <td>Arrow keys</td>
-      <td><code>↑↓</code> to navigate</td>
+      <td>
+        <code>↑↓</code> to navigate
+      </td>
     </tr>
   </tbody>
 </table>
@@ -274,9 +336,15 @@ The following are implementation patterns showing how to use keyboard shortcut t
 
 ```tsx
 <nav>
-  <a href="/home" data-tip="Home; ⌘1">Home</a>
-  <a href="/search" data-tip="Search; ⌘K">Search</a>
-  <a href="/settings" data-tip="Settings; ⌘,">Settings</a>
+  <a href="/home" data-tip="Home; ⌘1">
+    Home
+  </a>
+  <a href="/search" data-tip="Search; ⌘K">
+    Search
+  </a>
+  <a href="/settings" data-tip="Settings; ⌘,">
+    Settings
+  </a>
 </nav>
 ```
 
@@ -312,7 +380,9 @@ useEffect(() => {
 }, []);
 
 // Now it's safe to advertise the shortcut
-<button data-tip="Save; ⌘S" onClick={handleSave}>Save</button>
+<button data-tip="Save; ⌘S" onClick={handleSave}>
+  Save
+</button>;
 ```
 
 ---
@@ -371,11 +441,7 @@ Keyboard shortcuts improve accessibility when implemented correctly:
 Announce shortcuts to screen readers:
 
 ```tsx
-<button
-  data-tip="Save; ⌘S"
-  aria-keyshortcuts="Meta+S"
-  onClick={handleSave}
->
+<button data-tip="Save; ⌘S" aria-keyshortcuts="Meta+S" onClick={handleSave}>
   Save
 </button>
 ```
