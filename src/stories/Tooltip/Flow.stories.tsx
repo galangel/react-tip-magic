@@ -289,6 +289,9 @@ const InteractiveTourDemo = () => {
       targetId: 'tour-profile',
       title: 'Your Profile',
       message: "You're all set! Access your account settings and preferences here.",
+      tooltipOptions: {
+        moveTransitionDuration: 1000,
+      },
     },
   ];
 
@@ -316,6 +319,7 @@ const InteractiveTourDemo = () => {
     const target = document.querySelector(`[data-tip-id="${step.targetId}"]`);
     if (target) {
       tooltip.show(target, {
+        // Default options
         content: buildTooltipContent(stepIndex),
         html: true,
         interactive: true,
@@ -324,6 +328,9 @@ const InteractiveTourDemo = () => {
         showArrow: true,
         wordWrap: true,
         ellipsis: false,
+        moveTransitionDuration: 300,
+        // Merge step-specific options (overrides defaults)
+        ...step.tooltipOptions,
       });
       setCurrentStep(stepIndex);
     }

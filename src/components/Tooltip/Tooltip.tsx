@@ -63,6 +63,11 @@ export function Tooltip() {
     }
   }, [isPositioned, tooltip.visible]);
 
+  // Determine if we should animate position (move behavior)
+  // Only animate if: already positioned before, transitioning between targets, and behavior is 'move'
+  const shouldAnimatePosition =
+    hasBeenPositioned && tooltip.isTransitioning && transitionBehavior === 'move';
+
   // Control visibility: show only after positioned, hide immediately when not visible
   useEffect(() => {
     if (tooltip.visible && isPositioned) {
@@ -75,12 +80,23 @@ export function Tooltip() {
     }
   }, [tooltip.visible, isPositioned]);
 
-  // Handle transition end
-  const handleTransitionEnd = useCallback(() => {
-    if (tooltip.isTransitioning) {
-      dispatch({ type: 'SET_TOOLTIP_TRANSITIONING', payload: false });
-    }
-  }, [tooltip.isTransitioning, dispatch]);
+  // Handle transition end - only clear transitioning state when transform finishes
+  // (or opacity if not animating position)
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent) => {
+      if (!tooltip.isTransitioning) return;
+
+      // When animating position, wait for transform to finish (it's usually longer)
+      // When not animating position, opacity ending is sufficient
+      const shouldClear =
+        e.propertyName === 'transform' || (e.propertyName === 'opacity' && !shouldAnimatePosition);
+
+      if (shouldClear) {
+        dispatch({ type: 'SET_TOOLTIP_TRANSITIONING', payload: false });
+      }
+    },
+    [tooltip.isTransitioning, dispatch, shouldAnimatePosition]
+  );
 
   // Don't render if not visible or no content
   if (!tooltip.visible || !tooltip.content) {
@@ -101,11 +117,6 @@ export function Tooltip() {
       bottom: 'top',
       left: 'right',
     }[context.placement.split('-')[0]] ?? 'bottom';
-
-  // Determine if we should animate position (move behavior)
-  // Only animate if: already positioned before, transitioning between targets, and behavior is 'move'
-  const shouldAnimatePosition =
-    hasBeenPositioned && tooltip.isTransitioning && transitionBehavior === 'move';
 
   // Extract text display options
   const isInteractive = tooltip.parsedData?.interactive ?? false;
