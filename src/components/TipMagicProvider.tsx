@@ -67,9 +67,15 @@ function TipMagicEventHandler() {
 
       // If tooltip is already visible, move it instead of show/hide
       if (isCurrentlyVisible && currentTargetRef.current !== target) {
+        // Get the previous tooltip's group for group-based transition logic
+        const previousParsedData = currentTargetRef.current
+          ? parseDataAttributes(currentTargetRef.current)
+          : null;
+        const previousGroup = previousParsedData?.group;
+
         dispatch({
           type: 'MOVE_TOOLTIP',
-          payload: { target, content, parsedData },
+          payload: { target, content, parsedData, previousGroup },
         });
       } else if (!isCurrentlyVisible) {
         dispatch({
@@ -220,10 +226,16 @@ function TipMagicEventHandler() {
 
       const target = (event.target as Element).closest(DEFAULT_SELECTOR);
       if (target) {
-        showTooltip(target);
+        // Check if showOnFocus is enabled for this element or globally
+        const parsedData = parseDataAttributes(target);
+        const shouldShowOnFocus = parsedData.showOnFocus || config.showOnFocus;
+
+        if (shouldShowOnFocus) {
+          showTooltip(target);
+        }
       }
     },
-    [showTooltip]
+    [showTooltip, config.showOnFocus]
   );
 
   // Handle blur event
@@ -237,20 +249,30 @@ function TipMagicEventHandler() {
       const target = (event.target as Element).closest(DEFAULT_SELECTOR);
       const relatedTarget = event.relatedTarget as Element | null;
 
-      // Don't hide if moving focus to another tooltip target
+      // Don't hide if moving focus to another tooltip target that also has showOnFocus
       if (relatedTarget?.closest(DEFAULT_SELECTOR)) {
-        return;
+        const relatedParsedData = parseDataAttributes(relatedTarget.closest(DEFAULT_SELECTOR)!);
+        const relatedShowOnFocus = relatedParsedData.showOnFocus || config.showOnFocus;
+        if (relatedShowOnFocus) {
+          return;
+        }
       }
 
       if (target) {
-        // Use per-element hide delay if set, otherwise use provider config (use ref)
-        const hideDelay = parsedDataRef.current?.hideDelay ?? config.hideDelay;
-        hideTimeoutRef.current = setTimeout(() => {
-          hideTooltip();
-        }, hideDelay);
+        // Check if showOnFocus is enabled for this element or globally
+        const parsedData = parseDataAttributes(target);
+        const shouldShowOnFocus = parsedData.showOnFocus || config.showOnFocus;
+
+        if (shouldShowOnFocus) {
+          // Use per-element hide delay if set, otherwise use provider config (use ref)
+          const hideDelay = parsedDataRef.current?.hideDelay ?? config.hideDelay;
+          hideTimeoutRef.current = setTimeout(() => {
+            hideTooltip();
+          }, hideDelay);
+        }
       }
     },
-    [config.hideDelay, hideTooltip]
+    [config.hideDelay, config.showOnFocus, hideTooltip]
   );
 
   // Handle escape key to dismiss
@@ -317,6 +339,54 @@ function TipMagicPortal() {
 }
 
 /**
+ * Internal component that handles automatic tour highlighting
+ * Adds/removes the tourHighlightClass to target elements during a flow
+ */
+function TipMagicTourHighlight() {
+  const { state } = useTipMagicContext();
+  const { flow, tooltip, config } = state;
+  const previousTargetRef = useRef<Element | null>(null);
+
+  useEffect(() => {
+    const highlightClass = config.tourHighlightClass;
+
+    // Only apply highlighting if class is configured and flow is active
+    if (!highlightClass) {
+      return;
+    }
+
+    // Remove highlight from previous target
+    if (previousTargetRef.current && previousTargetRef.current !== tooltip.target) {
+      previousTargetRef.current.classList.remove(highlightClass);
+    }
+
+    // Add highlight to current target if flow is active
+    if (flow.active && tooltip.target) {
+      tooltip.target.classList.add(highlightClass);
+      previousTargetRef.current = tooltip.target;
+    }
+
+    // Cleanup function - remove highlight when flow ends or component unmounts
+    return () => {
+      if (!flow.active && previousTargetRef.current && highlightClass) {
+        previousTargetRef.current.classList.remove(highlightClass);
+        previousTargetRef.current = null;
+      }
+    };
+  }, [flow.active, tooltip.target, config.tourHighlightClass]);
+
+  // Also clean up when flow becomes inactive
+  useEffect(() => {
+    if (!flow.active && previousTargetRef.current && config.tourHighlightClass) {
+      previousTargetRef.current.classList.remove(config.tourHighlightClass);
+      previousTargetRef.current = null;
+    }
+  }, [flow.active, config.tourHighlightClass]);
+
+  return null;
+}
+
+/**
  * TipMagicProvider - Main provider component
  *
  * Wrap your application with this provider to enable tooltips.
@@ -333,6 +403,7 @@ export function TipMagicProvider({ children, options }: TipMagicProviderProps) {
   return (
     <TipMagicContextProvider options={options}>
       <TipMagicEventHandler />
+      <TipMagicTourHighlight />
       {children}
       <TipMagicPortal />
     </TipMagicContextProvider>

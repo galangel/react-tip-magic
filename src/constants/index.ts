@@ -36,8 +36,10 @@ export const DATA_ATTRIBUTES = {
   TIP_MOVE: 'data-tip-move',
   TIP_JUMP: 'data-tip-jump',
   TIP_MOVE_DURATION: 'data-tip-move-duration',
+  TIP_GROUP: 'data-tip-group',
   TIP_NO_ARROW: 'data-tip-no-arrow',
   TIP_SEPARATOR: 'data-tip-separator',
+  TIP_SHOW_ON_FOCUS: 'data-tip-show-on-focus',
 } as const;
 
 /**
@@ -77,6 +79,8 @@ export const DEFAULT_OPTIONS: Required<TipMagicOptions> = {
   contentSeparator: ';',
   enableShortcutStyle: true,
   respectReducedMotion: true,
-  transitionBehavior: 'move' as TooltipTransitionBehavior,
+  transitionBehavior: 'jump' as TooltipTransitionBehavior,
   moveTransitionDuration: ANIMATION.POSITION_MOVE,
+  tourHighlightClass: '',
+  showOnFocus: false,
 };

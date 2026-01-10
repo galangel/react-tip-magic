@@ -63,10 +63,30 @@ export function Tooltip() {
     }
   }, [isPositioned, tooltip.visible]);
 
+  // Determine if groups are compatible for move transitions
+  // Rules:
+  // - Same group → allow move
+  // - Different groups (both have groups but different) → force jump
+  // - One has group, one doesn't → allow move
+  const currentGroup = tooltip.parsedData?.group;
+  const previousGroup = tooltip.previousGroup;
+  const areGroupsCompatible =
+    // Both have no group
+    (currentGroup === undefined && previousGroup === undefined) ||
+    // Same group
+    currentGroup === previousGroup ||
+    // One has group, one doesn't (treat as compatible)
+    (currentGroup === undefined && previousGroup !== undefined) ||
+    (currentGroup !== undefined && previousGroup === undefined);
+
   // Determine if we should animate position (move behavior)
-  // Only animate if: already positioned before, transitioning between targets, and behavior is 'move'
+  // Only animate if: already positioned before, transitioning between targets, behavior is 'move',
+  // and groups are compatible
   const shouldAnimatePosition =
-    hasBeenPositioned && tooltip.isTransitioning && transitionBehavior === 'move';
+    hasBeenPositioned &&
+    tooltip.isTransitioning &&
+    transitionBehavior === 'move' &&
+    areGroupsCompatible;
 
   // Control visibility: show only after positioned, hide immediately when not visible
   useEffect(() => {

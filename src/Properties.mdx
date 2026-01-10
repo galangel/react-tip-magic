@@ -1,0 +1,769 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Tooltip/Properties/Documentation" />
+
+# Tooltip Properties
+
+Configure tooltip behavior and appearance using data attributes or the programmatic API.
+
+## Overview
+
+React Tip Magic uses data attributes on elements to control tooltip behavior. This declarative approach keeps your JSX clean while providing full control over each tooltip.
+
+**Configuration methods:**
+
+- **Data attributes** — Add `data-tip-*` attributes directly on elements
+- **Provider options** — Set defaults at the provider level
+- **Programmatic API** — Use `useTipMagic()` hook for dynamic control
+- **getTipProps()** — TypeScript utility for type-safe attribute generation
+
+---
+
+## Quick Reference
+
+<table>
+  <thead>
+    <tr>
+      <th>Attribute</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>data-tip</code>
+      </td>
+      <td>string</td>
+      <td>—</td>
+      <td>Tooltip content (required)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-placement</code>
+      </td>
+      <td>string</td>
+      <td>
+        <code>'top'</code>
+      </td>
+      <td>Position relative to target</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-delay</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>200</code>
+      </td>
+      <td>Show delay in milliseconds</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-hide-delay</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>700</code>
+      </td>
+      <td>Hide delay in milliseconds</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-disabled</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Disable tooltip for this element</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-word-wrap</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Enable text wrapping</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-ellipsis</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Enable truncation with ellipsis</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-max-lines</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>1</code>
+      </td>
+      <td>Max lines before truncation (requires ellipsis)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-max-width</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>300</code>
+      </td>
+      <td>Maximum width in pixels</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-text-break</code>
+      </td>
+      <td>string</td>
+      <td>
+        <code>'normal'</code>
+      </td>
+      <td>Word break behavior</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-html</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Parse content as HTML</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-interactive</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Keep visible when hovering tooltip</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-no-arrow</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Hide the tooltip arrow</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-id</code>
+      </td>
+      <td>string</td>
+      <td>—</td>
+      <td>Identifier for programmatic targeting</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-show-on-focus</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Show tooltip when element receives focus</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Placement
+
+Control where the tooltip appears relative to the target element.
+
+### Available Placements
+
+<table>
+  <thead>
+    <tr>
+      <th>Value</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>top</code>
+      </td>
+      <td>Above, centered</td>
+    </tr>
+    <tr>
+      <td>
+        <code>top-start</code>
+      </td>
+      <td>Above, aligned to start</td>
+    </tr>
+    <tr>
+      <td>
+        <code>top-end</code>
+      </td>
+      <td>Above, aligned to end</td>
+    </tr>
+    <tr>
+      <td>
+        <code>bottom</code>
+      </td>
+      <td>Below, centered</td>
+    </tr>
+    <tr>
+      <td>
+        <code>bottom-start</code>
+      </td>
+      <td>Below, aligned to start</td>
+    </tr>
+    <tr>
+      <td>
+        <code>bottom-end</code>
+      </td>
+      <td>Below, aligned to end</td>
+    </tr>
+    <tr>
+      <td>
+        <code>left</code>
+      </td>
+      <td>Left side, centered</td>
+    </tr>
+    <tr>
+      <td>
+        <code>left-start</code>
+      </td>
+      <td>Left side, aligned to start</td>
+    </tr>
+    <tr>
+      <td>
+        <code>left-end</code>
+      </td>
+      <td>Left side, aligned to end</td>
+    </tr>
+    <tr>
+      <td>
+        <code>right</code>
+      </td>
+      <td>Right side, centered</td>
+    </tr>
+    <tr>
+      <td>
+        <code>right-start</code>
+      </td>
+      <td>Right side, aligned to start</td>
+    </tr>
+    <tr>
+      <td>
+        <code>right-end</code>
+      </td>
+      <td>Right side, aligned to end</td>
+    </tr>
+  </tbody>
+</table>
+
+```tsx
+<button data-tip="Above me" data-tip-placement="top">Top</button>
+<button data-tip="Below me" data-tip-placement="bottom">Bottom</button>
+<button data-tip="To my left" data-tip-placement="left">Left</button>
+<button data-tip="To my right" data-tip-placement="right">Right</button>
+```
+
+> **Note:** Tooltips automatically flip to the opposite side if there isn't enough space (powered by Floating UI).
+
+---
+
+## Timing
+
+Control when tooltips appear and disappear.
+
+### Show Delay
+
+```tsx
+<button data-tip="Instant!" data-tip-delay="0">No delay</button>
+<button data-tip="Default" data-tip-delay="200">200ms (default)</button>
+<button data-tip="Slow reveal" data-tip-delay="500">500ms</button>
+<button data-tip="Very slow" data-tip-delay="1000">1 second</button>
+```
+
+### Hide Delay
+
+```tsx
+<button data-tip="Quick hide" data-tip-hide-delay="100">100ms hide</button>
+<button data-tip="Default hide" data-tip-hide-delay="700">700ms (default)</button>
+```
+
+### Delay Interaction
+
+When moving between elements:
+
+- If the new element's show delay is **shorter** than the hide delay → tooltip moves smoothly
+- If the new element's show delay is **longer** than the hide delay → tooltip hides first, then reappears
+
+---
+
+## Focus Behavior
+
+Control whether tooltips appear when elements receive keyboard focus.
+
+By default, tooltips only appear on hover. Enable `showOnFocus` to make tooltips appear when users Tab to elements — important for keyboard accessibility.
+
+### Provider-Level (Global)
+
+Enable for all tooltips:
+
+```tsx
+<TipMagicProvider options={{ showOnFocus: true }}>
+  <button data-tip="Shows on focus">Button 1</button>
+  <button data-tip="Shows on focus">Button 2</button>
+</TipMagicProvider>
+```
+
+### Per-Element
+
+Enable for specific elements only:
+
+```tsx
+<TipMagicProvider>
+  {/* Shows on focus */}
+  <button data-tip="Accessible!" data-tip-show-on-focus>
+    Focus enabled
+  </button>
+
+  {/* Only shows on hover */}
+  <button data-tip="Hover only">Hover only</button>
+</TipMagicProvider>
+```
+
+### When to Use
+
+- **Forms**: Help users understand input fields
+- **Toolbars**: Keyboard users can discover button actions
+- **Navigation**: Screen reader users benefit from focus-based hints
+
+> **Note:** When a flow/tour is active, focus-based tooltips are automatically disabled to prevent interference.
+
+---
+
+## Text Handling
+
+Control how long content is displayed in tooltips.
+
+### Word Wrap
+
+Enable text wrapping for long content:
+
+```tsx
+{
+  /* Without word wrap - extends horizontally */
+}
+<button data-tip="This is a very long tooltip that will extend...">No wrap</button>;
+
+{
+  /* With word wrap - wraps to multiple lines */
+}
+<button data-tip="This is a very long tooltip that will wrap..." data-tip-word-wrap>
+  Word wrap
+</button>;
+```
+
+### Max Width
+
+Limit the tooltip width:
+
+```tsx
+<button data-tip="Long content here..." data-tip-word-wrap data-tip-max-width="200">
+  Max 200px
+</button>
+```
+
+### Ellipsis & Max Lines
+
+Truncate long content with ellipsis:
+
+```tsx
+{
+  /* Truncate to 1 line with ellipsis */
+}
+<button data-tip="Very long content..." data-tip-ellipsis data-tip-max-width="200">
+  1 line
+</button>;
+
+{
+  /* Truncate to 2 lines */
+}
+<button
+  data-tip="Very long content..."
+  data-tip-ellipsis
+  data-tip-max-lines="2"
+  data-tip-max-width="200"
+>
+  2 lines
+</button>;
+```
+
+> ⚠️ **Important:** `data-tip-max-lines` only works when `data-tip-ellipsis` is also set. Without ellipsis, max-lines has no effect.
+
+### Text Break
+
+Control how words break within the tooltip:
+
+<table>
+  <thead>
+    <tr>
+      <th>Value</th>
+      <th>Description</th>
+      <th>Use Case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>normal</code>
+      </td>
+      <td>Break at word boundaries</td>
+      <td>Default behavior</td>
+    </tr>
+    <tr>
+      <td>
+        <code>break-all</code>
+      </td>
+      <td>Can break in middle of words</td>
+      <td>Long URLs, file paths, codes</td>
+    </tr>
+    <tr>
+      <td>
+        <code>keep-all</code>
+      </td>
+      <td>Don't break CJK characters</td>
+      <td>Chinese, Japanese, Korean text</td>
+    </tr>
+  </tbody>
+</table>
+
+```tsx
+{
+  /* Break long URLs anywhere */
+}
+<button
+  data-tip="https://example.com/very/long/path/to/resource"
+  data-tip-word-wrap
+  data-tip-text-break="break-all"
+  data-tip-max-width="200"
+>
+  URL
+</button>;
+
+{
+  /* Keep CJK characters together */
+}
+<button data-tip="这是一个中文示例" data-tip-word-wrap data-tip-text-break="keep-all">
+  CJK
+</button>;
+```
+
+---
+
+## Interactive Tooltips
+
+Allow users to interact with tooltip content.
+
+```tsx
+<button data-tip="Click <a href='#'>this link</a> for more info" data-tip-html data-tip-interactive>
+  Interactive
+</button>
+```
+
+When `data-tip-interactive` is set:
+
+- Tooltip stays visible when the cursor moves over it
+- Users can click links, select text, or interact with content
+- Tooltip hides when cursor leaves both target and tooltip
+
+---
+
+## HTML Content
+
+Render HTML in tooltips for rich content:
+
+```tsx
+<button data-tip="<strong>Bold</strong> and <em>italic</em> text" data-tip-html>
+  HTML content
+</button>
+```
+
+> ⚠️ **Security:** Only use `data-tip-html` with trusted content. Avoid rendering user-generated HTML.
+
+---
+
+## Arrow
+
+Control the tooltip arrow visibility:
+
+```tsx
+{
+  /* Default - with arrow */
+}
+<button data-tip="Has arrow">With arrow</button>;
+
+{
+  /* Hide the arrow */
+}
+<button data-tip="No arrow" data-tip-no-arrow>
+  No arrow
+</button>;
+```
+
+---
+
+## Programmatic Control
+
+Use the `useTipMagic()` hook for programmatic control:
+
+```tsx
+import { useTipMagic } from 'react-tip-magic';
+
+function MyComponent() {
+  const { tooltip } = useTipMagic();
+
+  return (
+    <>
+      <button id="my-target" data-tip="Default content">
+        Target
+      </button>
+
+      <button onClick={() => tooltip.show('#my-target')}>Show</button>
+
+      <button onClick={() => tooltip.show('#my-target', { content: 'Custom!' })}>
+        Custom Content
+      </button>
+
+      <button onClick={() => tooltip.hide()}>Hide</button>
+    </>
+  );
+}
+```
+
+### TooltipAPI Methods
+
+<table>
+  <thead>
+    <tr>
+      <th>Method/Property</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>show(target, options?)</code>
+      </td>
+      <td>Show tooltip for target element (selector or Element)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>hide()</code>
+      </td>
+      <td>Hide the current tooltip</td>
+    </tr>
+    <tr>
+      <td>
+        <code>updateContent(content)</code>
+      </td>
+      <td>Update content of visible tooltip</td>
+    </tr>
+    <tr>
+      <td>
+        <code>isVisible</code>
+      </td>
+      <td>Whether tooltip is currently visible</td>
+    </tr>
+    <tr>
+      <td>
+        <code>content</code>
+      </td>
+      <td>Current tooltip content</td>
+    </tr>
+    <tr>
+      <td>
+        <code>target</code>
+      </td>
+      <td>Current target element</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Provider Options
+
+Set default values at the provider level:
+
+```tsx
+<TipMagicProvider
+  options={{
+    showDelay: 300,
+    hideDelay: 500,
+    placement: 'bottom',
+    offset: 10,
+    disabled: false,
+    zIndex: 9999,
+  }}
+>
+  <App />
+</TipMagicProvider>
+```
+
+### Available Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>showDelay</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>200</code>
+      </td>
+      <td>Default show delay (ms)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>hideDelay</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>700</code>
+      </td>
+      <td>Default hide delay (ms)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>placement</code>
+      </td>
+      <td>Placement</td>
+      <td>
+        <code>'top'</code>
+      </td>
+      <td>Default placement</td>
+    </tr>
+    <tr>
+      <td>
+        <code>offset</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>8</code>
+      </td>
+      <td>Distance from target (px)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>zIndex</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>9999</code>
+      </td>
+      <td>Z-index for tooltip layer</td>
+    </tr>
+    <tr>
+      <td>
+        <code>disabled</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Disable all tooltips</td>
+    </tr>
+    <tr>
+      <td>
+        <code>portalContainer</code>
+      </td>
+      <td>HTMLElement</td>
+      <td>
+        <code>document.body</code>
+      </td>
+      <td>Portal mount target</td>
+    </tr>
+    <tr>
+      <td>
+        <code>showOnFocus</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Show tooltips when elements receive keyboard focus</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## getTipProps() Utility
+
+For TypeScript users, `getTipProps()` provides type-safe attribute generation:
+
+```tsx
+import { getTipProps } from 'react-tip-magic';
+
+const props = getTipProps({
+  tip: 'Hello world',
+  placement: 'bottom',
+  showDelay: 100,
+  wordWrap: true,
+  maxWidth: 200,
+});
+
+<button {...props}>Hover me</button>;
+```
+
+This generates the appropriate `data-tip-*` attributes with full type checking.
+
+---
+
+## Accessibility
+
+Tooltips support accessibility features:
+
+- **Keyboard navigation** — Enable `showOnFocus` to show tooltips when users Tab to elements
+- **Screen reader support** — Content is announced appropriately
+- **Reduced motion** — Animations respect `prefers-reduced-motion`
+
+For best practices:
+
+- Enable `showOnFocus` for important tooltips that keyboard users should discover
+- Keep tooltip content concise
+- Don't put critical information only in tooltips
+- Ensure interactive tooltips are keyboard accessible
+
+---
+
+## Next Steps
+
+- See the **[Placement](?path=/story/tooltip-properties--all-placements)** story for all placement options
+- See the **[Show Delay](?path=/story/tooltip-properties--show-delay)** story for timing examples
+- See the **[Text Handling](?path=/story/tooltip-properties--text-handling)** story for text options
+- See the **[Programmatic Control](?path=/story/tooltip-properties--programmatic-control)** story for API usage
+- See the **[Keyboard Navigation](?path=/story/tooltip-properties--keyboard-navigation)** story for focus behavior (provider-level)
+- See the **[Show On Focus Per Element](?path=/story/tooltip-properties--show-on-focus-per-element)** story for per-element focus behavior

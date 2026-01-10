@@ -109,6 +109,8 @@ export function parseDataAttributes(element: Element): ParsedTooltipData {
     moveTransitionDuration: parseOptionalInt(dataset.tipMoveDuration),
     showArrow: !parseBooleanAttribute(dataset.tipNoArrow),
     contentSeparator: dataset.tipSeparator,
+    group: dataset.tipGroup,
+    showOnFocus: parseBooleanAttribute(dataset.tipShowOnFocus),
   };
 }
 

@@ -1,0 +1,493 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Tooltip/Transitions/Documentation" />
+
+# Tooltip Transitions
+
+Control how tooltips animate when moving between target elements.
+
+## Overview
+
+When a user moves their cursor from one tooltip target to another, React Tip Magic can either:
+
+- **Move**: Smoothly animate the tooltip from one position to another
+- **Jump**: Fade out at the old position and fade in at the new position
+
+The default behavior is `jump`, which provides instant repositioning without animation.
+
+**Key features:**
+
+- Configurable at the provider level or per-element
+- Adjustable animation duration
+- Tooltip groups for controlling transitions between UI sections
+- Respects `prefers-reduced-motion` for accessibility
+
+---
+
+## Quick Start
+
+By default, tooltips jump (fade out/in) between targets. To enable smooth move transitions:
+
+```tsx
+<TipMagicProvider options={{ transitionBehavior: 'move' }}>
+  <button data-tip="First">Button 1</button>
+  <button data-tip="Second">Button 2</button>
+  <button data-tip="Third">Button 3</button>
+</TipMagicProvider>
+```
+
+Or enable move behavior per-element:
+
+```tsx
+<button data-tip="I will move smoothly!" data-tip-move>
+  Move
+</button>
+```
+
+---
+
+## API Reference
+
+### Provider Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>transitionBehavior</code>
+      </td>
+      <td>
+        <code>'move' | 'jump'</code>
+      </td>
+      <td>
+        <code>'jump'</code>
+      </td>
+      <td>Default transition behavior when moving between targets</td>
+    </tr>
+    <tr>
+      <td>
+        <code>moveTransitionDuration</code>
+      </td>
+      <td>number</td>
+      <td>
+        <code>200</code>
+      </td>
+      <td>Duration of the move transition in milliseconds</td>
+    </tr>
+    <tr>
+      <td>
+        <code>respectReducedMotion</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>true</code>
+      </td>
+      <td>Disable animations when user prefers reduced motion</td>
+    </tr>
+  </tbody>
+</table>
+
+```tsx
+<TipMagicProvider
+  options={{
+    transitionBehavior: 'move', // Enable smooth move transitions
+    moveTransitionDuration: 300, // Slower move animation
+    respectReducedMotion: true, // Respect accessibility preferences
+  }}
+>
+  <App />
+</TipMagicProvider>
+```
+
+### Data Attributes
+
+<table>
+  <thead>
+    <tr>
+      <th>Attribute</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>data-tip-move</code>
+      </td>
+      <td>Force move transition for this element (boolean attribute)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-jump</code>
+      </td>
+      <td>Force jump transition for this element (boolean attribute)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-move-duration</code>
+      </td>
+      <td>Override move duration for this element (in milliseconds)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-group</code>
+      </td>
+      <td>Group identifier for controlling transitions between groups</td>
+    </tr>
+  </tbody>
+</table>
+
+```tsx
+{
+  /* Force move behavior */
+}
+<button data-tip="Smooth slide" data-tip-move>
+  Move
+</button>;
+
+{
+  /* Force jump behavior */
+}
+<button data-tip="Instant appear" data-tip-jump>
+  Jump
+</button>;
+
+{
+  /* Custom duration */
+}
+<button data-tip="Slow transition" data-tip-move data-tip-move-duration="500">
+  Slow Move
+</button>;
+```
+
+### Programmatic API
+
+When using `tooltip.show()`, you can specify transition options:
+
+```tsx
+const { tooltip } = useTipMagic();
+
+tooltip.show('#my-element', {
+  content: 'Hello',
+  transitionBehavior: 'move',
+  moveTransitionDuration: 300,
+});
+```
+
+### CSS Classes
+
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>.tip-magic-moving</code>
+      </td>
+      <td>Applied during move transitions (smooth position animation)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-magic-transitioning</code>
+      </td>
+      <td>Applied during jump transitions (fade out/in)</td>
+    </tr>
+  </tbody>
+</table>
+
+### CSS Custom Properties
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>--animation-duration</code>
+      </td>
+      <td>
+        <code>150ms</code>
+      </td>
+      <td>Duration of opacity fade animations</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--move-duration</code>
+      </td>
+      <td>
+        <code>200ms</code>
+      </td>
+      <td>Duration of position move animations</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Tooltip Groups
+
+Use `data-tip-group` to control how tooltips transition between different UI sections.
+
+### How Groups Work
+
+- **Same group**: Tooltip smoothly moves between elements
+- **Different groups**: Tooltip jumps (fades out/in) instead of moving
+- **Grouped to ungrouped**: Tooltip smoothly moves
+
+This is useful for multi-section UIs where moving a tooltip across the screen would look jarring.
+
+### Example
+
+```tsx
+{
+  /* Sidebar navigation - same group, smooth transitions */
+}
+<nav>
+  <a data-tip="Dashboard" data-tip-move data-tip-group="sidebar">
+    Dashboard
+  </a>
+  <a data-tip="Analytics" data-tip-move data-tip-group="sidebar">
+    Analytics
+  </a>
+  <a data-tip="Settings" data-tip-move data-tip-group="sidebar">
+    Settings
+  </a>
+</nav>;
+
+{
+  /* Header toolbar - different group */
+}
+<header>
+  <button data-tip="Search" data-tip-move data-tip-group="toolbar">
+    Search
+  </button>
+  <button data-tip="Notifications" data-tip-move data-tip-group="toolbar">
+    Notifications
+  </button>
+  <button data-tip="Profile" data-tip-move data-tip-group="toolbar">
+    Profile
+  </button>
+</header>;
+```
+
+### Transition Rules
+
+<table>
+  <thead>
+    <tr>
+      <th>From</th>
+      <th>To</th>
+      <th>Behavior</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Group A</td>
+      <td>Group A</td>
+      <td>Smooth move ✓</td>
+    </tr>
+    <tr>
+      <td>Group A</td>
+      <td>Group B</td>
+      <td>Jump (instant reposition)</td>
+    </tr>
+    <tr>
+      <td>Group A</td>
+      <td>Ungrouped</td>
+      <td>Smooth move ✓</td>
+    </tr>
+    <tr>
+      <td>Ungrouped</td>
+      <td>Group A</td>
+      <td>Smooth move ✓</td>
+    </tr>
+    <tr>
+      <td>Ungrouped</td>
+      <td>Ungrouped</td>
+      <td>Smooth move ✓</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Styling
+
+### Customizing Animations
+
+Override CSS to customize transition timing:
+
+```css
+/* Slower fade animation */
+.tip-magic-tooltip {
+  --animation-duration: 200ms;
+}
+
+/* Faster move animation */
+.tip-magic-tooltip.tip-magic-moving {
+  --move-duration: 150ms;
+}
+
+/* Custom easing */
+.tip-magic-tooltip.tip-magic-moving {
+  transition:
+    opacity var(--animation-duration) ease-out,
+    transform var(--move-duration) cubic-bezier(0.4, 0, 0.2, 1);
+}
+```
+
+### Reduced Motion
+
+The library respects `prefers-reduced-motion` by default:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .tip-magic-tooltip {
+    transition: none;
+  }
+}
+```
+
+You can disable this behavior with `respectReducedMotion: false` in provider options.
+
+---
+
+## Examples & Patterns
+
+### Pattern: Section-Based Groups
+
+Group tooltips by UI section for a polished experience:
+
+```tsx
+function Dashboard() {
+  return (
+    <TipMagicProvider>
+      {/* Sidebar - tooltips move within this section */}
+      <aside>
+        <NavItem icon="home" label="Home" group="nav" />
+        <NavItem icon="files" label="Files" group="nav" />
+        <NavItem icon="settings" label="Settings" group="nav" />
+      </aside>
+
+      {/* Main content - separate group */}
+      <main>
+        <ActionButton icon="new" label="New File" group="actions" />
+        <ActionButton icon="upload" label="Upload" group="actions" />
+      </main>
+    </TipMagicProvider>
+  );
+}
+
+function NavItem({ icon, label, group }) {
+  return (
+    <a data-tip={label} data-tip-move data-tip-group={group}>
+      <Icon name={icon} />
+    </a>
+  );
+}
+```
+
+### Pattern: Slow Reveal Tooltips
+
+Use longer durations for a more deliberate feel:
+
+```tsx
+<TipMagicProvider options={{ moveTransitionDuration: 400 }}>
+  <button data-tip="Takes time to move">Slow</button>
+</TipMagicProvider>
+```
+
+### Pattern: Mixed Behaviors
+
+Combine move and jump in the same UI:
+
+```tsx
+{/* Primary actions move */}
+<button data-tip="Save changes" data-tip-move>Save</button>
+<button data-tip="Undo action" data-tip-move>Undo</button>
+
+{/* Danger actions jump for emphasis */}
+<button data-tip="Delete permanently" data-tip-jump>Delete</button>
+```
+
+---
+
+## Best Practices
+
+### Use Move for Related Elements
+
+Elements that are visually close or logically related should use move transitions:
+
+```tsx
+// ✅ Good: Related toolbar buttons move
+<div className="toolbar">
+  <button data-tip="Bold; ⌘B" data-tip-move>
+    B
+  </button>
+  <button data-tip="Italic; ⌘I" data-tip-move>
+    I
+  </button>
+  <button data-tip="Underline; ⌘U" data-tip-move>
+    U
+  </button>
+</div>
+```
+
+### Use Groups for Distant Sections
+
+When elements are far apart, use groups to prevent awkward cross-screen animations:
+
+```tsx
+// ✅ Good: Separate groups for header and footer
+<header>
+  <button data-tip="Menu" data-tip-group="header">☰</button>
+</header>
+
+<footer>
+  <button data-tip="Help" data-tip-group="footer">?</button>
+</footer>
+```
+
+### Consider Duration for Context
+
+- **Fast (100-150ms)**: Quick interactions, toolbars
+- **Normal (200ms)**: Default, works for most cases
+- **Slow (300-400ms)**: Deliberate, educational contexts like tours
+
+---
+
+## Accessibility
+
+### Reduced Motion
+
+By default, animations are disabled when `prefers-reduced-motion: reduce` is set. This can be controlled via the `respectReducedMotion` provider option.
+
+### Focus Considerations
+
+Transitions don't affect focus management. The tooltip remains accessible regardless of transition type.
+
+---
+
+## Next Steps
+
+- See the **[Move vs Jump](?path=/story/tooltip-transitions--move-vs-jump)** story for a live comparison
+- See the **[Tooltip Groups](?path=/story/tooltip-transitions--tooltip-groups)** story for group demonstrations
+- See the **[Dashboard Layout Groups](?path=/story/tooltip-transitions--dashboard-layout-groups)** story for a realistic example
+- Explore **[Keyboard Shortcuts](?path=/story/tooltip-keyboard-shortcuts--with-shortcuts)** for shortcut styling
+- Check the **[Flow & Tours](/docs/tooltip-flow-tours-documentation--docs)** documentation for guided tours

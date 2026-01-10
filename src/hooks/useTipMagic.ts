@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import type { ParsedTooltipData } from '../context/TipMagicContext';
 import { useTipMagicContext } from '../context/TipMagicContext';
 import type {
+  CurrentStepData,
   FlowStep,
   HelperAPI,
   HelperShowOptions,
@@ -225,6 +226,24 @@ export function useTipMagic(): UseTipMagicReturn {
     dispatch({ type: 'END_FLOW' });
   }, [dispatch]);
 
+  // Compute current step data
+  const currentStepData: CurrentStepData | null = useMemo(() => {
+    if (!state.flow.active || state.flow.currentIndex < 0) {
+      return null;
+    }
+    const step = state.flow.steps[state.flow.currentIndex];
+    if (!step) {
+      return null;
+    }
+    return {
+      ...step,
+      index: state.flow.currentIndex,
+      total: state.flow.steps.length,
+      isFirst: state.flow.currentIndex === 0,
+      isLast: state.flow.currentIndex === state.flow.steps.length - 1,
+    };
+  }, [state.flow.active, state.flow.currentIndex, state.flow.steps]);
+
   const helper: HelperAPI = useMemo(
     () => ({
       show: helperShow,
@@ -234,7 +253,10 @@ export function useTipMagic(): UseTipMagicReturn {
       startFlow: helperStartFlow,
       nextStep: helperNextStep,
       endFlow: helperEndFlow,
-      currentStep: state.flow.currentIndex,
+      currentStep: currentStepData,
+      currentStepIndex: state.flow.currentIndex,
+      steps: state.flow.steps,
+      isFlowActive: state.flow.active,
       isVisible: state.helper.visible,
       state: state.helper.state,
     }),
@@ -246,7 +268,10 @@ export function useTipMagic(): UseTipMagicReturn {
       helperStartFlow,
       helperNextStep,
       helperEndFlow,
+      currentStepData,
       state.flow.currentIndex,
+      state.flow.steps,
+      state.flow.active,
       state.helper.visible,
       state.helper.state,
     ]

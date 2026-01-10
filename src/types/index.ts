@@ -89,6 +89,19 @@ export interface TipMagicOptions {
   transitionBehavior?: TooltipTransitionBehavior;
   /** Duration of move transition (ms) */
   moveTransitionDuration?: number;
+  /**
+   * CSS class name to automatically apply to the target element during a tour.
+   * When a flow is active, this class is added to the current step's target element
+   * and removed when moving to the next step or ending the flow.
+   * @example 'tour-highlight'
+   */
+  tourHighlightClass?: string;
+  /**
+   * Whether to show tooltips when elements receive keyboard focus.
+   * When true, pressing Tab to focus an element will show its tooltip.
+   * @default false
+   */
+  showOnFocus?: boolean;
 }
 
 /**
@@ -210,6 +223,20 @@ export interface FlowStep {
 }
 
 /**
+ * Current step data with index
+ */
+export interface CurrentStepData extends FlowStep {
+  /** The index of the current step (0-based) */
+  index: number;
+  /** Total number of steps in the flow */
+  total: number;
+  /** Whether this is the first step */
+  isFirst: boolean;
+  /** Whether this is the last step */
+  isLast: boolean;
+}
+
+/**
  * Helper API returned by useTipMagic hook
  */
 export interface HelperAPI {
@@ -227,8 +254,14 @@ export interface HelperAPI {
   nextStep: () => void;
   /** End current flow */
   endFlow: () => void;
-  /** Current flow step index */
-  currentStep: number;
+  /** Current step data including index, targetId, message, etc. Null if no flow is active. */
+  currentStep: CurrentStepData | null;
+  /** Current step index (0-based). -1 if no flow is active. */
+  currentStepIndex: number;
+  /** All steps in the current flow. Empty array if no flow is active. */
+  steps: FlowStep[];
+  /** Whether a flow is currently active */
+  isFlowActive: boolean;
   /** Check if helper is visible */
   isVisible: boolean;
   /** Current helper state */
