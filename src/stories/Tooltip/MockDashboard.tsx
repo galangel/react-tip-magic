@@ -73,6 +73,8 @@ export interface MockDashboardProps {
   navDataTipId?: boolean;
   /** Data attributes to add to tabs (for tour targets) */
   tabDataTipId?: boolean;
+  /** Prefix for tab IDs (e.g., 'guided' creates 'guided-tab-overview') */
+  tabIdPrefix?: string;
   /** Data attributes to add to other elements */
   elementIds?: {
     sidebar?: string;
@@ -149,6 +151,7 @@ export function MockDashboard({
   highlightedId,
   navDataTipId = false,
   tabDataTipId = false,
+  tabIdPrefix,
   elementIds = {},
   children,
 }: MockDashboardProps) {
@@ -212,7 +215,8 @@ export function MockDashboard({
         {tabs.length > 0 && (
           <div className="mock-tabs">
             {tabs.map((tab) => {
-              const tabId = tab.id || `tab-${tab.label.toLowerCase().replace(/\s+/g, '-')}`;
+              const baseTabId = tab.id || `tab-${tab.label.toLowerCase().replace(/\s+/g, '-')}`;
+              const tabId = tabIdPrefix ? `${tabIdPrefix}-${baseTabId}` : baseTabId;
               const isHighlighted = highlightedId === tabId;
 
               return (
