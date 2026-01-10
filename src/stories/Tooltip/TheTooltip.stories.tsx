@@ -17,7 +17,7 @@ import './tooltip-stories.css';
  * - **TypeScript support**: Use `getTipProps()` for typed tooltip configuration
  */
 const meta: Meta = {
-  title: 'Tooltip/Basic',
+  title: 'The Tooltip',
   tags: ['autodocs'],
   parameters: {
     layout: 'centered',

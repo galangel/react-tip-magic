@@ -1,0 +1,606 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Tooltip/Flow & Tours/Documentation" />
+
+# Flows & Tours
+
+Create guided tours and onboarding experiences that walk users through your application step by step.
+
+## Overview
+
+The Flow API allows you to create multi-step guided tours that:
+
+- Track the current position in a sequence of steps
+- Navigate forward, backward, or exit at any time
+- Automatically highlight the current target element
+- Provide step metadata (index, isFirst, isLast, etc.)
+
+> **Note:** The Flow API manages **state and navigation** only. You control how and when tooltips are displayed using the `tooltip.show()` API. This gives you full flexibility over tooltip content, styling, and timing.
+
+## Quick Start
+
+```tsx
+import { useTipMagic } from 'react-tip-magic';
+
+function OnboardingTour() {
+  const { helper, tooltip } = useTipMagic();
+
+  const steps = [
+    { id: 'step-1', targetId: 'nav-sidebar', message: 'Navigate between sections.' },
+    { id: 'step-2', targetId: 'search-bar', message: 'Find anything quickly.' },
+    { id: 'step-3', targetId: 'profile-menu', message: 'Access your settings.' },
+  ];
+
+  const showCurrentStep = () => {
+    const { currentStep } = helper;
+    if (!currentStep) return;
+
+    const target = document.querySelector(`[data-tip-id="${currentStep.targetId}"]`);
+    if (target) {
+      tooltip.show(target, { content: currentStep.message, placement: 'bottom' });
+    }
+  };
+
+  const startTour = () => {
+    helper.startFlow(steps);
+    showCurrentStep();
+  };
+
+  const nextStep = () => {
+    helper.nextStep();
+    showCurrentStep();
+  };
+
+  const endTour = () => {
+    helper.endFlow();
+    tooltip.hide();
+  };
+
+  return (
+    <div>
+      <button onClick={startTour}>Start Tour</button>
+      {helper.isFlowActive && (
+        <>
+          <button onClick={nextStep} disabled={helper.currentStep?.isLast}>
+            Next
+          </button>
+          <button onClick={endTour}>Exit</button>
+        </>
+      )}
+    </div>
+  );
+}
+```
+
+### Target Elements
+
+Add `data-tip-id` attributes to elements you want to reference in your flow:
+
+```tsx
+<nav data-tip-id="nav-sidebar">{/* Sidebar content */}</nav>
+<input data-tip-id="search-bar" placeholder="Search..." />
+<div data-tip-id="profile-menu">{/* Profile menu */}</div>
+```
+
+---
+
+## API Reference
+
+### `helper.startFlow(steps)`
+
+Starts a new flow with the provided steps. Does not automatically show any tooltip.
+
+```tsx
+helper.startFlow([
+  { id: 'step-1', targetId: 'element-1', message: 'First step' },
+  { id: 'step-2', targetId: 'element-2', message: 'Second step' },
+]);
+```
+
+### `helper.nextStep()`
+
+Advances to the next step in the flow. Updates `currentStep` and `currentStepIndex`.
+
+```tsx
+helper.nextStep();
+```
+
+### `helper.endFlow()`
+
+Ends the current flow and resets flow state. **Does not hide the tooltip** — call `tooltip.hide()` if needed.
+
+```tsx
+helper.endFlow();
+tooltip.hide();
+```
+
+### `helper.isFlowActive`
+
+Returns `true` if a flow is currently active.
+
+```tsx
+if (helper.isFlowActive) {
+  console.log('Tour is in progress');
+}
+```
+
+### `helper.currentStep`
+
+Returns the current step data with computed properties, or `null` if no flow is active.
+
+```tsx
+const { currentStep } = helper;
+
+if (currentStep) {
+  console.log(`Step ${currentStep.index + 1} of ${currentStep.total}`);
+  console.log(`Target: ${currentStep.targetId}`);
+  console.log(`Is first: ${currentStep.isFirst}, Is last: ${currentStep.isLast}`);
+}
+```
+
+**CurrentStepData properties:**
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>index</code>
+      </td>
+      <td>number</td>
+      <td>Current step index (0-based)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>total</code>
+      </td>
+      <td>number</td>
+      <td>Total number of steps</td>
+    </tr>
+    <tr>
+      <td>
+        <code>isFirst</code>
+      </td>
+      <td>boolean</td>
+      <td>Whether this is the first step</td>
+    </tr>
+    <tr>
+      <td>
+        <code>isLast</code>
+      </td>
+      <td>boolean</td>
+      <td>Whether this is the last step</td>
+    </tr>
+    <tr>
+      <td colspan="3">
+        <em>Plus all properties from FlowStep (see below)</em>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### `helper.currentStepIndex`
+
+Returns just the current step index (0-based), or `-1` if no flow is active.
+
+```tsx
+const stepIndex = helper.currentStepIndex;
+```
+
+### `helper.steps`
+
+Returns the array of all steps in the current flow, or an empty array if no flow is active.
+
+```tsx
+const allSteps = helper.steps;
+console.log(`Total steps: ${allSteps.length}`);
+```
+
+---
+
+## FlowStep Interface
+
+The `FlowStep` interface defines the structure of each step passed to `startFlow()`.
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>id</code>
+      </td>
+      <td>string</td>
+      <td>Yes</td>
+      <td>Unique identifier for the step</td>
+    </tr>
+    <tr>
+      <td>
+        <code>targetId</code>
+      </td>
+      <td>string</td>
+      <td>Yes</td>
+      <td>
+        The <code>data-tip-id</code> of the target element
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>message</code>
+      </td>
+      <td>string</td>
+      <td>Yes</td>
+      <td>Step message/content</td>
+    </tr>
+    <tr>
+      <td>
+        <code>title</code>
+      </td>
+      <td>string</td>
+      <td>No</td>
+      <td>Optional step title</td>
+    </tr>
+    <tr>
+      <td>
+        <code>state</code>
+      </td>
+      <td>HelperState</td>
+      <td>No</td>
+      <td>Helper state for this step (e.g., 'informative', 'success')</td>
+    </tr>
+    <tr>
+      <td>
+        <code>delay</code>
+      </td>
+      <td>number</td>
+      <td>No</td>
+      <td>Delay before showing this step (ms)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>highlight</code>
+      </td>
+      <td>boolean</td>
+      <td>No</td>
+      <td>Whether to highlight the target element</td>
+    </tr>
+    <tr>
+      <td>
+        <code>scrollIntoView</code>
+      </td>
+      <td>boolean</td>
+      <td>No</td>
+      <td>Whether to scroll the target into view</td>
+    </tr>
+    <tr>
+      <td>
+        <code>onEnter</code>
+      </td>
+      <td>() =&gt; void</td>
+      <td>No</td>
+      <td>Callback when step is shown</td>
+    </tr>
+    <tr>
+      <td>
+        <code>onExit</code>
+      </td>
+      <td>() =&gt; void</td>
+      <td>No</td>
+      <td>Callback when leaving step</td>
+    </tr>
+    <tr>
+      <td>
+        <code>condition</code>
+      </td>
+      <td>() =&gt; boolean</td>
+      <td>No</td>
+      <td>Conditional display - step is skipped if returns false</td>
+    </tr>
+    <tr>
+      <td>
+        <code>tooltipOptions</code>
+      </td>
+      <td>TooltipShowOptions</td>
+      <td>No</td>
+      <td>Override tooltip options for this step</td>
+    </tr>
+  </tbody>
+</table>
+
+> **Note:** Properties like `delay`, `highlight`, `scrollIntoView`, `onEnter`, `onExit`, and `condition` are available in the step data for your implementation to use. The library stores them but **you decide how to interpret them** in your tour logic.
+
+---
+
+## Provider Options
+
+### `tourHighlightClass`
+
+Automatically apply a CSS class to the current target element during a flow.
+
+```tsx
+<TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
+  <App />
+</TipMagicProvider>
+```
+
+The class is automatically:
+
+- Added to the target element when `tooltip.show()` is called during an active flow
+- Removed when moving to a different target
+- Cleaned up when the flow ends
+
+Define your highlight styles:
+
+```css
+.tour-highlight {
+  box-shadow:
+    0 0 0 3px rgba(79, 70, 229, 0.4),
+    0 0 20px rgba(79, 70, 229, 0.2);
+  position: relative;
+  z-index: 10;
+}
+```
+
+---
+
+## Tooltip Groups
+
+Use `data-tip-group` to control how tooltips transition between elements. This is useful when your tour spans different UI sections:
+
+```tsx
+{/* Sidebar items - same group, smooth transitions between them */}
+<nav data-tip-id="nav-home" data-tip-group="sidebar" data-tip="Home">Home</nav>
+<nav data-tip-id="nav-settings" data-tip-group="sidebar" data-tip="Settings">Settings</nav>
+
+{/* Header items - different group */}
+<div data-tip-id="search" data-tip-group="header" data-tip="Search">Search</div>
+<div data-tip-id="profile" data-tip-group="header" data-tip="Profile">Profile</div>
+```
+
+**Transition behavior:**
+
+- Same group → Smooth move transition
+- Different groups → Jump transition (instant repositioning)
+- Grouped to ungrouped → Smooth move transition
+
+---
+
+## Examples & Patterns
+
+The following are **implementation patterns** you can use when building tours. They are not built into the library — you implement them based on your needs.
+
+### Pattern: Interactive Tooltip Navigation
+
+Embed navigation buttons inside the tooltip using HTML content:
+
+```tsx
+const showStepWithNavigation = () => {
+  const { currentStep } = helper;
+  if (!currentStep) return;
+
+  const target = document.querySelector(`[data-tip-id="${currentStep.targetId}"]`);
+  if (!target) return;
+
+  // Build HTML content with navigation buttons
+  const content = `
+    <div class="tour-content">
+      <div class="tour-badge">Step ${currentStep.index + 1} of ${currentStep.total}</div>
+      <h4>${currentStep.title || ''}</h4>
+      <p>${currentStep.message}</p>
+      <div class="tour-buttons">
+        ${!currentStep.isFirst ? '<button data-action="prev">← Back</button>' : ''}
+        <button data-action="${currentStep.isLast ? 'finish' : 'next'}">
+          ${currentStep.isLast ? 'Finish' : 'Next →'}
+        </button>
+      </div>
+    </div>
+  `;
+
+  tooltip.show(target, {
+    content,
+    html: true,
+    interactive: true, // Allow clicking buttons inside tooltip
+  });
+};
+
+// Handle button clicks via event delegation
+useEffect(() => {
+  const handleClick = (e) => {
+    const action = e.target.getAttribute('data-action');
+    if (action === 'next') {
+      helper.nextStep();
+      showStepWithNavigation();
+    } else if (action === 'prev') {
+      // Note: prevStep() is not built-in, you'd track index manually
+      // or implement your own navigation logic
+    } else if (action === 'finish') {
+      helper.endFlow();
+      tooltip.hide();
+    }
+  };
+
+  document.addEventListener('click', handleClick);
+  return () => document.removeEventListener('click', handleClick);
+}, []);
+```
+
+### Pattern: Using Step Options
+
+Leverage `FlowStep` properties in your tour logic:
+
+```tsx
+const showStep = () => {
+  const { currentStep } = helper;
+  if (!currentStep) return;
+
+  // Check condition
+  if (currentStep.condition && !currentStep.condition()) {
+    helper.nextStep(); // Skip this step
+    return showStep();
+  }
+
+  // Call onEnter callback
+  currentStep.onEnter?.();
+
+  // Scroll into view if specified
+  const target = document.querySelector(`[data-tip-id="${currentStep.targetId}"]`);
+  if (currentStep.scrollIntoView && target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Apply delay if specified
+  const delay = currentStep.delay ?? 0;
+  setTimeout(() => {
+    if (target) {
+      tooltip.show(target, {
+        content: currentStep.message,
+        ...currentStep.tooltipOptions,
+      });
+    }
+  }, delay);
+};
+
+// When leaving a step
+const goToNextStep = () => {
+  helper.currentStep?.onExit?.();
+  helper.nextStep();
+  showStep();
+};
+```
+
+### Pattern: Manual Highlighting
+
+If you need more control than `tourHighlightClass` provides:
+
+```tsx
+const { currentStep } = helper;
+
+<div data-tip-id="sidebar" className={currentStep?.targetId === 'sidebar' ? 'tour-highlight' : ''}>
+  Sidebar content
+</div>;
+```
+
+### Pattern: Persist Tour Progress
+
+For longer tours, save progress to localStorage:
+
+```tsx
+const STORAGE_KEY = 'tour-progress';
+
+const startTour = () => {
+  const savedStep = localStorage.getItem(STORAGE_KEY);
+  const startIndex = savedStep ? parseInt(savedStep, 10) : 0;
+
+  helper.startFlow(steps);
+  // Navigate to saved step
+  for (let i = 0; i < startIndex; i++) {
+    helper.nextStep();
+  }
+  showStep();
+};
+
+const nextStep = () => {
+  const nextIndex = helper.currentStepIndex + 1;
+  localStorage.setItem(STORAGE_KEY, nextIndex.toString());
+  helper.nextStep();
+  showStep();
+};
+
+const endTour = () => {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.setItem('tour-completed', 'true');
+  helper.endFlow();
+  tooltip.hide();
+};
+```
+
+### Pattern: First-Time User Onboarding
+
+```tsx
+useEffect(() => {
+  const hasCompletedTour = localStorage.getItem('onboarding-complete');
+
+  if (!hasCompletedTour) {
+    // Delay slightly to let the page render
+    setTimeout(() => startTour(), 500);
+  }
+}, []);
+```
+
+---
+
+## Best Practices
+
+### Keep Steps Concise
+
+Each step should focus on one concept:
+
+```tsx
+// ✅ Good: Focused message
+{
+  message: 'Click here to create a new project.';
+}
+
+// ❌ Bad: Too much information
+{
+  message: 'Click here to create a new project. You can also import projects, duplicate existing ones, or use templates. Projects can be organized into folders...';
+}
+```
+
+### Use Logical Flow
+
+Order steps in the sequence users will naturally encounter features:
+
+```tsx
+// ✅ Good: Natural discovery order
+const steps = [
+  { targetId: 'sidebar', message: 'Main navigation' },
+  { targetId: 'content', message: 'Your content area' },
+  { targetId: 'actions', message: 'Quick actions' },
+];
+
+// ❌ Bad: Jumping around confuses users
+const steps = [
+  { targetId: 'footer', message: 'Footer links' },
+  { targetId: 'header', message: 'Header options' },
+  { targetId: 'sidebar', message: 'Navigation' },
+];
+```
+
+### Provide Exit Options
+
+Always let users skip or exit the tour.
+
+### Don't Block Critical Actions
+
+Ensure users can still perform essential tasks during the tour by positioning tooltips appropriately.
+
+---
+
+## Accessibility
+
+- Ensure tooltips are keyboard accessible
+- Provide skip links for screen reader users
+- Respect `prefers-reduced-motion` for animations (enabled by default in TipMagic)
+- Use ARIA attributes for dynamic content
+
+---
+
+## Next Steps
+
+- See the **[Guided Flow](?path=/story/tooltip-flow-tours--guided-flow)** story for a basic tour demo
+- See the **[Interactive Tour](?path=/story/tooltip-flow-tours--interactive-tour)** story for in-tooltip navigation
+- Explore **[Transitions](?path=/story/tooltip-transitions--smooth-transitions)** for tooltip animation options
+- Check **[Tooltip Groups](?path=/story/tooltip-transitions--tooltip-groups)** for grouped transitions

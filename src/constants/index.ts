@@ -80,4 +80,5 @@ export const DEFAULT_OPTIONS: Required<TipMagicOptions> = {
   respectReducedMotion: true,
   transitionBehavior: 'move' as TooltipTransitionBehavior,
   moveTransitionDuration: ANIMATION.POSITION_MOVE,
+  tourHighlightClass: '',
 };

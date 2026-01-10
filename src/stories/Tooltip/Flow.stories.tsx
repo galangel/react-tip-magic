@@ -38,8 +38,6 @@ type Story = StoryObj;
  */
 const FlowDemo = () => {
   const { helper, tooltip } = useTipMagic();
-  const [flowActive, setFlowActive] = React.useState(false);
-  const [currentStep, setCurrentStep] = React.useState(0);
 
   const steps: FlowStep[] = [
     {
@@ -80,80 +78,72 @@ const FlowDemo = () => {
     },
   ];
 
-  // Map step index to highlighted element ID
-  const getHighlightedId = (stepIndex: number): string | undefined => {
-    const step = steps[stepIndex];
-    return step?.targetId;
-  };
-
   const showStepTooltip = (stepIndex: number) => {
     const step = steps[stepIndex];
     const target = document.querySelector(`[data-tip-id="${step.targetId}"]`);
     if (target) {
       tooltip.show(target, {
-        content: `${step.title}: ${step.message}`,
+        content: `<b>${step.title}</b>: ${step.message}`,
         maxWidth: 300,
         wordWrap: true,
         placement: 'bottom',
+        html: true,
       });
-      setCurrentStep(stepIndex);
     }
   };
 
   const handleStartFlow = () => {
     helper.startFlow(steps);
-    setFlowActive(true);
-    showStepTooltip(0);
+    // Show first step after starting flow
+    setTimeout(() => showStepTooltip(0), 0);
   };
 
   const handleNext = () => {
-    const nextIndex = currentStep + 1;
-    if (nextIndex >= steps.length) {
+    if (helper.currentStep?.isLast) {
       handleEndFlow();
       return;
     }
     helper.nextStep();
-    showStepTooltip(nextIndex);
+    // Show next step tooltip
+    setTimeout(() => showStepTooltip(helper.currentStepIndex + 1), 0);
   };
 
   const handlePrev = () => {
-    if (currentStep > 0) {
-      showStepTooltip(currentStep - 1);
+    if (helper.currentStepIndex > 0) {
+      showStepTooltip(helper.currentStepIndex - 1);
     }
   };
 
   const handleEndFlow = () => {
     helper.endFlow();
     tooltip.hide();
-    setFlowActive(false);
-    setCurrentStep(0);
   };
 
-  const isFirst = currentStep === 0;
-  const isLast = currentStep === steps.length - 1;
+  // Use the enhanced helper API
+  const { isFlowActive, currentStep } = helper;
 
   return (
     <div className="tour-demo-container">
       {/* Start/Control Buttons */}
       <div className="tour-controls">
-        {!flowActive ? (
+        {!isFlowActive ? (
           <button className="tour-start-btn" onClick={handleStartFlow}>
             🚀 Start Guided Tour
           </button>
         ) : (
           <div className="tour-control-buttons">
             <span className="tour-step-indicator">
-              Step {currentStep + 1} of {steps.length}
+              Step {(currentStep?.index ?? 0) + 1} of {currentStep?.total ?? steps.length}
             </span>
             <button
-              disabled={isFirst}
+              disabled={currentStep?.isFirst}
               className="tour-control-btn tour-control-btn-secondary"
               onClick={handlePrev}
             >
               ← Back
             </button>
             <button className="tour-control-btn tour-control-btn-primary" onClick={handleNext}>
-              {isLast ? '✓ Finish' : 'Next →'}
+              {currentStep?.isLast ? '✓ Finish' : 'Next →'}
             </button>
             <button className="tour-control-btn tour-control-btn-ghost" onClick={handleEndFlow}>
               ✕ Exit
@@ -162,7 +152,7 @@ const FlowDemo = () => {
         )}
       </div>
 
-      {/* Mock Dashboard UI */}
+      {/* Mock Dashboard UI - highlighting is automatic via tourHighlightClass */}
       <MockDashboard
         contentTitle="Project Overview"
         contentDescription="Welcome to your dashboard. Start the tour to learn about the features."
@@ -174,7 +164,6 @@ const FlowDemo = () => {
           stats: 'guided-stats',
           actions: 'guided-actions',
         }}
-        highlightedId={flowActive ? getHighlightedId(currentStep) : undefined}
       />
     </div>
   );
@@ -182,7 +171,7 @@ const FlowDemo = () => {
 
 export const GuidedFlow: Story = {
   render: () => (
-    <TipMagicProvider>
+    <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
       <FlowDemo />
     </TipMagicProvider>
   ),
@@ -197,8 +186,6 @@ export const GuidedFlow: Story = {
  */
 const InteractiveTourDemo = () => {
   const { helper, tooltip } = useTipMagic();
-  const [tourActive, setTourActive] = React.useState(false);
-  const [currentStep, setCurrentStep] = React.useState(0);
 
   const steps: FlowStep[] = [
     {
@@ -239,26 +226,19 @@ const InteractiveTourDemo = () => {
     },
   ];
 
-  // Map step index to highlighted element ID
-  const getHighlightedId = (stepIndex: number): string | undefined => {
-    const step = steps[stepIndex];
-    return step?.targetId;
-  };
-
-  const buildTooltipContent = (stepIndex: number) => {
-    const step = steps[stepIndex];
-    const isFirst = stepIndex === 0;
-    const isLast = stepIndex === steps.length - 1;
+  // Build tooltip content using helper.currentStep data
+  const buildTooltipContent = (stepData: typeof helper.currentStep) => {
+    if (!stepData) return '';
 
     return `<div class="tour-tooltip-content">
       <button class="tour-close-btn" data-tour-action="close" aria-label="Close tour">×</button>
-      <div class="tour-step-badge">Step ${stepIndex + 1} of ${steps.length}</div>
-      <h4 class="tour-title">${step.title}</h4>
-      <p class="tour-message">${step.message}</p>
+      <div class="tour-step-badge">Step ${stepData.index + 1} of ${stepData.total}</div>
+      <h4 class="tour-title">${stepData.title}</h4>
+      <p class="tour-message">${stepData.message}</p>
       <div class="tour-buttons">
-        ${!isFirst ? '<button class="tour-btn tour-btn-secondary" data-tour-action="prev">← Back</button>' : ''}
-        <button class="tour-btn tour-btn-primary" data-tour-action="${isLast ? 'finish' : 'next'}">
-          ${isLast ? '✓ Finish' : 'Next →'}
+        ${!stepData.isFirst ? '<button class="tour-btn tour-btn-secondary" data-tour-action="prev">← Back</button>' : ''}
+        <button class="tour-btn tour-btn-primary" data-tour-action="${stepData.isLast ? 'finish' : 'next'}">
+          ${stepData.isLast ? '✓ Finish' : 'Next →'}
         </button>
       </div>
     </div>`;
@@ -268,9 +248,17 @@ const InteractiveTourDemo = () => {
     const step = steps[stepIndex];
     const target = document.querySelector(`[data-tip-id="${step.targetId}"]`);
     if (target) {
+      // We need to build content with step data manually here since helper state
+      // hasn't updated yet at this point
+      const stepData = {
+        ...step,
+        index: stepIndex,
+        total: steps.length,
+        isFirst: stepIndex === 0,
+        isLast: stepIndex === steps.length - 1,
+      };
       tooltip.show(target, {
-        // Default options
-        content: buildTooltipContent(stepIndex),
+        content: buildTooltipContent(stepData),
         html: true,
         interactive: true,
         maxWidth: 340,
@@ -279,36 +267,33 @@ const InteractiveTourDemo = () => {
         wordWrap: true,
         ellipsis: false,
         moveTransitionDuration: 300,
-        // Merge step-specific options (overrides defaults)
         ...step.tooltipOptions,
       });
-      setCurrentStep(stepIndex);
     }
   };
 
   const handleStartTour = () => {
-    helper.startFlow(steps.map((s, i) => ({ ...s, id: `step-${i}`, actions: [] })));
-    setTourActive(true);
+    helper.startFlow(steps);
     showStep(0);
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      showStep(currentStep + 1);
+    if (!helper.currentStep?.isLast) {
+      const nextIndex = helper.currentStepIndex + 1;
+      helper.nextStep();
+      showStep(nextIndex);
     }
   };
 
   const handlePrev = () => {
-    if (currentStep > 0) {
-      showStep(currentStep - 1);
+    if (helper.currentStepIndex > 0) {
+      showStep(helper.currentStepIndex - 1);
     }
   };
 
   const handleEndTour = () => {
     helper.endFlow();
     tooltip.hide();
-    setTourActive(false);
-    setCurrentStep(0);
   };
 
   // Handle clicks on tour buttons inside the tooltip
@@ -325,18 +310,21 @@ const InteractiveTourDemo = () => {
     return () => document.removeEventListener('click', handleClick);
   });
 
+  // Use the enhanced helper API
+  const { isFlowActive } = helper;
+
   return (
     <div className="tour-demo-container">
       {/* Start Tour Button */}
       <button
-        className={`tour-start-btn ${tourActive ? 'tour-start-btn-disabled' : ''}`}
+        className={`tour-start-btn ${isFlowActive ? 'tour-start-btn-disabled' : ''}`}
         onClick={handleStartTour}
-        disabled={tourActive}
+        disabled={isFlowActive}
       >
-        {tourActive ? '🎯 Tour in Progress...' : '🎯 Start Interactive Tour'}
+        {isFlowActive ? '🎯 Tour in Progress...' : '🎯 Start Interactive Tour'}
       </button>
 
-      {/* Mock Dashboard UI */}
+      {/* Mock Dashboard UI - highlighting is automatic via tourHighlightClass */}
       <MockDashboard
         contentTitle="Project Overview"
         contentDescription="Welcome to your dashboard. Start the tour to learn about the features."
@@ -348,7 +336,6 @@ const InteractiveTourDemo = () => {
           stats: 'tour-stats',
           actions: 'tour-actions',
         }}
-        highlightedId={tourActive ? getHighlightedId(currentStep) : undefined}
       />
     </div>
   );
@@ -356,7 +343,7 @@ const InteractiveTourDemo = () => {
 
 export const InteractiveTour: Story = {
   render: () => (
-    <TipMagicProvider>
+    <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
       <InteractiveTourDemo />
     </TipMagicProvider>
   ),
