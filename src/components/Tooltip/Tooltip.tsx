@@ -7,11 +7,17 @@ import {
   useFloating,
   type Placement,
 } from '@floating-ui/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ANIMATION, CSS_CLASSES } from '../../constants';
 import { useTipMagicContext } from '../../context/TipMagicContext';
 import type { TooltipTransitionBehavior } from '../../types';
+import { areGroupsCompatible, shouldAnimatePosition } from '../../utils/groupCompatibility';
 import { parseContent } from '../../utils/parseDataAttributes';
+import {
+  buildTooltipClassNames,
+  getArrowStaticSide,
+  getArrowStyles,
+} from '../../utils/tooltipStyles';
 
 /**
  * Main Tooltip component - renders a single tooltip instance
@@ -31,11 +37,9 @@ export function Tooltip() {
   const transitionBehavior: TooltipTransitionBehavior =
     tooltip.parsedData?.transitionBehavior ?? config.transitionBehavior;
 
-  // Floating UI setup
-  const { refs, floatingStyles, context, middlewareData, isPositioned } = useFloating({
-    placement,
-    open: tooltip.visible,
-    middleware: [
+  // Memoize middleware array to prevent unnecessary recalculations
+  const middleware = useMemo(
+    () => [
       offset(config.offset),
       flip({
         fallbackAxisSideDirection: 'start',
@@ -44,6 +48,14 @@ export function Tooltip() {
       shift({ padding: 8 }),
       arrow({ element: arrowRef }),
     ],
+    [config.offset]
+  );
+
+  // Floating UI setup
+  const { refs, floatingStyles, context, middlewareData, isPositioned } = useFloating({
+    placement,
+    open: tooltip.visible,
+    middleware,
     whileElementsMounted: autoUpdate,
   });
 
@@ -63,30 +75,16 @@ export function Tooltip() {
     }
   }, [isPositioned, tooltip.visible]);
 
-  // Determine if groups are compatible for move transitions
-  // Rules:
-  // - Same group → allow move
-  // - Different groups (both have groups but different) → force jump
-  // - One has group, one doesn't → allow move
-  const currentGroup = tooltip.parsedData?.group;
-  const previousGroup = tooltip.previousGroup;
-  const areGroupsCompatible =
-    // Both have no group
-    (currentGroup === undefined && previousGroup === undefined) ||
-    // Same group
-    currentGroup === previousGroup ||
-    // One has group, one doesn't (treat as compatible)
-    (currentGroup === undefined && previousGroup !== undefined) ||
-    (currentGroup !== undefined && previousGroup === undefined);
+  // Check group compatibility for move transitions
+  const groupsCompatible = areGroupsCompatible(tooltip.parsedData?.group, tooltip.previousGroup);
 
   // Determine if we should animate position (move behavior)
-  // Only animate if: already positioned before, transitioning between targets, behavior is 'move',
-  // and groups are compatible
-  const shouldAnimatePosition =
-    hasBeenPositioned &&
-    tooltip.isTransitioning &&
-    transitionBehavior === 'move' &&
-    areGroupsCompatible;
+  const animatePosition = shouldAnimatePosition(
+    hasBeenPositioned,
+    tooltip.isTransitioning,
+    transitionBehavior,
+    groupsCompatible
+  );
 
   // Control visibility: show only after positioned, hide immediately when not visible
   useEffect(() => {
@@ -109,13 +107,13 @@ export function Tooltip() {
       // When animating position, wait for transform to finish (it's usually longer)
       // When not animating position, opacity ending is sufficient
       const shouldClear =
-        e.propertyName === 'transform' || (e.propertyName === 'opacity' && !shouldAnimatePosition);
+        e.propertyName === 'transform' || (e.propertyName === 'opacity' && !animatePosition);
 
       if (shouldClear) {
         dispatch({ type: 'SET_TOOLTIP_TRANSITIONING', payload: false });
       }
     },
-    [tooltip.isTransitioning, dispatch, shouldAnimatePosition]
+    [tooltip.isTransitioning, dispatch, animatePosition]
   );
 
   // Don't render if not visible or no content
@@ -127,17 +125,6 @@ export function Tooltip() {
   const separator = tooltip.parsedData?.contentSeparator ?? config.contentSeparator;
   const parsedContent = parseContent(tooltip.content, separator);
 
-  // Calculate arrow position based on placement
-  const arrowX = middlewareData.arrow?.x;
-  const arrowY = middlewareData.arrow?.y;
-  const staticSide =
-    {
-      top: 'bottom',
-      right: 'left',
-      bottom: 'top',
-      left: 'right',
-    }[context.placement.split('-')[0]] ?? 'bottom';
-
   // Extract text display options
   const isInteractive = tooltip.parsedData?.interactive ?? false;
   const wordWrap = tooltip.parsedData?.wordWrap ?? false;
@@ -146,19 +133,20 @@ export function Tooltip() {
   const textBreak = tooltip.parsedData?.textBreak ?? 'normal';
   const showArrow = tooltip.parsedData?.showArrow ?? true;
 
-  // Build class names
-  const classNames = [
-    CSS_CLASSES.TOOLTIP,
-    shouldShow ? CSS_CLASSES.TOOLTIP_VISIBLE : CSS_CLASSES.TOOLTIP_HIDDEN,
-    tooltip.isTransitioning ? CSS_CLASSES.TOOLTIP_TRANSITIONING : '',
-    shouldAnimatePosition ? 'tip-magic-moving' : '',
-    isInteractive ? 'tip-magic-interactive' : '',
-    wordWrap ? 'tip-magic-word-wrap' : '',
-    ellipsis ? 'tip-magic-ellipsis' : '',
-    textBreak !== 'normal' ? `tip-magic-text-break-${textBreak}` : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  // Build class names using utility
+  const classNames = buildTooltipClassNames({
+    shouldShow,
+    isTransitioning: tooltip.isTransitioning,
+    shouldAnimatePosition: animatePosition,
+    isInteractive,
+    wordWrap,
+    ellipsis,
+    textBreak,
+  });
+
+  // Calculate arrow position
+  const staticSide = getArrowStaticSide(context.placement);
+  const arrowStyles = getArrowStyles(middlewareData.arrow?.x, middlewareData.arrow?.y, staticSide);
 
   return (
     <div
@@ -196,15 +184,7 @@ export function Tooltip() {
         )}
       </div>
       {showArrow && (
-        <div
-          ref={arrowRef}
-          className={CSS_CLASSES.TOOLTIP_ARROW}
-          style={{
-            left: arrowX != null ? `${arrowX}px` : '',
-            top: arrowY != null ? `${arrowY}px` : '',
-            [staticSide]: '-4px',
-          }}
-        />
+        <div ref={arrowRef} className={CSS_CLASSES.TOOLTIP_ARROW} style={arrowStyles} />
       )}
     </div>
   );

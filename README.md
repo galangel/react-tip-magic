@@ -158,11 +158,54 @@ helper.show({
 });
 ```
 
+## Programmatic API
+
+Use the `useTipMagic` hook for full programmatic control:
+
+```tsx
+import { useTipMagic } from 'react-tip-magic';
+
+function MyComponent() {
+  const { tooltip, helper, config } = useTipMagic();
+
+  // Show tooltip programmatically
+  tooltip.show('#my-element', 'Custom content');
+
+  // Hide tooltip
+  tooltip.hide();
+
+  // Update content dynamically
+  tooltip.updateContent('New content');
+
+  return <div id="my-element">Hover me</div>;
+}
+```
+
+## Data Attributes
+
+| Attribute              | Description                               | Example                       |
+| ---------------------- | ----------------------------------------- | ----------------------------- |
+| `data-tip`             | Tooltip content                           | `data-tip="Hello"`            |
+| `data-tip-id`          | Element identifier for flows              | `data-tip-id="welcome"`       |
+| `data-tip-placement`   | Position (top, bottom, left, right, etc.) | `data-tip-placement="bottom"` |
+| `data-tip-delay`       | Show delay in ms                          | `data-tip-delay="500"`        |
+| `data-tip-hide-delay`  | Hide delay in ms                          | `data-tip-hide-delay="100"`   |
+| `data-tip-disabled`    | Disable tooltip                           | `data-tip-disabled`           |
+| `data-tip-ellipsis`    | Enable text truncation                    | `data-tip-ellipsis`           |
+| `data-tip-max-lines`   | Max lines before truncation               | `data-tip-max-lines="2"`      |
+| `data-tip-word-wrap`   | Enable word wrapping                      | `data-tip-word-wrap`          |
+| `data-tip-max-width`   | Maximum width in pixels                   | `data-tip-max-width="300"`    |
+| `data-tip-html`        | Parse content as HTML                     | `data-tip-html`               |
+| `data-tip-interactive` | Keep tooltip on hover                     | `data-tip-interactive`        |
+| `data-tip-move`        | Smooth move transition                    | `data-tip-move`               |
+| `data-tip-jump`        | Jump transition                           | `data-tip-jump`               |
+| `data-tip-group`       | Group identifier for transitions          | `data-tip-group="nav"`        |
+| `data-tip-no-arrow`    | Hide tooltip arrow                        | `data-tip-no-arrow`           |
+
 ## Documentation
 
 - [Architecture](./docs/ARCHITECTURE.md) - Technical design and decisions
 - [API Reference](./docs/API.md) - Complete API documentation
-- [Development](./docs/DEVELOPMENT.md) - Setup and contribution guide
 - [Roadmap](./docs/ROADMAP.md) - Planned features and milestones
 
 ## Tech Stack
@@ -176,4 +219,4 @@ helper.show({
 
 ## License
 
-MIT © [Your Name]
+Apache-2.0
