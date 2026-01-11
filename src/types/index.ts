@@ -1,3 +1,7 @@
+// =============================================================================
+// Core Types
+// =============================================================================
+
 /**
  * Tooltip placement options
  */
@@ -275,4 +279,88 @@ export interface UseTipMagicReturn {
   tooltip: TooltipAPI;
   helper: HelperAPI;
   config: TipMagicOptions;
+}
+
+// =============================================================================
+// Internal State Types (used by context and hooks)
+// =============================================================================
+
+/**
+ * Parsed tooltip data from element attributes
+ */
+export interface ParsedTooltipData {
+  content: string;
+  id?: string;
+  placement: Placement;
+  delay: number;
+  /** Per-element hide delay override (undefined = use provider default) */
+  hideDelay?: number;
+  disabled: boolean;
+  ellipsis: boolean;
+  maxLines: number;
+  wordWrap: boolean;
+  /** Text break behavior - controls where words can break */
+  textBreak: TextBreak;
+  maxWidth: number;
+  html: boolean;
+  interactive: boolean;
+  /** Override transition behavior for this specific tooltip */
+  transitionBehavior?: TooltipTransitionBehavior;
+  /** Override move transition duration for this specific tooltip (ms) */
+  moveTransitionDuration?: number;
+  /** Show or hide the arrow (default: true) */
+  showArrow: boolean;
+  /** Override content separator for keyboard shortcuts (default: ';') */
+  contentSeparator?: string;
+  /** Group identifier for controlling move transitions between grouped elements */
+  group?: string;
+  /** Whether to show tooltip when element receives focus */
+  showOnFocus?: boolean;
+}
+
+/**
+ * Tooltip state
+ */
+export interface TooltipState {
+  visible: boolean;
+  content: string;
+  target: Element | null;
+  position: { x: number; y: number };
+  placement: Placement;
+  isTransitioning: boolean;
+  parsedData: ParsedTooltipData | null;
+  /** Group of the previous tooltip (for group-based move transitions) */
+  previousGroup?: string;
+}
+
+/**
+ * Helper internal state
+ */
+export interface HelperInternalState {
+  visible: boolean;
+  state: HelperState;
+  message?: string;
+  actions?: HelperAction[];
+  targetId?: string;
+  position: HelperPosition;
+  autoHide?: number;
+}
+
+/**
+ * Flow state
+ */
+export interface FlowState {
+  active: boolean;
+  steps: FlowStep[];
+  currentIndex: number;
+}
+
+/**
+ * Complete state for TipMagic
+ */
+export interface TipMagicState {
+  tooltip: TooltipState;
+  helper: HelperInternalState;
+  flow: FlowState;
+  config: Required<TipMagicOptions>;
 }

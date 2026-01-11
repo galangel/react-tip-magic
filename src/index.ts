@@ -12,27 +12,27 @@ export { useTipMagic } from './hooks/useTipMagic';
 
 // Context (for advanced usage)
 export { TipMagicContext, useTipMagicContext } from './context/TipMagicContext';
-export type {
-  ParsedTooltipData,
-  TipMagicAction,
-  TipMagicContextValue,
-  TipMagicState,
-  TooltipState,
-} from './context/TipMagicContext';
+export type { TipMagicAction, TipMagicContextValue } from './context/TipMagicContext';
 
 // Types
 export type {
+  CurrentStepData,
+  FlowState,
   FlowStep,
   HelperAPI,
   HelperAction,
+  HelperInternalState,
   HelperPosition,
   HelperShowOptions,
   HelperState,
+  ParsedTooltipData,
   Placement,
   TextBreak,
   TipMagicOptions,
+  TipMagicState,
   TooltipAPI,
   TooltipShowOptions,
+  TooltipState,
   TooltipTransitionBehavior,
   UseTipMagicReturn,
 } from './types';
@@ -47,4 +47,4 @@ export { generateTooltipId, parseContent, parseDataAttributes } from './utils/pa
 export type { ParsedContent } from './utils/parseDataAttributes';
 
 // Version
-export const VERSION = '0.0.1';
+export const VERSION = '1.0.0';

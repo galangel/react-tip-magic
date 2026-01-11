@@ -1,6 +1,5 @@
 import { DEFAULT_OPTIONS } from '../constants';
-import type { ParsedTooltipData } from '../context/TipMagicContext';
-import type { Placement, TextBreak, TooltipTransitionBehavior } from '../types';
+import type { ParsedTooltipData, Placement, TextBreak, TooltipTransitionBehavior } from '../types';
 
 /**
  * Valid placement values

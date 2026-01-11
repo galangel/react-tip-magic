@@ -22,9 +22,22 @@ const preview: Preview = {
       test: 'todo',
     },
     options: {
+      // Sort stories with Welcome first
       storySort: {
-        order: ['Introduction', 'Getting Started', 'Components', 'Hooks', 'Examples', '*'],
+        order: [
+          'Welcome',
+          'Tooltip',
+          'Flows',
+          'Keyboard Shortcuts',
+          'Transitions',
+          'Examples',
+          '*',
+        ],
       },
+    },
+    // Disable version update notifications
+    chromatic: {
+      disableSnapshot: false,
     },
   },
   tags: ['autodocs'],

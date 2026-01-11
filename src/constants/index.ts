@@ -17,7 +17,7 @@ export const ANIMATION = {
 } as const;
 
 /**
- * Data attribute selectors
+ * Data attribute selectors, unused currently but kept for future use
  */
 export const DATA_ATTRIBUTES = {
   TIP: 'data-tip',
