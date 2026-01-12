@@ -42,13 +42,13 @@ function OnboardingTour() {
         <button onClick={tour.start}>Start Tour</button>
       ) : (
         <>
-          <span>Step {tour.progress.current} of {tour.progress.total}</span>
+          <span>
+            Step {tour.progress.current} of {tour.progress.total}
+          </span>
           <button onClick={tour.prev} disabled={tour.currentStep?.isFirst}>
             Back
           </button>
-          <button onClick={tour.next}>
-            {tour.currentStep?.isLast ? 'Finish' : 'Next'}
-          </button>
+          <button onClick={tour.next}>{tour.currentStep?.isLast ? 'Finish' : 'Next'}</button>
           <button onClick={tour.end}>Exit</button>
         </>
       )}
@@ -103,73 +103,99 @@ Each step in the `steps` array can have the following properties:
   </thead>
   <tbody>
     <tr>
-      <td><code>target</code></td>
+      <td>
+        <code>target</code>
+      </td>
       <td>string</td>
       <td>Yes</td>
-      <td>The <code>data-tip-id</code> of the target element</td>
+      <td>
+        The <code>data-tip-id</code> of the target element
+      </td>
     </tr>
     <tr>
-      <td><code>content</code></td>
+      <td>
+        <code>content</code>
+      </td>
       <td>string | function</td>
       <td>Yes</td>
       <td>Step content (can be dynamic)</td>
     </tr>
     <tr>
-      <td><code>title</code></td>
+      <td>
+        <code>title</code>
+      </td>
       <td>string</td>
       <td>No</td>
       <td>Optional title displayed above content</td>
     </tr>
     <tr>
-      <td><code>placement</code></td>
+      <td>
+        <code>placement</code>
+      </td>
       <td>string</td>
       <td>No</td>
       <td>Override tooltip placement for this step</td>
     </tr>
     <tr>
-      <td><code>image</code></td>
+      <td>
+        <code>image</code>
+      </td>
       <td>string</td>
       <td>No</td>
       <td>URL of image/GIF to display</td>
     </tr>
     <tr>
-      <td><code>video</code></td>
+      <td>
+        <code>video</code>
+      </td>
       <td>object</td>
       <td>No</td>
       <td>Video configuration (embed or native)</td>
     </tr>
     <tr>
-      <td><code>focus</code></td>
+      <td>
+        <code>focus</code>
+      </td>
       <td>boolean</td>
       <td>No</td>
       <td>Enable focus mode for this step only</td>
     </tr>
     <tr>
-      <td><code>condition</code></td>
+      <td>
+        <code>condition</code>
+      </td>
       <td>() =&gt; boolean</td>
       <td>No</td>
       <td>Conditional display - step skipped if returns false</td>
     </tr>
     <tr>
-      <td><code>onEnter</code></td>
+      <td>
+        <code>onEnter</code>
+      </td>
       <td>() =&gt; void</td>
       <td>No</td>
       <td>Callback when entering this step</td>
     </tr>
     <tr>
-      <td><code>onExit</code></td>
+      <td>
+        <code>onExit</code>
+      </td>
       <td>() =&gt; void</td>
       <td>No</td>
       <td>Callback when leaving this step</td>
     </tr>
     <tr>
-      <td><code>navigation</code></td>
+      <td>
+        <code>navigation</code>
+      </td>
       <td>object</td>
       <td>No</td>
       <td>Override navigation labels for this step</td>
     </tr>
     <tr>
-      <td><code>tooltipOptions</code></td>
+      <td>
+        <code>tooltipOptions</code>
+      </td>
       <td>object</td>
       <td>No</td>
       <td>Override tooltip options for this step</td>
@@ -204,47 +230,67 @@ The `useTour` hook returns an object with these properties and methods:
   </thead>
   <tbody>
     <tr>
-      <td><code>start()</code></td>
+      <td>
+        <code>start()</code>
+      </td>
       <td>function</td>
       <td>Start the tour from the first step</td>
     </tr>
     <tr>
-      <td><code>end()</code></td>
+      <td>
+        <code>end()</code>
+      </td>
       <td>function</td>
       <td>End the tour immediately</td>
     </tr>
     <tr>
-      <td><code>next()</code></td>
+      <td>
+        <code>next()</code>
+      </td>
       <td>function</td>
       <td>Go to the next step (or finish if on last)</td>
     </tr>
     <tr>
-      <td><code>prev()</code></td>
+      <td>
+        <code>prev()</code>
+      </td>
       <td>function</td>
       <td>Go to the previous step</td>
     </tr>
     <tr>
-      <td><code>goTo(index)</code></td>
+      <td>
+        <code>goTo(index)</code>
+      </td>
       <td>function</td>
       <td>Jump to a specific step by index</td>
     </tr>
     <tr>
-      <td><code>isActive</code></td>
+      <td>
+        <code>isActive</code>
+      </td>
       <td>boolean</td>
       <td>Whether the tour is currently active</td>
     </tr>
     <tr>
-      <td><code>currentStep</code></td>
+      <td>
+        <code>currentStep</code>
+      </td>
       <td>object | null</td>
       <td>Current step data with computed properties</td>
     </tr>
     <tr>
-      <td><code>progress</code></td>
+      <td>
+        <code>progress</code>
+      </td>
       <td>object</td>
-      <td><code>{'{ current, total }'}</code> - Current progress</td>
+      <td>
+        <code>{'{ current, total }'}</code> - Current progress
+      </td>
     </tr>
     <tr>
-      <td><code>totalSteps</code></td>
+      <td>
+        <code>totalSteps</code>
+      </td>
       <td>number</td>
       <td>Total number of active steps</td>
     </tr>
@@ -285,7 +331,7 @@ progress: { show: true, type: 'ring' }
 // Custom render
 progress: {
   show: true,
-  render: ({ currentStep, totalSteps }) => 
+  render: ({ currentStep, totalSteps }) =>
     `<span>📍 ${currentStep} / ${totalSteps}</span>`
 }
 ```
@@ -408,10 +454,10 @@ const [isPremiumUser] = useState(false);
 const tour = useTour({
   steps: [
     { target: 'basic', content: 'Available to all users' },
-    { 
-      target: 'premium', 
+    {
+      target: 'premium',
       content: 'Premium feature!',
-      condition: () => isPremiumUser  // Only shown if true
+      condition: () => isPremiumUser, // Only shown if true
     },
     { target: 'footer', content: 'Thanks for touring!' },
   ],
@@ -425,9 +471,11 @@ const tour = useTour({
 Wrap your app with `TipMagicProvider` and configure tour options:
 
 ```tsx
-<TipMagicProvider options={{ 
-  tourHighlightClass: 'tour-highlight'  // CSS class for highlighted elements
-}}>
+<TipMagicProvider
+  options={{
+    tourHighlightClass: 'tour-highlight', // CSS class for highlighted elements
+  }}
+>
   <App />
 </TipMagicProvider>
 ```
@@ -436,8 +484,9 @@ Define your highlight styles:
 
 ```css
 .tour-highlight {
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4),
-              0 0 20px rgba(79, 70, 229, 0.2);
+  box-shadow:
+    0 0 0 3px rgba(79, 70, 229, 0.4),
+    0 0 20px rgba(79, 70, 229, 0.2);
   position: relative;
   z-index: 10;
 }
@@ -453,10 +502,14 @@ Each step should focus on one concept:
 
 ```tsx
 // ✅ Good: Focused message
-{ content: 'Click here to create a new project.' }
+{
+  content: 'Click here to create a new project.';
+}
 
 // ❌ Bad: Too much information
-{ content: 'Click here to create a project. You can also import, duplicate, or use templates...' }
+{
+  content: 'Click here to create a project. You can also import, duplicate, or use templates...';
+}
 ```
 
 ### Use Logical Flow
