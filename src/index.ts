@@ -9,6 +9,7 @@ export type { TipMagicProviderProps } from './components/TipMagicProvider';
 
 // Hooks
 export { useTipMagic } from './hooks/useTipMagic';
+export { useTour } from './hooks/useTour';
 
 // Context (for advanced usage)
 export { TipMagicContext, useTipMagicContext } from './context/TipMagicContext';
@@ -17,10 +18,11 @@ export type { TipMagicAction, TipMagicContextValue } from './context/TipMagicCon
 // Types
 export type {
   CurrentStepData,
+  CurrentTourStep,
   FlowState,
   FlowStep,
-  HelperAPI,
   HelperAction,
+  HelperAPI,
   HelperInternalState,
   HelperPosition,
   HelperShowOptions,
@@ -34,7 +36,13 @@ export type {
   TooltipShowOptions,
   TooltipState,
   TooltipTransitionBehavior,
+  TourDirection,
+  TourNavigation,
+  TourOptions,
+  TourProgress,
+  TourStep,
   UseTipMagicReturn,
+  UseTourReturn,
 } from './types';
 
 // Constants (for customization)

@@ -235,7 +235,8 @@
 .story-code {
   margin-top: 24px;
   padding: 16px;
-  background: #1f2937;
+  min-width: 400px;
+  background: #233855;
   color: #e5e7eb;
   border-radius: 8px;
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;

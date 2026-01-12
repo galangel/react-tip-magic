@@ -364,3 +364,20 @@ export interface TipMagicState {
   flow: FlowState;
   config: Required<TipMagicOptions>;
 }
+
+// =============================================================================
+// Tour Types (Simplified API)
+// =============================================================================
+
+export type {
+  CurrentTourStep,
+  ProgressOptions,
+  ProgressRenderProps,
+  ProgressType,
+  TourDirection,
+  TourNavigation,
+  TourOptions,
+  TourProgress,
+  TourStep,
+  UseTourReturn,
+} from './tour';

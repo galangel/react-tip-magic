@@ -159,7 +159,7 @@ export function MockDashboard({
     <div className="mock-dashboard">
       {/* Sidebar */}
       <aside
-        className={`mock-sidebar ${highlightedId === elementIds.sidebar ? 'tour-highlight' : ''}`}
+        className={`mock-sidebar ${highlightedId && highlightedId === elementIds.sidebar ? 'tour-highlight' : ''}`}
         {...(elementIds.sidebar ? { 'data-tip-id': elementIds.sidebar } : {})}
       >
         <div className="mock-logo">{sidebarTitle}</div>
@@ -171,7 +171,7 @@ export function MockDashboard({
             return (
               <a
                 key={item.label}
-                className={`mock-nav-item ${index === 0 ? 'active' : ''} ${isHighlighted ? 'tour-highlight' : ''}`}
+                className={`mock-nav-item ${index === 0 ? 'active' : ''} ${highlightedId && isHighlighted ? 'tour-highlight' : ''}`}
                 data-tip={item.tip}
                 data-tip-placement="right"
                 {...(navMove ? { 'data-tip-move': '' } : {})}
@@ -190,14 +190,14 @@ export function MockDashboard({
         {/* Header */}
         <header className="mock-header">
           <div
-            className={`mock-search ${highlightedId === elementIds.search ? 'tour-highlight' : ''}`}
+            className={`mock-search ${highlightedId && highlightedId === elementIds.search ? 'tour-highlight' : ''}`}
             {...(elementIds.search ? { 'data-tip-id': elementIds.search } : {})}
           >
             <span className="mock-search-icon">🔍</span>
             <input type="text" placeholder="Search..." className="mock-search-input" />
           </div>
           <div
-            className={`mock-profile ${highlightedId === elementIds.profile ? 'tour-highlight' : ''}`}
+            className={`mock-profile ${highlightedId && highlightedId === elementIds.profile ? 'tour-highlight' : ''}`}
             {...(elementIds.profile ? { 'data-tip-id': elementIds.profile } : {})}
           >
             <span className="mock-avatar">👤</span>
@@ -222,7 +222,7 @@ export function MockDashboard({
               return (
                 <button
                   key={tab.label}
-                  className={`mock-tab ${tab.active ? 'active' : ''} ${isHighlighted ? 'tour-highlight' : ''}`}
+                  className={`mock-tab ${tab.active ? 'active' : ''} ${highlightedId && isHighlighted ? 'tour-highlight' : ''}`}
                   data-tip={tab.tip}
                   {...(tabMove ? { 'data-tip-move': '' } : {})}
                   {...(tabTooltipGroup ? { 'data-tip-group': tabTooltipGroup } : {})}
@@ -241,7 +241,7 @@ export function MockDashboard({
             {/* Stats Cards */}
             {stats.length > 0 && (
               <div
-                className={`mock-stats ${highlightedId === elementIds.stats ? 'tour-highlight' : ''}`}
+                className={`mock-stats ${highlightedId && highlightedId === elementIds.stats ? 'tour-highlight' : ''}`}
                 {...(elementIds.stats ? { 'data-tip-id': elementIds.stats } : {})}
               >
                 {stats.map((stat) => (
@@ -256,7 +256,7 @@ export function MockDashboard({
             {/* Quick Actions */}
             {actions.length > 0 && (
               <div
-                className={`mock-actions ${highlightedId === elementIds.actions ? 'tour-highlight' : ''}`}
+                className={`mock-actions ${highlightedId && highlightedId === elementIds.actions ? 'tour-highlight' : ''}`}
                 {...(elementIds.actions ? { 'data-tip-id': elementIds.actions } : {})}
               >
                 <h3 className="mock-section-title">Quick Actions</h3>
