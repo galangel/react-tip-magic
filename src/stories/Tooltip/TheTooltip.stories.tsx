@@ -18,9 +18,17 @@ import './tooltip-stories.css';
  */
 const meta: Meta = {
   title: 'The Tooltip',
-  tags: ['autodocs'],
+  tags: ['!autodocs'],
   parameters: {
     layout: 'centered',
+    options: {
+      panelPosition: 'right',
+    },
+    // Open controls panel by default
+    viewMode: 'story',
+    previewTabs: {
+      'storybook/docs/panel': { hidden: true },
+    },
   },
 };
 
@@ -33,7 +41,7 @@ type Story = StoryObj<TipPropsOptions>;
  *
  * Use the controls panel below to experiment with all available options.
  */
-export const Default: Story = {
+export const TheTooltip: Story = {
   args: {
     tip: 'This is a tooltip',
     placement: 'top',

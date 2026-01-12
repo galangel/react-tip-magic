@@ -8,3 +8,6 @@
 
 /* Core component styles */
 @import './tooltip.css';
+
+/* Tour styles (navigation, images, backdrop) */
+@import './tour.css';

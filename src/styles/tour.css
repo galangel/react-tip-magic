@@ -1,0 +1,346 @@
+/**
+ * TipMagic Tour Styles
+ * Styles for the useTour hook's built-in navigation, images, and focus backdrop
+ */
+
+/* =============================================================================
+   CSS Variables (User-Customizable)
+   ============================================================================= */
+
+:root {
+  /* Tour navigation buttons */
+  --tip-magic-tour-btn-bg: rgba(255, 255, 255, 0.15);
+  --tip-magic-tour-btn-color: #ffffff;
+  --tip-magic-tour-btn-hover-bg: rgba(255, 255, 255, 0.25);
+  --tip-magic-tour-btn-primary-bg: #ffffff;
+  --tip-magic-tour-btn-primary-color: #1f2937;
+  --tip-magic-tour-btn-radius: 4px;
+  --tip-magic-tour-btn-padding: 6px 12px;
+  --tip-magic-tour-btn-font-size: 12px;
+  --tip-magic-tour-btn-font-weight: 500;
+  --tip-magic-tour-btn-gap: 8px;
+
+  /* Tour image */
+  --tip-magic-tour-image-radius: 8px;
+  --tip-magic-tour-image-max-height: 150px;
+  --tip-magic-tour-image-margin: 12px 0;
+
+  /* Tour header (title + close) */
+  --tip-magic-tour-header-margin: 0 0 8px 0;
+  --tip-magic-tour-title-font-size: 15px;
+  --tip-magic-tour-title-font-weight: 600;
+  --tip-magic-tour-title-color: #ffffff;
+
+  /* Close button */
+  --tip-magic-tour-close-size: 24px;
+  --tip-magic-tour-close-font-size: 18px;
+  --tip-magic-tour-close-color: rgba(255, 255, 255, 0.7);
+  --tip-magic-tour-close-hover-color: #ffffff;
+  --tip-magic-tour-close-hover-bg: rgba(255, 255, 255, 0.15);
+
+  /* Message */
+  --tip-magic-tour-message-font-size: 13px;
+  --tip-magic-tour-message-line-height: 1.5;
+  --tip-magic-tour-message-color: rgba(255, 255, 255, 0.9);
+
+  /* Navigation container */
+  --tip-magic-tour-nav-margin: 12px 0 0 0;
+  --tip-magic-tour-nav-padding: 4px 0;
+
+  /* Progress indicator (steps type) */
+  --tip-magic-tour-progress-font-size: 12px;
+  --tip-magic-tour-progress-color: rgba(255, 255, 255, 0.6);
+
+  /* Progress indicator (ring type) */
+  --tip-magic-tour-progress-ring-size: 32px;
+  --tip-magic-tour-progress-ring-stroke: 3px;
+  --tip-magic-tour-progress-ring-bg: rgba(255, 255, 255, 0.2);
+  --tip-magic-tour-progress-ring-fill: #ffffff;
+  --tip-magic-tour-progress-ring-text-size: 10px;
+  --tip-magic-tour-progress-ring-text-color: rgba(255, 255, 255, 0.9);
+
+  /* Backdrop / Focus */
+  --tip-magic-tour-backdrop-blur: 4px;
+  --tip-magic-tour-backdrop-bg: rgba(0, 0, 0, 0.3);
+  /* Backdrop: 9997, Focus target: 9998, Tooltip: 9999 */
+  --tip-magic-tour-backdrop-z-index: 9997;
+}
+
+/* =============================================================================
+   Tour Content Wrapper
+   ============================================================================= */
+
+.tip-magic-tour-content {
+  display: block;
+  min-width: 200px;
+}
+
+/* =============================================================================
+   Header Row (Title + Close Button)
+   ============================================================================= */
+
+.tip-magic-tour-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: var(--tip-magic-tour-header-margin);
+}
+
+.tip-magic-tour-title {
+  flex: 1;
+  font-size: var(--tip-magic-tour-title-font-size);
+  font-weight: var(--tip-magic-tour-title-font-weight);
+  color: var(--tip-magic-tour-title-color);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tip-magic-tour-close {
+  flex-shrink: 0;
+  width: var(--tip-magic-tour-close-size);
+  height: var(--tip-magic-tour-close-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--tip-magic-tour-close-color);
+  font-size: var(--tip-magic-tour-close-font-size);
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto; /* Ensure button is always clickable */
+  position: relative; /* Ensure proper stacking */
+  z-index: 1;
+  border-radius: 50%;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tip-magic-tour-close:hover {
+  background: var(--tip-magic-tour-close-hover-bg);
+  color: var(--tip-magic-tour-close-hover-color);
+}
+
+/* =============================================================================
+   Image (Pokemon Card Style)
+   ============================================================================= */
+
+.tip-magic-tour-image {
+  margin: var(--tip-magic-tour-image-margin);
+  border-radius: var(--tip-magic-tour-image-radius);
+  overflow: hidden;
+}
+
+.tip-magic-tour-image img {
+  display: block;
+  width: 100%;
+  max-height: var(--tip-magic-tour-image-max-height);
+  object-fit: cover;
+  border-radius: var(--tip-magic-tour-image-radius);
+}
+
+/* =============================================================================
+   Video
+   ============================================================================= */
+
+.tip-magic-tour-video {
+  margin: var(--tip-magic-tour-image-margin);
+  border-radius: var(--tip-magic-tour-image-radius);
+  overflow: hidden;
+}
+
+.tip-magic-tour-video video {
+  display: block;
+  width: 100%;
+  max-height: var(--tip-magic-tour-image-max-height);
+  object-fit: cover;
+  border-radius: var(--tip-magic-tour-image-radius);
+}
+
+/* Embed video (YouTube, Vimeo, etc.) - default responsive 16:9 */
+.tip-magic-tour-video-embed {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+}
+
+.tip-magic-tour-video-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--tip-magic-tour-image-radius);
+}
+
+/* When explicit dimensions are provided via inline style */
+.tip-magic-tour-video-embed[style*='width'],
+.tip-magic-tour-video-embed[style*='height'] {
+  padding-bottom: 0;
+  height: auto;
+}
+
+.tip-magic-tour-video-embed[style*='width'] iframe,
+.tip-magic-tour-video-embed[style*='height'] iframe {
+  position: static;
+  width: 100%;
+  height: 100%;
+}
+
+/* =============================================================================
+   Body / Message
+   ============================================================================= */
+
+.tip-magic-tour-body {
+  margin: 0;
+}
+
+.tip-magic-tour-message {
+  font-size: var(--tip-magic-tour-message-font-size);
+  line-height: var(--tip-magic-tour-message-line-height);
+  color: var(--tip-magic-tour-message-color);
+  margin: 0;
+}
+
+/* =============================================================================
+   Navigation Controls
+   ============================================================================= */
+
+.tip-magic-tour-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--tip-magic-tour-btn-gap);
+  margin: var(--tip-magic-tour-nav-margin);
+  padding: var(--tip-magic-tour-nav-padding);
+}
+
+.tip-magic-tour-btn {
+  padding: var(--tip-magic-tour-btn-padding);
+  font-size: var(--tip-magic-tour-btn-font-size);
+  font-weight: var(--tip-magic-tour-btn-font-weight);
+  border: none;
+  border-radius: var(--tip-magic-tour-btn-radius);
+  cursor: pointer;
+  pointer-events: auto; /* Ensure buttons are always clickable */
+  position: relative; /* Ensure proper stacking */
+  z-index: 1;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.tip-magic-tour-btn:active {
+  transform: scale(0.97);
+}
+
+/* Back button (secondary style) */
+.tip-magic-tour-btn-back {
+  background: var(--tip-magic-tour-btn-bg);
+  color: var(--tip-magic-tour-btn-color);
+}
+
+.tip-magic-tour-btn-back:hover {
+  background: var(--tip-magic-tour-btn-hover-bg);
+}
+
+/* Next/Finish button (primary style) */
+.tip-magic-tour-btn-next {
+  background: var(--tip-magic-tour-btn-primary-bg);
+  color: var(--tip-magic-tour-btn-primary-color);
+}
+
+.tip-magic-tour-btn-next:hover {
+  opacity: 0.9;
+}
+
+/* =============================================================================
+   Footer (Progress + Navigation)
+   ============================================================================= */
+
+.tip-magic-tour-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: var(--tip-magic-tour-nav-margin);
+  padding: var(--tip-magic-tour-nav-padding);
+}
+
+/* When footer has both progress and nav */
+.tip-magic-tour-footer .tip-magic-tour-nav {
+  margin: 0;
+  padding: 0;
+}
+
+/* =============================================================================
+   Progress Indicator
+   ============================================================================= */
+
+.tip-magic-tour-progress {
+  font-size: var(--tip-magic-tour-progress-font-size);
+  color: var(--tip-magic-tour-progress-color);
+  white-space: nowrap;
+}
+
+/* Ring Progress Indicator */
+.tip-magic-tour-progress-ring {
+  position: relative;
+  width: var(--tip-magic-tour-progress-ring-size);
+  height: var(--tip-magic-tour-progress-ring-size);
+  flex-shrink: 0;
+}
+
+.tip-magic-tour-progress-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.tip-magic-tour-progress-ring-bg {
+  fill: none;
+  stroke: var(--tip-magic-tour-progress-ring-bg);
+  stroke-width: var(--tip-magic-tour-progress-ring-stroke);
+}
+
+.tip-magic-tour-progress-ring-fill {
+  fill: none;
+  stroke: var(--tip-magic-tour-progress-ring-fill);
+  stroke-width: var(--tip-magic-tour-progress-ring-stroke);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.tip-magic-tour-progress-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--tip-magic-tour-progress-ring-text-size);
+  font-weight: 600;
+  color: var(--tip-magic-tour-progress-ring-text-color);
+}
+
+/* =============================================================================
+   Backdrop / Focus Mode
+   ============================================================================= */
+
+.tip-magic-tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--tip-magic-tour-backdrop-z-index);
+  background: var(--tip-magic-tour-backdrop-bg);
+  backdrop-filter: blur(var(--tip-magic-tour-backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--tip-magic-tour-backdrop-blur));
+  pointer-events: none; /* Allow clicks through to target */
+}
+
+/* Target element when focus is active - ensure it's above backdrop but below tooltip */
+.tip-magic-tour-focus-target {
+  position: relative;
+  z-index: 9998 !important; /* Above backdrop (9997), below tooltip (9999) */
+}
