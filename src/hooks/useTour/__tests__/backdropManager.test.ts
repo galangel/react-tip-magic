@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TOUR_CSS_CLASSES, TOUR_DATA_ATTRIBUTES } from '../constants';
 import { BackdropManager, createBackdropManager } from '../utils/backdropManager';
-import { TOUR_CSS_CLASSES } from '../constants';
 
 describe('BackdropManager', () => {
   let manager: BackdropManager;
@@ -18,6 +18,10 @@ describe('BackdropManager', () => {
     targetElement.remove();
     // Clean up any leftover backdrop elements
     document.querySelectorAll(`.${TOUR_CSS_CLASSES.BACKDROP}`).forEach((el) => el.remove());
+    // Clean up any always-visible test elements
+    document
+      .querySelectorAll(`[${TOUR_DATA_ATTRIBUTES.ALWAYS_VISIBLE}]`)
+      .forEach((el) => el.remove());
   });
 
   describe('initial state', () => {
@@ -119,6 +123,108 @@ describe('BackdropManager', () => {
       expect(manager.isVisible).toBe(false);
       expect(manager.currentFocusTarget).toBeNull();
       expect(targetElement.classList.contains(TOUR_CSS_CLASSES.FOCUS_TARGET)).toBe(false);
+    });
+  });
+
+  describe('always-visible elements', () => {
+    let headerElement: HTMLElement;
+    let sidebarElement: HTMLElement;
+
+    beforeEach(() => {
+      headerElement = document.createElement('header');
+      headerElement.setAttribute(TOUR_DATA_ATTRIBUTES.ALWAYS_VISIBLE, '');
+      document.body.appendChild(headerElement);
+
+      sidebarElement = document.createElement('nav');
+      sidebarElement.setAttribute(TOUR_DATA_ATTRIBUTES.ALWAYS_VISIBLE, '');
+      document.body.appendChild(sidebarElement);
+    });
+
+    afterEach(() => {
+      headerElement.remove();
+      sidebarElement.remove();
+    });
+
+    it('should add always-visible class to elements with data-tip-always-visible', () => {
+      manager.show(targetElement);
+
+      expect(headerElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(true);
+      expect(sidebarElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(true);
+    });
+
+    it('should remove always-visible class when backdrop is hidden', () => {
+      manager.show(targetElement);
+      manager.hide();
+
+      expect(headerElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(false);
+      expect(sidebarElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(false);
+    });
+
+    it('should handle dynamically added always-visible elements', () => {
+      manager.show(targetElement);
+
+      // Add a new element after backdrop is shown
+      const newElement = document.createElement('footer');
+      newElement.setAttribute(TOUR_DATA_ATTRIBUTES.ALWAYS_VISIBLE, '');
+      document.body.appendChild(newElement);
+
+      // Clean up previous always-visible elements and re-elevate
+      // When show is called again (e.g., when switching steps), the new element should be found
+      manager.show(targetElement);
+
+      expect(newElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(true);
+      expect(headerElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(true);
+
+      newElement.remove();
+    });
+
+    it('should clean up always-visible elements when destroyed', () => {
+      manager.show(targetElement);
+      manager.destroy();
+
+      expect(headerElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(false);
+      expect(sidebarElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(false);
+    });
+
+    it('should not affect elements without data-tip-always-visible', () => {
+      const regularElement = document.createElement('div');
+      document.body.appendChild(regularElement);
+
+      manager.show(targetElement);
+
+      expect(regularElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(false);
+
+      regularElement.remove();
+    });
+
+    it('should work with nested elements', () => {
+      // Create a container with nested elements
+      const container = document.createElement('div');
+      container.setAttribute(TOUR_DATA_ATTRIBUTES.ALWAYS_VISIBLE, '');
+      const nestedElement = document.createElement('span');
+      container.appendChild(nestedElement);
+      document.body.appendChild(container);
+
+      manager.show(targetElement);
+
+      // Only the element with the attribute should get the class
+      expect(container.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(true);
+      expect(nestedElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(false);
+
+      container.remove();
+    });
+
+    it('should update always-visible elements when switching focus targets', () => {
+      const target2 = document.createElement('div');
+      document.body.appendChild(target2);
+
+      manager.show(targetElement);
+      expect(headerElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(true);
+
+      manager.show(target2);
+      expect(headerElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(true);
+
+      target2.remove();
     });
   });
 });

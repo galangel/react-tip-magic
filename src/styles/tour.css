@@ -344,3 +344,13 @@
   position: relative;
   z-index: 9998 !important; /* Above backdrop (9997), below tooltip (9999) */
 }
+
+/**
+ * Elements marked with data-tip-always-visible remain visible during tour focus.
+ * Useful for headers, sidebars, and other persistent UI elements that should
+ * not be masked during a tour.
+ */
+.tip-magic-tour-always-visible {
+  position: relative;
+  z-index: 9998 !important; /* Same as focus target - above backdrop, below tooltip */
+}

@@ -368,6 +368,49 @@ Customize the backdrop via CSS:
 }
 ```
 
+### Always Visible Elements
+
+Some UI elements like headers, navigation sidebars, or toolbars should remain accessible during a tour — even when focus mode is active. Use `data-tip-always-visible` to exclude elements from being masked:
+
+```tsx
+{
+  /* Header stays visible during tour focus */
+}
+<header data-tip-always-visible>
+  <nav>Navigation</nav>
+  <div className="user-menu">User Menu</div>
+</header>;
+
+{
+  /* Sidebar stays visible */
+}
+<aside data-tip-always-visible>
+  <ul>
+    <li>Home</li>
+    <li>Settings</li>
+  </ul>
+</aside>;
+
+{
+  /* Main content will be masked as normal during focus */
+}
+<main>
+  <div data-tip-id="step1">Tour target</div>
+</main>;
+```
+
+Elements with `data-tip-always-visible`:
+
+- Appear above the backdrop alongside the focused tour target
+- Remain fully interactive during the tour
+- Apply to the element and all its children
+
+This is useful for:
+
+- **Application headers** — Users can still access navigation or exit the app
+- **Sidebars** — Keep navigation accessible throughout the tour
+- **Toolbars** — Allow users to access tools while learning
+
 ---
 
 ## Media Support
@@ -540,4 +583,5 @@ Enable focus mode on key steps to draw attention without overwhelming users.
 - See the **[Simple Tour](?path=/story/tooltip-flow-tours--simple-tour)** story for a basic example
 - See the **[Built-in Navigation](?path=/story/tooltip-flow-tours--built-in-navigation)** for in-tooltip controls
 - See the **[Focus Mode](?path=/story/tooltip-flow-tours--focus-mode)** for backdrop highlighting
+- See the **[Always Visible Elements](?path=/story/tooltip-flow-tours--always-visible-elements)** for keeping elements accessible during focus
 - See the **[Complete Tour](?path=/story/tooltip-flow-tours--complete-tour)** for a full-featured example

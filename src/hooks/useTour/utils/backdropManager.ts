@@ -1,4 +1,4 @@
-import { TOUR_CSS_CLASSES } from '../constants';
+import { TOUR_CSS_CLASSES, TOUR_DATA_ATTRIBUTES } from '../constants';
 
 /**
  * BackdropManager handles the creation and cleanup of the tour backdrop
@@ -8,6 +8,7 @@ import { TOUR_CSS_CLASSES } from '../constants';
 export class BackdropManager {
   private backdropElement: HTMLDivElement | null = null;
   private focusTargetElement: HTMLElement | null = null;
+  private alwaysVisibleElements: Element[] = [];
 
   /**
    * Check if backdrop is currently visible
@@ -43,6 +44,9 @@ export class BackdropManager {
     // Elevate target above backdrop
     targetElement.classList.add(TOUR_CSS_CLASSES.FOCUS_TARGET);
     this.focusTargetElement = targetElement;
+
+    // Find and elevate all elements with data-tip-always-visible
+    this.elevateAlwaysVisibleElements();
   }
 
   /**
@@ -57,6 +61,9 @@ export class BackdropManager {
 
     // Clean up focus target
     this.cleanupFocusTarget();
+
+    // Clean up always-visible elements
+    this.cleanupAlwaysVisibleElements();
   }
 
   /**
@@ -67,6 +74,32 @@ export class BackdropManager {
       this.focusTargetElement.classList.remove(TOUR_CSS_CLASSES.FOCUS_TARGET);
       this.focusTargetElement = null;
     }
+  }
+
+  /**
+   * Find and elevate all elements with data-tip-always-visible attribute
+   */
+  private elevateAlwaysVisibleElements(): void {
+    // Clean up any previously elevated elements first
+    this.cleanupAlwaysVisibleElements();
+
+    // Find all elements with the always-visible attribute
+    const elements = document.querySelectorAll(`[${TOUR_DATA_ATTRIBUTES.ALWAYS_VISIBLE}]`);
+
+    elements.forEach((element) => {
+      element.classList.add(TOUR_CSS_CLASSES.ALWAYS_VISIBLE);
+      this.alwaysVisibleElements.push(element);
+    });
+  }
+
+  /**
+   * Remove the always-visible class from all tracked elements
+   */
+  private cleanupAlwaysVisibleElements(): void {
+    this.alwaysVisibleElements.forEach((element) => {
+      element.classList.remove(TOUR_CSS_CLASSES.ALWAYS_VISIBLE);
+    });
+    this.alwaysVisibleElements = [];
   }
 
   /**
