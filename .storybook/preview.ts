@@ -18,9 +18,6 @@ const preview: Preview = {
       ],
     },
     layout: 'centered',
-    a11y: {
-      test: 'todo',
-    },
     options: {
       // Sort stories with Welcome first
       storySort: {
@@ -34,10 +31,6 @@ const preview: Preview = {
           '*',
         ],
       },
-    },
-    // Disable version update notifications
-    chromatic: {
-      disableSnapshot: false,
     },
   },
   tags: ['autodocs'],

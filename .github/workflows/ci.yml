@@ -28,9 +28,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
       - name: Run TypeScript type check
         run: npm run typecheck
 
@@ -106,4 +103,3 @@ jobs:
           name: storybook-static
           path: storybook-static/
           retention-days: 7
-

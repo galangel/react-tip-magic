@@ -2,9 +2,9 @@
 
 A sophisticated, elegant, and performant tooltip library for React with an intelligent floating helper system.
 
-![npm version](https://img.shields.io/npm/v/react-tip-magic)
-![bundle size](https://img.shields.io/bundlephobia/minzip/react-tip-magic)
-![license](https://img.shields.io/npm/l/react-tip-magic)
+![npm version](https://img.shields.io/npm/v/@galangel/react-tip-magic)
+![bundle size](https://img.shields.io/bundlephobia/minzip/@galangel/react-tip-magic)
+![license](https://img.shields.io/npm/l/@galangel/react-tip-magic)
 
 ## Features
 
@@ -21,14 +21,14 @@ A sophisticated, elegant, and performant tooltip library for React with an intel
 ### Installation
 
 ```bash
-npm install react-tip-magic
+npm install @galangel/react-tip-magic
 ```
 
 ### Basic Setup
 
 ```tsx
-import { TipMagicProvider } from 'react-tip-magic';
-import 'react-tip-magic/styles.css';
+import { TipMagicProvider } from '@galangel/react-tip-magic';
+import '@galangel/react-tip-magic/styles.css';
 
 function App() {
   return (
@@ -106,7 +106,7 @@ The Helper is an optional floating element that provides contextual information 
 ### Onboarding Flow Example
 
 ```tsx
-import { useTipMagic } from 'react-tip-magic';
+import { useTipMagic } from '@galangel/react-tip-magic';
 
 function OnboardingFlow() {
   const { helper } = useTipMagic();
@@ -163,7 +163,7 @@ helper.show({
 Use the `useTipMagic` hook for full programmatic control:
 
 ```tsx
-import { useTipMagic } from 'react-tip-magic';
+import { useTipMagic } from '@galangel/react-tip-magic';
 
 function MyComponent() {
   const { tooltip, helper, config } = useTipMagic();
