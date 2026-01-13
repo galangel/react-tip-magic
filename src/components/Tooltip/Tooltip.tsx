@@ -122,8 +122,13 @@ export function Tooltip() {
   }
 
   // Parse content to extract shortcut (per-element separator overrides provider default)
+  // Skip parsing for HTML content - HTML should be rendered as-is without separator splitting
+  // This prevents semicolons in tour titles/messages/labels from breaking the HTML
+  const isHtmlContent = tooltip.parsedData?.html ?? false;
   const separator = tooltip.parsedData?.contentSeparator ?? config.contentSeparator;
-  const parsedContent = parseContent(tooltip.content, separator);
+  const parsedContent = isHtmlContent
+    ? { main: tooltip.content, shortcut: undefined }
+    : parseContent(tooltip.content, separator);
 
   // Extract text display options
   const isInteractive = tooltip.parsedData?.interactive ?? false;
@@ -171,7 +176,7 @@ export function Tooltip() {
       data-interactive={isInteractive ? '' : undefined}
     >
       <div className={CSS_CLASSES.TOOLTIP_CONTENT}>
-        {tooltip.parsedData?.html ? (
+        {isHtmlContent ? (
           <span
             className="tip-magic-text"
             dangerouslySetInnerHTML={{ __html: parsedContent.main }}

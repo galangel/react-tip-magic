@@ -14,12 +14,12 @@ const dirname =
 export default defineConfig({
   test: {
     projects: [
-      // Unit tests for utility functions
+      // Unit tests for utility functions and components
       {
         extends: true,
         test: {
           name: 'unit',
-          include: ['src/**/*.test.ts'],
+          include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
           exclude: ['src/**/*.stories.tsx'],
           environment: 'jsdom',
         },
