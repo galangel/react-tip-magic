@@ -21,8 +21,8 @@ export type {
   CurrentTourStep,
   FlowState,
   FlowStep,
-  HelperAPI,
   HelperAction,
+  HelperAPI,
   HelperInternalState,
   HelperPosition,
   HelperShowOptions,
@@ -53,6 +53,3 @@ export { getTipProps } from './utils/getTipProps';
 export type { TipPropsOptions, TipPropsResult } from './utils/getTipProps';
 export { generateTooltipId, parseContent, parseDataAttributes } from './utils/parseDataAttributes';
 export type { ParsedContent } from './utils/parseDataAttributes';
-
-// Version
-export const VERSION = '1.0.2';
