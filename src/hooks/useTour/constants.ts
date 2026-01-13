@@ -17,6 +17,7 @@ export const DEFAULT_NAVIGATION: Required<TourNavigation> = {
 export const TOUR_CSS_CLASSES = {
   BACKDROP: 'tip-magic-tour-backdrop',
   FOCUS_TARGET: 'tip-magic-tour-focus-target',
+  ALWAYS_VISIBLE: 'tip-magic-tour-always-visible',
   CONTENT: 'tip-magic-tour-content',
   HEADER: 'tip-magic-tour-header',
   TITLE: 'tip-magic-tour-title',
@@ -44,6 +45,12 @@ export const TOUR_CSS_CLASSES = {
 export const TOUR_DATA_ATTRIBUTES = {
   ACTION: 'data-tour-action',
   TIP_ID: 'data-tip-id',
+  /**
+   * Elements with this attribute will remain visible (not masked) during tour focus.
+   * Useful for headers, sidebars, and other persistent UI elements.
+   * @example <header data-tip-always-visible>...</header>
+   */
+  ALWAYS_VISIBLE: 'data-tip-always-visible',
 } as const;
 
 /**

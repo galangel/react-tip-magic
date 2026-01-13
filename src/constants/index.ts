@@ -40,6 +40,12 @@ export const DATA_ATTRIBUTES = {
   TIP_NO_ARROW: 'data-tip-no-arrow',
   TIP_SEPARATOR: 'data-tip-separator',
   TIP_SHOW_ON_FOCUS: 'data-tip-show-on-focus',
+  /**
+   * Elements with this attribute will remain visible (not masked) during tour focus.
+   * Useful for headers, sidebars, and other persistent UI elements.
+   * @example <header data-tip-always-visible>...</header>
+   */
+  TIP_ALWAYS_VISIBLE: 'data-tip-always-visible',
 } as const;
 
 /**

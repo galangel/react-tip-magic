@@ -1371,6 +1371,170 @@ export const FocusSpecificSteps: Story = {
 };
 
 // =============================================================================
+// Always Visible Elements
+// =============================================================================
+
+/**
+ * Always Visible Elements
+ *
+ * Use `data-tip-always-visible` on elements that should remain visible
+ * (not masked) during tour focus mode. Perfect for:
+ * - Application headers
+ * - Navigation sidebars
+ * - Important persistent UI elements
+ *
+ * These elements will appear above the backdrop alongside the tour target.
+ */
+const AlwaysVisibleDemo = () => {
+  const tour = useTour({
+    steps: [
+      {
+        target: 'always-stats',
+        title: 'Statistics Overview',
+        content:
+          'Notice how the header and sidebar remain visible and accessible during this tour.',
+      },
+      {
+        target: 'always-actions',
+        title: 'Quick Actions',
+        content:
+          'The header stays visible so users can still access navigation or exit the app if needed.',
+      },
+      {
+        target: 'always-search',
+        title: 'Search',
+        content:
+          'Elements with data-tip-always-visible are never masked, even when focus mode is active.',
+      },
+    ],
+    navigation: {
+      showControls: true,
+    },
+    focus: true, // Enable focus for entire tour
+    tooltipOptions: {
+      placement: 'bottom',
+      maxWidth: 340,
+      textBreak: 'normal',
+      wordWrap: true,
+      transitionBehavior: 'move',
+    },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <button
+        className={`tour-start-btn ${tour.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={tour.start}
+        disabled={tour.isActive}
+      >
+        {tour.isActive ? 'Tour in Progress...' : 'Start Tour with Always Visible Elements'}
+      </button>
+
+      {/* Custom dashboard with always-visible header */}
+      <div className="mock-dashboard">
+        {/* Sidebar - marked as always visible */}
+        <aside className="mock-sidebar" data-tip-always-visible data-tip-id="always-sidebar">
+          <div className="mock-logo">📊 Dashboard</div>
+          <nav className="mock-nav">
+            <a
+              className="mock-nav-item active"
+              data-tip="Go to home page"
+              data-tip-placement="right"
+            >
+              🏠 Home
+            </a>
+            <a
+              className="mock-nav-item"
+              data-tip="View analytics and reports"
+              data-tip-placement="right"
+            >
+              📊 Analytics
+            </a>
+            <a className="mock-nav-item" data-tip="Manage user accounts" data-tip-placement="right">
+              👥 Users
+            </a>
+            <a className="mock-nav-item" data-tip="Browse all projects" data-tip-placement="right">
+              📁 Projects
+            </a>
+            <a
+              className="mock-nav-item"
+              data-tip="Configure preferences"
+              data-tip-placement="right"
+            >
+              ⚙️ Settings
+            </a>
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="mock-main">
+          {/* Header - marked as always visible */}
+          <header className="mock-header" data-tip-always-visible>
+            <div className="mock-search" data-tip-id="always-search">
+              <span className="mock-search-icon">🔍</span>
+              <input type="text" placeholder="Search..." className="mock-search-input" />
+            </div>
+            <div className="mock-profile" data-tip-id="always-profile">
+              <span className="mock-avatar">👤</span>
+              <span className="mock-username">John Doe</span>
+            </div>
+          </header>
+
+          {/* Content Title */}
+          <div className="mock-content-header">
+            <h1 className="mock-content-title">Always Visible Elements</h1>
+            <p className="mock-content-description">
+              The header and sidebar have <code>data-tip-always-visible</code> - they stay visible
+              during focus mode.
+            </p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="mock-stats" data-tip-id="always-stats">
+            <div className="mock-stat-card">
+              <span className="mock-stat-value">1,234</span>
+              <span className="mock-stat-label">Total Users</span>
+            </div>
+            <div className="mock-stat-card">
+              <span className="mock-stat-value">567</span>
+              <span className="mock-stat-label">Active Now</span>
+            </div>
+            <div className="mock-stat-card">
+              <span className="mock-stat-value">89%</span>
+              <span className="mock-stat-label">Satisfaction</span>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="mock-actions" data-tip-id="always-actions">
+            <h3 className="mock-section-title">Quick Actions</h3>
+            <div className="mock-action-buttons">
+              <button className="mock-action-btn" data-tip="Create a new project">
+                + New Project
+              </button>
+              <button className="mock-action-btn" data-tip="Export data to CSV">
+                📤 Export Data
+              </button>
+              <button className="mock-action-btn" data-tip="Email report to team">
+                📧 Send Report
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export const AlwaysVisibleElements: Story = {
+  render: () => (
+    <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
+      <AlwaysVisibleDemo />
+    </TipMagicProvider>
+  ),
+};
+
+// =============================================================================
 // Complete Tour Example
 // =============================================================================
 

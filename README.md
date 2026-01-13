@@ -183,24 +183,25 @@ function MyComponent() {
 
 ## Data Attributes
 
-| Attribute              | Description                               | Example                       |
-| ---------------------- | ----------------------------------------- | ----------------------------- |
-| `data-tip`             | Tooltip content                           | `data-tip="Hello"`            |
-| `data-tip-id`          | Element identifier for flows              | `data-tip-id="welcome"`       |
-| `data-tip-placement`   | Position (top, bottom, left, right, etc.) | `data-tip-placement="bottom"` |
-| `data-tip-delay`       | Show delay in ms                          | `data-tip-delay="500"`        |
-| `data-tip-hide-delay`  | Hide delay in ms                          | `data-tip-hide-delay="100"`   |
-| `data-tip-disabled`    | Disable tooltip                           | `data-tip-disabled`           |
-| `data-tip-ellipsis`    | Enable text truncation                    | `data-tip-ellipsis`           |
-| `data-tip-max-lines`   | Max lines before truncation               | `data-tip-max-lines="2"`      |
-| `data-tip-word-wrap`   | Enable word wrapping                      | `data-tip-word-wrap`          |
-| `data-tip-max-width`   | Maximum width in pixels                   | `data-tip-max-width="300"`    |
-| `data-tip-html`        | Parse content as HTML                     | `data-tip-html`               |
-| `data-tip-interactive` | Keep tooltip on hover                     | `data-tip-interactive`        |
-| `data-tip-move`        | Smooth move transition                    | `data-tip-move`               |
-| `data-tip-jump`        | Jump transition                           | `data-tip-jump`               |
-| `data-tip-group`       | Group identifier for transitions          | `data-tip-group="nav"`        |
-| `data-tip-no-arrow`    | Hide tooltip arrow                        | `data-tip-no-arrow`           |
+| Attribute                 | Description                               | Example                       |
+| ------------------------- | ----------------------------------------- | ----------------------------- |
+| `data-tip`                | Tooltip content                           | `data-tip="Hello"`            |
+| `data-tip-id`             | Element identifier for flows              | `data-tip-id="welcome"`       |
+| `data-tip-placement`      | Position (top, bottom, left, right, etc.) | `data-tip-placement="bottom"` |
+| `data-tip-delay`          | Show delay in ms                          | `data-tip-delay="500"`        |
+| `data-tip-hide-delay`     | Hide delay in ms                          | `data-tip-hide-delay="100"`   |
+| `data-tip-disabled`       | Disable tooltip                           | `data-tip-disabled`           |
+| `data-tip-ellipsis`       | Enable text truncation                    | `data-tip-ellipsis`           |
+| `data-tip-max-lines`      | Max lines before truncation               | `data-tip-max-lines="2"`      |
+| `data-tip-word-wrap`      | Enable word wrapping                      | `data-tip-word-wrap`          |
+| `data-tip-max-width`      | Maximum width in pixels                   | `data-tip-max-width="300"`    |
+| `data-tip-html`           | Parse content as HTML                     | `data-tip-html`               |
+| `data-tip-interactive`    | Keep tooltip on hover                     | `data-tip-interactive`        |
+| `data-tip-move`           | Smooth move transition                    | `data-tip-move`               |
+| `data-tip-jump`           | Jump transition                           | `data-tip-jump`               |
+| `data-tip-group`          | Group identifier for transitions          | `data-tip-group="nav"`        |
+| `data-tip-no-arrow`       | Hide tooltip arrow                        | `data-tip-no-arrow`           |
+| `data-tip-always-visible` | Keep element visible during tour focus    | `data-tip-always-visible`     |
 
 ## Documentation
 
