@@ -55,4 +55,4 @@ export { generateTooltipId, parseContent, parseDataAttributes } from './utils/pa
 export type { ParsedContent } from './utils/parseDataAttributes';
 
 // Version
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.1';

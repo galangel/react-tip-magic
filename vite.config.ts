@@ -20,7 +20,7 @@ function cssPlugin() {
       }
 
       // Read all CSS files in order
-      const cssFiles = ['variables.css', 'tooltip.css', 'index.css'];
+      const cssFiles = ['variables.css', 'tooltip.css', 'tour.css', 'index.css'];
       let combinedCss = '/* React Tip Magic Styles */\n\n';
 
       for (const file of cssFiles) {
