@@ -1,5 +1,5 @@
 import { DEFAULT_OPTIONS } from '../constants';
-import type { ParsedTooltipData, Placement, TextBreak, TooltipTransitionBehavior } from '../types';
+import type { ParsedTooltipData, Placement, TextBreak } from '../types';
 
 /**
  * Valid placement values
@@ -50,7 +50,7 @@ function parseBooleanAttribute(value: string | undefined): boolean {
  * Parse transition behavior from data attributes
  * data-tip-move takes precedence over data-tip-jump
  */
-function parseTransitionBehavior(dataset: DOMStringMap): TooltipTransitionBehavior | undefined {
+function parseTransitionBehavior(dataset: DOMStringMap): 'move' | 'jump' | undefined {
   if (dataset.tipMove !== undefined) {
     return 'move';
   }
@@ -107,38 +107,10 @@ export function parseDataAttributes(element: Element): ParsedTooltipData {
     transitionBehavior: parseTransitionBehavior(dataset),
     moveTransitionDuration: parseOptionalInt(dataset.tipMoveDuration),
     showArrow: !parseBooleanAttribute(dataset.tipNoArrow),
-    contentSeparator: dataset.tipSeparator,
+    shortcut: dataset.tipShortcut,
     group: dataset.tipGroup,
     showOnFocus: parseBooleanAttribute(dataset.tipShowOnFocus),
   };
-}
-
-/**
- * Parsed content with optional keyboard shortcut
- */
-export interface ParsedContent {
-  main: string;
-  shortcut?: string;
-}
-
-/**
- * Parse tooltip content to extract keyboard shortcut
- * Format: "Main text; keyboard shortcut"
- */
-export function parseContent(
-  content: string,
-  separator: string = DEFAULT_OPTIONS.contentSeparator
-): ParsedContent {
-  const parts = content.split(separator).map((s) => s.trim());
-
-  if (parts.length >= 2) {
-    return {
-      main: parts[0],
-      shortcut: parts.slice(1).join(separator),
-    };
-  }
-
-  return { main: content };
 }
 
 /**

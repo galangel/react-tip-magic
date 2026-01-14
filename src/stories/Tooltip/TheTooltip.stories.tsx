@@ -11,7 +11,7 @@ import './tooltip-stories.css';
  * ## Features
  * - **Single instance**: One tooltip moves between targets for smooth transitions
  * - **Data attribute based**: Just add `data-tip` to any element
- * - **Keyboard shortcut support**: Use `; ` to separate content from shortcuts
+ * - **Keyboard shortcut support**: Use `data-tip-shortcut` attribute for shortcuts
  * - **Floating UI powered**: Smart positioning with flip/shift
  * - **Accessible**: Keyboard and screen reader support
  * - **TypeScript support**: Use `getTipProps()` for typed tooltip configuration
@@ -58,13 +58,13 @@ export const TheTooltip: Story = {
     transitionBehavior: 'jump',
     moveTransitionDuration: 100,
     showArrow: true,
-    contentSeparator: ';',
+    shortcut: '',
     showOnFocus: false,
   },
   argTypes: {
     tip: {
       control: 'text',
-      description: 'Tooltip content. Use "; " to add keyboard shortcuts (e.g., "Save; ⌘S")',
+      description: 'Tooltip content text',
     },
     placement: {
       control: 'select',
@@ -139,10 +139,9 @@ export const TheTooltip: Story = {
       control: 'boolean',
       description: 'Show or hide the tooltip arrow',
     },
-    contentSeparator: {
+    shortcut: {
       control: 'text',
-      description:
-        'Character(s) to separate main text from keyboard shortcut (e.g., "Save; ⌘S" uses ";")',
+      description: 'Keyboard shortcut to display (e.g., "⌘S")',
     },
     showOnFocus: {
       control: 'boolean',
@@ -152,6 +151,14 @@ export const TheTooltip: Story = {
   render: (args) => {
     const tipProps = getTipProps(args);
 
+    // Filter out empty/default values for cleaner code preview
+    const displayArgs = Object.fromEntries(
+      Object.entries(args).filter(([key, value]) => {
+        if (key === 'shortcut' && value === '') return false;
+        return true;
+      })
+    );
+
     return (
       <TipMagicProvider>
         <div className="story-container">
@@ -159,6 +166,8 @@ export const TheTooltip: Story = {
             Using <code>getTipProps()</code> for typed tooltip configuration.
             <br />
             Adjust the controls below to see different tooltip behaviors.
+            <br />
+            <em>Try adding a shortcut like "⌘S" or "Ctrl+C" to see it styled!</em>
           </p>
           <button className="story-button" {...tipProps}>
             Hover me
@@ -167,7 +176,7 @@ export const TheTooltip: Story = {
             Hover me
           </button>
           <pre className="story-code">
-            {`const tipProps = getTipProps(${JSON.stringify(args, null, 2)});
+            {`const tipProps = getTipProps(${JSON.stringify(displayArgs, null, 2)});
 
 <button {...tipProps}>Hover me</button>`}
           </pre>

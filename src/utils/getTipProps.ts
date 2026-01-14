@@ -41,8 +41,8 @@ export interface TipPropsOptions {
   moveTransitionDuration?: number;
   /** Show or hide the arrow (default: true) */
   showArrow?: boolean;
-  /** Override content separator for keyboard shortcuts (default: ';') */
-  contentSeparator?: string;
+  /** Keyboard shortcut to display alongside the tooltip content */
+  shortcut?: string;
   /** Show tooltip when element receives keyboard focus */
   showOnFocus?: boolean;
 }
@@ -68,7 +68,7 @@ export interface TipPropsResult {
   'data-tip-jump'?: '';
   'data-tip-move-duration'?: string;
   'data-tip-no-arrow'?: '';
-  'data-tip-separator'?: string;
+  'data-tip-shortcut'?: string;
   'data-tip-show-on-focus'?: '';
 }
 
@@ -91,7 +91,8 @@ export interface TipPropsResult {
  * ```tsx
  * // With keyboard shortcut
  * const tipProps = getTipProps({
- *   tip: 'Copy; ⌘C',
+ *   tip: 'Copy',
+ *   shortcut: '⌘C',
  *   hideDelay: 500,
  * });
  *
@@ -165,8 +166,8 @@ export function getTipProps(options: TipPropsOptions): TipPropsResult {
     result['data-tip-no-arrow'] = '';
   }
 
-  if (options.contentSeparator !== undefined) {
-    result['data-tip-separator'] = options.contentSeparator;
+  if (options.shortcut !== undefined && options.shortcut !== '') {
+    result['data-tip-shortcut'] = options.shortcut;
   }
 
   if (options.showOnFocus) {

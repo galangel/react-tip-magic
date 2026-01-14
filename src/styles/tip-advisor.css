@@ -1,0 +1,552 @@
+/**
+ * TipAdvisor Styles
+ *
+ * Styles for the optional TipAdvisor menu component that displays
+ * all tooltips with keyboard shortcuts for discoverability.
+ *
+ * All colors and sizing are controlled via CSS custom properties.
+ * Override these in your own stylesheet to customize the appearance.
+ */
+
+/* ==========================================================================
+   CSS CUSTOM PROPERTIES
+   ========================================================================== */
+
+:root {
+  /* --------------------------------------------------------------------------
+     BACKGROUND COLORS
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Background color of the menu panel
+   * @default Semi-transparent dark gray
+   */
+  --tip-advisor-bg: rgba(24, 24, 27, 0.95);
+
+  /**
+   * Background color of the backdrop overlay
+   * @default Semi-transparent black
+   */
+  --tip-advisor-backdrop-bg: rgba(0, 0, 0, 0.5);
+
+  /**
+   * Background color of menu items (default state)
+   * @default Transparent
+   */
+  --tip-advisor-item-bg: transparent;
+
+  /**
+   * Background color of menu items on hover
+   * @default Semi-transparent white
+   */
+  --tip-advisor-item-hover-bg: rgba(255, 255, 255, 0.1);
+
+  /**
+   * Background color of menu items on keyboard focus
+   * @default Slightly more opaque white
+   */
+  --tip-advisor-item-focus-bg: rgba(255, 255, 255, 0.15);
+
+  /* --------------------------------------------------------------------------
+     TEXT COLORS
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Primary text color
+   * @default Near-white
+   */
+  --tip-advisor-text: #fafafa;
+
+  /**
+   * Secondary/muted text color
+   * @default Light gray
+   */
+  --tip-advisor-text-secondary: #a1a1aa;
+
+  /**
+   * Text color for shortcut badges
+   * @default Light gray
+   */
+  --tip-advisor-shortcut-text: #e5e7eb;
+
+  /**
+   * Background color for shortcut badges
+   * @default Semi-transparent white
+   */
+  --tip-advisor-shortcut-bg: rgba(255, 255, 255, 0.15);
+
+  /* --------------------------------------------------------------------------
+     BORDER & SHAPE
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Border style for the menu panel
+   * @default Subtle white border
+   */
+  --tip-advisor-border: 1px solid rgba(255, 255, 255, 0.1);
+
+  /**
+   * Border radius for the menu panel
+   * @default 12px (rounded corners)
+   */
+  --tip-advisor-border-radius: 12px;
+
+  /**
+   * Border radius for menu items
+   * @default 8px
+   */
+  --tip-advisor-item-border-radius: 8px;
+
+  /* --------------------------------------------------------------------------
+     SHADOWS
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Box shadow for the menu panel
+   * @default Large soft shadow
+   */
+  --tip-advisor-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+  /* --------------------------------------------------------------------------
+     SIZING
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Width of the menu panel
+   * @default 320px
+   */
+  --tip-advisor-width: 320px;
+
+  /**
+   * Maximum height of the menu panel (scrollable if exceeded)
+   * @default 400px
+   */
+  --tip-advisor-max-height: 400px;
+
+  /**
+   * Padding inside the menu panel
+   * @default 8px
+   */
+  --tip-advisor-padding: 8px;
+
+  /**
+   * Padding inside menu items
+   * @default 10px 12px
+   */
+  --tip-advisor-item-padding: 10px 12px;
+
+  /**
+   * Gap between menu items
+   * @default 0px
+   */
+  --tip-advisor-gap: 0px;
+
+  /* --------------------------------------------------------------------------
+     ANIMATION
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Duration of show/hide animations
+   * @default 150ms
+   */
+  --tip-advisor-animation-duration: 150ms;
+
+  /* --------------------------------------------------------------------------
+     SEARCH INPUT
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Background color for the search input
+   * @default Semi-transparent white
+   */
+  --tip-advisor-search-bg: rgba(255, 255, 255, 0.1);
+
+  /**
+   * Border color for the search input
+   * @default Semi-transparent white
+   */
+  --tip-advisor-search-border: rgba(255, 255, 255, 0.15);
+
+  /**
+   * Border color for the search input when focused
+   * @default Semi-transparent white (more visible)
+   */
+  --tip-advisor-search-focus-border: rgba(255, 255, 255, 0.3);
+
+  /**
+   * Text color for the search input
+   * @default Near-white
+   */
+  --tip-advisor-search-text: #fafafa;
+
+  /**
+   * Placeholder text color for the search input
+   * @default Light gray
+   */
+  --tip-advisor-search-placeholder: #71717a;
+
+  /* --------------------------------------------------------------------------
+     HIGHLIGHT (SEARCH MATCH)
+     -------------------------------------------------------------------------- */
+
+  /**
+   * Background color for highlighted/matched text
+   * @default Semi-transparent yellow
+   */
+  --tip-advisor-highlight-bg: rgba(250, 204, 21, 0.4);
+
+  /**
+   * Text color for highlighted/matched text
+   * @default Inherit (same as surrounding text)
+   */
+  --tip-advisor-highlight-text: inherit;
+}
+
+/* ==========================================================================
+   MAIN CONTAINER
+   ========================================================================== */
+
+.tip-advisor {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   BACKDROP
+   ========================================================================== */
+
+.tip-advisor-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--tip-advisor-backdrop-bg);
+  animation: tip-advisor-fade-in var(--tip-advisor-animation-duration) ease-out;
+}
+
+@keyframes tip-advisor-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   MENU PANEL
+   ========================================================================== */
+
+.tip-advisor-menu {
+  position: relative;
+  width: var(--tip-advisor-width);
+  max-height: var(--tip-advisor-max-height);
+  background: var(--tip-advisor-bg);
+  border: var(--tip-advisor-border);
+  border-radius: var(--tip-advisor-border-radius);
+  box-shadow: var(--tip-advisor-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: tip-advisor-scale-in var(--tip-advisor-animation-duration) ease-out;
+}
+
+@keyframes tip-advisor-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==========================================================================
+   POSITION VARIANTS
+   ========================================================================== */
+
+/* Center (default) - already centered via flexbox */
+.tip-advisor-menu--center {
+  /* No additional styles needed */
+}
+
+/* Bottom right */
+.tip-advisor-menu--bottom-right {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  top: auto;
+  left: auto;
+}
+
+/* Bottom left */
+.tip-advisor-menu--bottom-left {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  top: auto;
+  right: auto;
+}
+
+/* Top right */
+.tip-advisor-menu--top-right {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  bottom: auto;
+  left: auto;
+}
+
+/* Top left */
+.tip-advisor-menu--top-left {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  bottom: auto;
+  right: auto;
+}
+
+/* Top (centered horizontally) */
+.tip-advisor-menu--top {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: auto;
+  right: auto;
+  animation: tip-advisor-scale-in-centered var(--tip-advisor-animation-duration) ease-out;
+}
+
+/* Bottom (centered horizontally) */
+.tip-advisor-menu--bottom {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: auto;
+  right: auto;
+  animation: tip-advisor-scale-in-centered var(--tip-advisor-animation-duration) ease-out;
+}
+
+/* Animation for horizontally centered positions (preserves translateX) */
+@keyframes tip-advisor-scale-in-centered {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+
+.tip-advisor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: var(--tip-advisor-border);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   SEARCH INPUT
+   ========================================================================== */
+
+.tip-advisor-search {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  background: var(--tip-advisor-search-bg);
+  border: 1px solid var(--tip-advisor-search-border);
+  border-radius: 8px;
+  color: var(--tip-advisor-search-text);
+  font-size: 13px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  outline: none;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.tip-advisor-search:focus {
+  border-color: var(--tip-advisor-search-focus-border);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tip-advisor-search::placeholder {
+  color: var(--tip-advisor-search-placeholder);
+}
+
+.tip-advisor-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--tip-advisor-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.tip-advisor-close:hover {
+  background: var(--tip-advisor-item-hover-bg);
+  color: var(--tip-advisor-text);
+}
+
+.tip-advisor-close:focus {
+  outline: none;
+  background: var(--tip-advisor-item-focus-bg);
+  color: var(--tip-advisor-text);
+}
+
+/* ==========================================================================
+   LIST CONTAINER
+   ========================================================================== */
+
+.tip-advisor-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--tip-advisor-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tip-advisor-gap);
+}
+
+/* Custom scrollbar */
+.tip-advisor-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tip-advisor-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tip-advisor-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.tip-advisor-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================================================
+   MENU ITEMS
+   ========================================================================== */
+
+.tip-advisor-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--tip-advisor-item-padding);
+  background: var(--tip-advisor-item-bg);
+  border-radius: var(--tip-advisor-item-border-radius);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  user-select: none;
+}
+
+.tip-advisor-item:hover,
+.tip-advisor-item--hover {
+  background: var(--tip-advisor-item-hover-bg);
+}
+
+.tip-advisor-item--focus {
+  background: var(--tip-advisor-item-focus-bg);
+}
+
+.tip-advisor-item-content {
+  font-size: 13px;
+  color: var(--tip-advisor-text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tip-advisor-item-shortcut {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 6px;
+  margin-left: 12px;
+  background: var(--tip-advisor-shortcut-bg);
+  color: var(--tip-advisor-shortcut-text);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   EMPTY STATE
+   ========================================================================== */
+
+.tip-advisor-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--tip-advisor-text-secondary);
+  font-size: 13px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ==========================================================================
+   SEARCH HIGHLIGHT
+   ========================================================================== */
+
+.tip-advisor-item-content mark,
+.tip-advisor-item-shortcut mark {
+  background: var(--tip-advisor-highlight-bg);
+  color: var(--tip-advisor-highlight-text);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ==========================================================================
+   NO BACKDROP VARIANT
+   ========================================================================== */
+
+.tip-advisor--no-backdrop {
+  pointer-events: none;
+}
+
+.tip-advisor--no-backdrop .tip-advisor-menu {
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .tip-advisor-backdrop,
+  .tip-advisor-menu {
+    animation: none;
+  }
+
+  .tip-advisor-item,
+  .tip-advisor-close {
+    transition: none;
+  }
+}

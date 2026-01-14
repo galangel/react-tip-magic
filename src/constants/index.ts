@@ -38,7 +38,11 @@ export const DATA_ATTRIBUTES = {
   TIP_MOVE_DURATION: 'data-tip-move-duration',
   TIP_GROUP: 'data-tip-group',
   TIP_NO_ARROW: 'data-tip-no-arrow',
-  TIP_SEPARATOR: 'data-tip-separator',
+  /**
+   * Keyboard shortcut to display alongside the tooltip content.
+   * @example <button data-tip="Copy" data-tip-shortcut="⌘C">Copy</button>
+   */
+  TIP_SHORTCUT: 'data-tip-shortcut',
   TIP_SHOW_ON_FOCUS: 'data-tip-show-on-focus',
   /**
    * Elements with this attribute will remain visible (not masked) during tour focus.
@@ -82,7 +86,6 @@ export const DEFAULT_OPTIONS: Required<TipMagicOptions> = {
   zIndex: 9999,
   disabled: false,
   portalContainer: null as unknown as HTMLElement,
-  contentSeparator: ';',
   enableShortcutStyle: true,
   respectReducedMotion: true,
   transitionBehavior: 'jump' as TooltipTransitionBehavior,

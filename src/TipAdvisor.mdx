@@ -1,0 +1,1087 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Tooltip/TipAdvisor/Documentation" />
+
+# TipAdvisor
+
+A discoverable menu component with fuzzy search that displays all tooltips with keyboard shortcuts, allowing users to explore and trigger actions via keyboard or mouse.
+
+## Overview
+
+The TipAdvisor is an **optional, standalone component** that you add alongside `TipMagicProvider` when you want shortcut discoverability. It:
+
+- Collects all elements with `data-tip` and `data-tip-shortcut` attributes
+- Supports **preset items** for command palette patterns (no DOM elements needed)
+- Provides fuzzy search to filter shortcuts
+- Highlights matching text in search results
+- Shows tooltips on target elements when hovering menu items
+- Triggers clicks on target elements when selecting menu items
+
+**Key features:**
+
+- Keyboard activated (F1 by default)
+- Fuzzy search with highlighting (powered by fuzzysort)
+- Hover preview of tooltips on target elements
+- Click to trigger the target element
+- Preset items for command palette patterns
+- Arrow key navigation
+- Optional backdrop overlay
+- Fully themeable via CSS custom properties
+- Zero overhead when not used
+
+---
+
+## Quick Start
+
+```tsx
+import { TipMagicProvider, TipAdvisor } from 'react-tip-magic';
+
+function App() {
+  return (
+    <TipMagicProvider>
+      {/* Your app with tooltip elements */}
+      <button data-tip="Copy" data-tip-shortcut="⌘C">
+        Copy
+      </button>
+      <button data-tip="Paste" data-tip-shortcut="⌘V">
+        Paste
+      </button>
+
+      {/* Add TipAdvisor - optional! */}
+      <TipAdvisor />
+    </TipMagicProvider>
+  );
+}
+```
+
+Press **F1** to open the TipAdvisor menu, then start typing to search.
+
+---
+
+## API Reference
+
+### TipAdvisor Props
+
+<table>
+  <thead>
+    <tr>
+      <th>Prop</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>triggerKey</code>
+      </td>
+      <td>string</td>
+      <td>
+        <code>'F1'</code>
+      </td>
+      <td>Key to toggle the TipAdvisor menu</td>
+    </tr>
+    <tr>
+      <td>
+        <code>position</code>
+      </td>
+      <td>TipAdvisorPosition</td>
+      <td>
+        <code>'center'</code>
+      </td>
+      <td>
+        Menu position: 'center', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left',
+        'bottom-right'
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>showCloseButton</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>true</code>
+      </td>
+      <td>Show close button in header</td>
+    </tr>
+    <tr>
+      <td>
+        <code>showBackdrop</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>true</code>
+      </td>
+      <td>Show backdrop overlay behind the menu</td>
+    </tr>
+    <tr>
+      <td>
+        <code>closeOnBackdropClick</code>
+      </td>
+      <td>boolean</td>
+      <td>
+        <code>true</code>
+      </td>
+      <td>Close menu when clicking the backdrop (only applies if showBackdrop is true)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>searchPlaceholder</code>
+      </td>
+      <td>string</td>
+      <td>
+        <code>'Search shortcuts...'</code>
+      </td>
+      <td>Placeholder text for the search input</td>
+    </tr>
+    <tr>
+      <td>
+        <code>selector</code>
+      </td>
+      <td>string | null</td>
+      <td>
+        <code>'[data-tip][data-tip-shortcut]'</code>
+      </td>
+      <td>
+        CSS selector for elements to include. Set to <code>null</code> to disable DOM scanning
+        (useful for preset-only menus)
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>items</code>
+      </td>
+      <td>TipAdvisorPresetItem[]</td>
+      <td>-</td>
+      <td>
+        Preset items for command palette patterns. These are added alongside DOM-scanned items
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>className</code>
+      </td>
+      <td>string</td>
+      <td>-</td>
+      <td>Custom CSS class for the menu container</td>
+    </tr>
+    <tr>
+      <td>
+        <code>itemClassName</code>
+      </td>
+      <td>string</td>
+      <td>-</td>
+      <td>Custom CSS class for menu items</td>
+    </tr>
+    <tr>
+      <td>
+        <code>onOpen</code>
+      </td>
+      <td>function</td>
+      <td>-</td>
+      <td>Callback when menu opens</td>
+    </tr>
+    <tr>
+      <td>
+        <code>onClose</code>
+      </td>
+      <td>function</td>
+      <td>-</td>
+      <td>Callback when menu closes</td>
+    </tr>
+  </tbody>
+</table>
+
+### useTipAdvisor Hook
+
+For programmatic control of the TipAdvisor:
+
+```tsx
+import { useTipAdvisor, TipAdvisor } from 'react-tip-magic';
+
+function MyComponent() {
+  const advisor = useTipAdvisor();
+
+  return (
+    <>
+      <button onClick={advisor.open}>Open Shortcuts</button>
+      <button onClick={advisor.close}>Close</button>
+      <button onClick={advisor.toggle}>Toggle</button>
+
+      <TipAdvisor ref={advisor.ref} />
+    </>
+  );
+}
+```
+
+**Returns:**
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>ref</code>
+      </td>
+      <td>React.RefObject</td>
+      <td>Ref to pass to TipAdvisor component</td>
+    </tr>
+    <tr>
+      <td>
+        <code>open</code>
+      </td>
+      <td>function</td>
+      <td>Open the TipAdvisor menu</td>
+    </tr>
+    <tr>
+      <td>
+        <code>close</code>
+      </td>
+      <td>function</td>
+      <td>Close the TipAdvisor menu</td>
+    </tr>
+    <tr>
+      <td>
+        <code>toggle</code>
+      </td>
+      <td>function</td>
+      <td>Toggle the TipAdvisor menu</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Preset Items
+
+For command palette patterns or actions not tied to DOM elements, use the `items` prop with `TipAdvisorPresetItem` objects:
+
+### TipAdvisorPresetItem
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>id</code>
+      </td>
+      <td>string</td>
+      <td>Yes</td>
+      <td>Unique identifier for the item</td>
+    </tr>
+    <tr>
+      <td>
+        <code>label</code>
+      </td>
+      <td>string</td>
+      <td>Yes</td>
+      <td>Text displayed in the menu</td>
+    </tr>
+    <tr>
+      <td>
+        <code>shortcut</code>
+      </td>
+      <td>string</td>
+      <td>No</td>
+      <td>Keyboard shortcut to display (optional)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>onSelect</code>
+      </td>
+      <td>function</td>
+      <td>Yes</td>
+      <td>Callback executed when item is selected</td>
+    </tr>
+  </tbody>
+</table>
+
+### Command Palette Example
+
+```tsx
+import { TipAdvisor, useTipAdvisor, TipAdvisorPresetItem } from 'react-tip-magic';
+
+function CommandPalette() {
+  const advisor = useTipAdvisor();
+
+  const commands: TipAdvisorPresetItem[] = [
+    {
+      id: 'new-file',
+      label: 'New File',
+      shortcut: '⌘N',
+      onSelect: () => console.log('Creating new file...'),
+    },
+    {
+      id: 'open-file',
+      label: 'Open File',
+      shortcut: '⌘O',
+      onSelect: () => console.log('Opening file picker...'),
+    },
+    {
+      id: 'save',
+      label: 'Save',
+      shortcut: '⌘S',
+      onSelect: () => console.log('Saving...'),
+    },
+    {
+      id: 'settings',
+      label: 'Open Settings',
+      shortcut: '⌘,',
+      onSelect: () => console.log('Opening settings...'),
+    },
+  ];
+
+  return (
+    <>
+      <button onClick={advisor.toggle}>
+        Quick Actions (⌘K)
+      </button>
+
+      <TipAdvisor
+        ref={advisor.ref}
+        triggerKey="k"
+        position="top"
+        selector={null}  {/* Disable DOM scanning */}
+        items={commands}
+        searchPlaceholder="Type a command..."
+        className="command-palette"
+      />
+
+      <style>{`
+        .command-palette {
+          --tip-advisor-width: 600px;
+        }
+      `}</style>
+    </>
+  );
+}
+```
+
+### Combining DOM Elements and Preset Items
+
+You can use both DOM-scanned elements and preset items together:
+
+```tsx
+<TipAdvisor
+  selector="[data-tip][data-tip-shortcut]"  {/* Scan DOM for shortcuts */}
+  items={additionalCommands}                 {/* Add extra items */}
+/>
+```
+
+---
+
+## Fuzzy Search
+
+The TipAdvisor includes built-in fuzzy search powered by [fuzzysort](https://github.com/farzher/fuzzysort). When you start typing:
+
+- Results are filtered in real-time
+- Matching characters are highlighted
+- Both tooltip content and shortcuts are searchable
+- Typos and partial matches work
+
+### Search Behavior
+
+- The search input is autofocused when the menu opens
+- Type to filter the list instantly
+- Matching parts are highlighted with `<mark>` elements
+- Arrow keys navigate filtered results
+- Enter selects the focused item
+
+---
+
+## Keyboard Navigation
+
+<table>
+  <thead>
+    <tr>
+      <th>Key</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>F1</code>
+      </td>
+      <td>
+        Toggle the TipAdvisor menu (configurable via <code>triggerKey</code>)
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>Escape</code>
+      </td>
+      <td>Close the menu</td>
+    </tr>
+    <tr>
+      <td>
+        <code>Arrow Down</code>
+      </td>
+      <td>Move to next item</td>
+    </tr>
+    <tr>
+      <td>
+        <code>Arrow Up</code>
+      </td>
+      <td>Move to previous item</td>
+    </tr>
+    <tr>
+      <td>
+        <code>Enter</code>
+      </td>
+      <td>Select focused item (triggers click on target element)</td>
+    </tr>
+    <tr>
+      <td>Any character</td>
+      <td>Start searching (input is autofocused)</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## CSS Custom Properties
+
+Override these CSS variables to customize the appearance:
+
+### Background Colors
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>--tip-advisor-bg</code>
+      </td>
+      <td>
+        <code>rgba(24, 24, 27, 0.95)</code>
+      </td>
+      <td>Menu background color</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-backdrop-bg</code>
+      </td>
+      <td>
+        <code>rgba(0, 0, 0, 0.5)</code>
+      </td>
+      <td>Backdrop overlay color</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-item-bg</code>
+      </td>
+      <td>
+        <code>transparent</code>
+      </td>
+      <td>Item background (default state)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-item-hover-bg</code>
+      </td>
+      <td>
+        <code>rgba(255, 255, 255, 0.1)</code>
+      </td>
+      <td>Item background on hover</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-item-focus-bg</code>
+      </td>
+      <td>
+        <code>rgba(255, 255, 255, 0.15)</code>
+      </td>
+      <td>Item background on keyboard focus</td>
+    </tr>
+  </tbody>
+</table>
+
+### Text Colors
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>--tip-advisor-text</code>
+      </td>
+      <td>
+        <code>#fafafa</code>
+      </td>
+      <td>Primary text color</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-text-secondary</code>
+      </td>
+      <td>
+        <code>#a1a1aa</code>
+      </td>
+      <td>Secondary/muted text color</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-shortcut-text</code>
+      </td>
+      <td>
+        <code>#e5e7eb</code>
+      </td>
+      <td>Shortcut badge text color</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-shortcut-bg</code>
+      </td>
+      <td>
+        <code>rgba(255, 255, 255, 0.15)</code>
+      </td>
+      <td>Shortcut badge background</td>
+    </tr>
+  </tbody>
+</table>
+
+### Search Input
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>--tip-advisor-search-bg</code>
+      </td>
+      <td>
+        <code>rgba(255, 255, 255, 0.1)</code>
+      </td>
+      <td>Search input background</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-search-border</code>
+      </td>
+      <td>
+        <code>rgba(255, 255, 255, 0.15)</code>
+      </td>
+      <td>Search input border color</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-search-focus-border</code>
+      </td>
+      <td>
+        <code>rgba(255, 255, 255, 0.3)</code>
+      </td>
+      <td>Search input border when focused</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-search-text</code>
+      </td>
+      <td>
+        <code>#fafafa</code>
+      </td>
+      <td>Search input text color</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-search-placeholder</code>
+      </td>
+      <td>
+        <code>#71717a</code>
+      </td>
+      <td>Search input placeholder color</td>
+    </tr>
+  </tbody>
+</table>
+
+### Search Highlight
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>--tip-advisor-highlight-bg</code>
+      </td>
+      <td>
+        <code>rgba(250, 204, 21, 0.4)</code>
+      </td>
+      <td>Highlighted match background</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-highlight-text</code>
+      </td>
+      <td>
+        <code>inherit</code>
+      </td>
+      <td>Highlighted match text color</td>
+    </tr>
+  </tbody>
+</table>
+
+### Border & Shape
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>--tip-advisor-border</code>
+      </td>
+      <td>
+        <code>1px solid rgba(255, 255, 255, 0.1)</code>
+      </td>
+      <td>Menu border</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-border-radius</code>
+      </td>
+      <td>
+        <code>12px</code>
+      </td>
+      <td>Menu border radius</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-item-border-radius</code>
+      </td>
+      <td>
+        <code>8px</code>
+      </td>
+      <td>Item border radius</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-shadow</code>
+      </td>
+      <td>
+        <code>0 25px 50px -12px rgba(0, 0, 0, 0.5)</code>
+      </td>
+      <td>Menu shadow</td>
+    </tr>
+  </tbody>
+</table>
+
+### Sizing
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>--tip-advisor-width</code>
+      </td>
+      <td>
+        <code>320px</code>
+      </td>
+      <td>Menu width</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-max-height</code>
+      </td>
+      <td>
+        <code>400px</code>
+      </td>
+      <td>Maximum menu height (scrollable)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-padding</code>
+      </td>
+      <td>
+        <code>8px</code>
+      </td>
+      <td>Menu padding</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-item-padding</code>
+      </td>
+      <td>
+        <code>10px 12px</code>
+      </td>
+      <td>Item padding</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-gap</code>
+      </td>
+      <td>
+        <code>4px</code>
+      </td>
+      <td>Gap between items</td>
+    </tr>
+    <tr>
+      <td>
+        <code>--tip-advisor-animation-duration</code>
+      </td>
+      <td>
+        <code>150ms</code>
+      </td>
+      <td>Animation duration</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## CSS Classes Reference
+
+Override these classes for custom styling:
+
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>.tip-advisor</code>
+      </td>
+      <td>Main container (fixed, full screen)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor--no-backdrop</code>
+      </td>
+      <td>Applied when showBackdrop is false</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-backdrop</code>
+      </td>
+      <td>Backdrop overlay</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-menu</code>
+      </td>
+      <td>Menu panel</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-header</code>
+      </td>
+      <td>Header section (contains search and close button)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-search</code>
+      </td>
+      <td>Search input field</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-close</code>
+      </td>
+      <td>Close button</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-list</code>
+      </td>
+      <td>Items list container</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-item</code>
+      </td>
+      <td>Individual menu item</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-item--hover</code>
+      </td>
+      <td>Hovered item state</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-item--focus</code>
+      </td>
+      <td>Keyboard-focused item state</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-item-content</code>
+      </td>
+      <td>Item text content</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-item-shortcut</code>
+      </td>
+      <td>Shortcut badge</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-item-content mark</code>
+      </td>
+      <td>Highlighted search match in content</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-item-shortcut mark</code>
+      </td>
+      <td>Highlighted search match in shortcut</td>
+    </tr>
+  </tbody>
+</table>
+
+### Position Variants
+
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>.tip-advisor-menu--center</code>
+      </td>
+      <td>Centered (default)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-menu--top</code>
+      </td>
+      <td>Top center</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-menu--bottom</code>
+      </td>
+      <td>Bottom center</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-menu--top-left</code>
+      </td>
+      <td>Top left corner</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-menu--top-right</code>
+      </td>
+      <td>Top right corner</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-menu--bottom-left</code>
+      </td>
+      <td>Bottom left corner</td>
+    </tr>
+    <tr>
+      <td>
+        <code>.tip-advisor-menu--bottom-right</code>
+      </td>
+      <td>Bottom right corner</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Examples & Patterns
+
+### Toolbar Shortcuts with Search
+
+```tsx
+<div className="toolbar">
+  <button data-tip="Bold" data-tip-shortcut="⌘B">B</button>
+  <button data-tip="Italic" data-tip-shortcut="⌘I">I</button>
+  <button data-tip="Link" data-tip-shortcut="⌘K">🔗</button>
+</div>
+
+<TipAdvisor position="bottom-right" />
+```
+
+### Without Backdrop
+
+```tsx
+<TipAdvisor showBackdrop={false} position="bottom-right" />
+```
+
+### Custom Search Placeholder
+
+```tsx
+<TipAdvisor searchPlaceholder="Type to find a shortcut..." />
+```
+
+### Custom Highlight Styling
+
+```css
+:root {
+  /* Make highlights more prominent with a blue color */
+  --tip-advisor-highlight-bg: rgba(59, 130, 246, 0.5);
+  --tip-advisor-highlight-text: #ffffff;
+}
+```
+
+### Command Palette Pattern
+
+Use preset items for a command palette that doesn't rely on DOM elements:
+
+```tsx
+const advisor = useTipAdvisor();
+
+const commands: TipAdvisorPresetItem[] = [
+  { id: 'new', label: 'New File', shortcut: '⌘N', onSelect: () => createFile() },
+  { id: 'open', label: 'Open File', shortcut: '⌘O', onSelect: () => openFile() },
+  { id: 'save', label: 'Save', shortcut: '⌘S', onSelect: () => saveFile() },
+];
+
+<button onClick={advisor.toggle}>
+  Quick Actions (⌘K)
+</button>
+
+<TipAdvisor
+  ref={advisor.ref}
+  triggerKey="k"
+  position="top"
+  selector={null}
+  items={commands}
+  searchPlaceholder="Type a command..."
+  className="command-palette"
+/>
+
+<style>{`
+  .command-palette { --tip-advisor-width: 600px; }
+`}</style>
+```
+
+### Custom Toggle Button
+
+```tsx
+const advisor = useTipAdvisor();
+
+<button onClick={advisor.open}>Show Shortcuts</button>
+<button onClick={advisor.toggle}>Toggle (F1)</button>
+
+<TipAdvisor ref={advisor.ref} />
+```
+
+---
+
+## Accessibility
+
+The TipAdvisor is built with accessibility in mind:
+
+- **Role attributes**: Uses `role="dialog"`, `role="menu"`, `role="menuitem"`
+- **ARIA labels**: `aria-modal="true"`, `aria-label` on dialog and search input
+- **Keyboard navigation**: Full keyboard support
+- **Focus management**: Search input is autofocused when menu opens
+- **Reduced motion**: Respects `prefers-reduced-motion`
+
+---
+
+## Best Practices
+
+### When to Use
+
+- Applications with many keyboard shortcuts
+- Power user features
+- Toolbar-heavy interfaces
+- Documentation/help systems
+- Command palette functionality
+
+### DOM Scanning vs Preset Items
+
+**Use DOM scanning (default)** when:
+
+- Shortcuts are tied to visible UI elements
+- You want tooltips to appear on the target elements
+- Clicking should trigger the actual element
+
+**Use preset items** when:
+
+- Building a command palette with actions not tied to UI
+- Actions are contextual or dynamically generated
+- You want full control over what happens when an item is selected
+
+**Combine both** for the best of both worlds:
+
+```tsx
+<TipAdvisor selector="[data-tip][data-tip-shortcut]" items={additionalCommands} />
+```
+
+### What Elements to Include
+
+- Buttons with actions
+- Navigation links
+- Toolbar buttons
+- Form controls with keyboard shortcuts
+
+### Don't Overload
+
+Not every action needs a keyboard shortcut. Focus on:
+
+- Frequently used actions
+- Actions that benefit from quick access
+- Standard shortcuts (copy, paste, save, etc.)
+
+---
+
+## Next Steps
+
+- See the **[TipAdvisor Playground](?path=/story/the-tipadvisor--the-tip-advisor)** for interactive demo
+- Explore **[Use Case Stories](?path=/story/tooltip-tipadvisor--toolbar-shortcuts)** for real-world examples
+- Check the **[Keyboard Shortcuts Guide](?path=/docs/tooltip-keyboard-shortcuts-documentation--docs)** for tooltip shortcuts

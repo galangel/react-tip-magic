@@ -1,6 +1,6 @@
 {
   "name": "@galangel/react-tip-magic",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "A sophisticated, elegant, and performant tooltip library for React with an intelligent floating helper system.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -60,7 +60,8 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@floating-ui/react": "^0.27.16"
+    "@floating-ui/react": "^0.27.16",
+    "fuzzysort": "^3.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",

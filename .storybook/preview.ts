@@ -21,15 +21,7 @@ const preview: Preview = {
     options: {
       // Sort stories with Welcome first
       storySort: {
-        order: [
-          'Welcome',
-          'Tooltip',
-          'Flows',
-          'Keyboard Shortcuts',
-          'Transitions',
-          'Examples',
-          '*',
-        ],
+        order: ['Welcome', 'The Tooltip', 'The Tourtip', 'The TipAdvisor', 'Tooltip', '*'],
       },
     },
   },

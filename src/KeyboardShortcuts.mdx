@@ -8,37 +8,66 @@ Display keyboard shortcuts alongside tooltip content for better discoverability 
 
 ## Overview
 
-React Tip Magic automatically parses tooltip content to extract and style keyboard shortcuts. When a separator character is found in the tooltip content, everything after it is displayed as a styled keyboard shortcut badge.
+React Tip Magic displays keyboard shortcuts as styled badges next to tooltip text. Use the `data-tip-shortcut` attribute to specify the shortcut.
 
 **Key features:**
 
-- Automatic parsing — no extra markup needed
-- Customizable separator (default: `;`)
+- Simple attribute-based API
 - Styled `<kbd>` element for the shortcut
 - CSS custom properties for theming
-- Can be disabled globally or enabled per-element
+- Can be disabled globally
+- Works with TipAdvisor for shortcut discovery
 
 ---
 
 ## Quick Start
 
-Use a semicolon (`;`) to separate the main text from the keyboard shortcut:
+Use `data-tip-shortcut` to add a keyboard shortcut badge:
 
 ```tsx
-<button data-tip="Copy; ⌘C">Copy</button>
-<button data-tip="Paste; ⌘V">Paste</button>
-<button data-tip="Save; ⌘S">Save</button>
+<button data-tip="Copy" data-tip-shortcut="⌘C">Copy</button>
+<button data-tip="Paste" data-tip-shortcut="⌘V">Paste</button>
+<button data-tip="Save" data-tip-shortcut="⌘S">Save</button>
 ```
 
-The library automatically:
+The library displays:
 
-1. Splits the content at the separator
-2. Renders the main text normally
-3. Displays the shortcut in a styled `<kbd>` badge
+1. The main text from `data-tip`
+2. A styled `<kbd>` badge with the shortcut
 
 ---
 
 ## API Reference
+
+### Data Attributes
+
+<table>
+  <thead>
+    <tr>
+      <th>Attribute</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>data-tip</code>
+      </td>
+      <td>Tooltip content (main text)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>data-tip-shortcut</code>
+      </td>
+      <td>Keyboard shortcut to display as a styled badge</td>
+    </tr>
+  </tbody>
+</table>
+
+```tsx
+<button data-tip="Copy" data-tip-shortcut="⌘C">Copy</button>
+<button data-tip="Paste" data-tip-shortcut="⌘V">Paste</button>
+```
 
 ### Provider Options
 
@@ -52,16 +81,6 @@ The library automatically:
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td>
-        <code>contentSeparator</code>
-      </td>
-      <td>string</td>
-      <td>
-        <code>';'</code>
-      </td>
-      <td>Character(s) used to separate main text from keyboard shortcut</td>
-    </tr>
     <tr>
       <td>
         <code>enableShortcutStyle</code>
@@ -80,53 +99,11 @@ The library automatically:
 ```tsx
 <TipMagicProvider
   options={{
-    contentSeparator: '|', // Change separator to pipe
     enableShortcutStyle: false, // Disable shortcut styling
   }}
 >
   <App />
 </TipMagicProvider>
-```
-
-### Data Attributes
-
-<table>
-  <thead>
-    <tr>
-      <th>Attribute</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>
-        <code>data-tip</code>
-      </td>
-      <td>
-        Tooltip content. Format: <code>"Main text; Shortcut"</code>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <code>data-tip-separator</code>
-      </td>
-      <td>Override the separator for this element only</td>
-    </tr>
-  </tbody>
-</table>
-
-```tsx
-{
-  /* Uses custom separator for this element only */
-}
-<button data-tip="Copy | ⌘C" data-tip-separator="|">
-  Copy
-</button>;
-
-{
-  /* Still uses default semicolon separator */
-}
-<button data-tip="Paste; ⌘V">Paste</button>;
 ```
 
 ### CSS Classes
@@ -314,19 +291,17 @@ Common keyboard symbols for use in shortcuts:
 
 ## Examples & Patterns
 
-The following are implementation patterns showing how to use keyboard shortcut tooltips effectively.
-
 ### Pattern: Text Editor Toolbar
 
 ```tsx
 <div className="toolbar">
-  <button data-tip="Bold; ⌘B" onClick={toggleBold}>
+  <button data-tip="Bold" data-tip-shortcut="⌘B" onClick={toggleBold}>
     <BoldIcon />
   </button>
-  <button data-tip="Italic; ⌘I" onClick={toggleItalic}>
+  <button data-tip="Italic" data-tip-shortcut="⌘I" onClick={toggleItalic}>
     <ItalicIcon />
   </button>
-  <button data-tip="Link; ⌘K" onClick={insertLink}>
+  <button data-tip="Link" data-tip-shortcut="⌘K" onClick={insertLink}>
     <LinkIcon />
   </button>
 </div>
@@ -336,13 +311,13 @@ The following are implementation patterns showing how to use keyboard shortcut t
 
 ```tsx
 <nav>
-  <a href="/home" data-tip="Home; ⌘1">
+  <a href="/home" data-tip="Home" data-tip-shortcut="⌘1">
     Home
   </a>
-  <a href="/search" data-tip="Search; ⌘K">
+  <a href="/search" data-tip="Search" data-tip-shortcut="⌘K">
     Search
   </a>
-  <a href="/settings" data-tip="Settings; ⌘,">
+  <a href="/settings" data-tip="Settings" data-tip-shortcut="⌘,">
     Settings
   </a>
 </nav>
@@ -356,33 +331,29 @@ Detect the platform and show appropriate modifier keys:
 const isMac = navigator.platform.includes('Mac');
 const mod = isMac ? '⌘' : 'Ctrl+';
 
-<button data-tip={`Copy; ${mod}C`}>Copy</button>
-<button data-tip={`Paste; ${mod}V`}>Paste</button>
-<button data-tip={`Save; ${mod}S`}>Save</button>
+<button data-tip="Copy" data-tip-shortcut={`${mod}C`}>Copy</button>
+<button data-tip="Paste" data-tip-shortcut={`${mod}V`}>Paste</button>
+<button data-tip="Save" data-tip-shortcut={`${mod}S`}>Save</button>
 ```
 
-### Pattern: Ensuring Shortcuts Work
+### Pattern: With TipAdvisor
 
-Only display shortcuts that are actually implemented:
+Combine shortcuts with TipAdvisor for discoverability:
 
 ```tsx
-// Implement the shortcut handler
-useEffect(() => {
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-      e.preventDefault();
-      handleSave();
-    }
-  };
+<TipMagicProvider>
+  <div className="toolbar">
+    <button data-tip="Copy" data-tip-shortcut="⌘C">
+      Copy
+    </button>
+    <button data-tip="Paste" data-tip-shortcut="⌘V">
+      Paste
+    </button>
+  </div>
 
-  document.addEventListener('keydown', handleKeyDown);
-  return () => document.removeEventListener('keydown', handleKeyDown);
-}, []);
-
-// Now it's safe to advertise the shortcut
-<button data-tip="Save; ⌘S" onClick={handleSave}>
-  Save
-</button>;
+  {/* Press F1 to see all shortcuts */}
+  <TipAdvisor />
+</TipMagicProvider>
 ```
 
 ---
@@ -394,11 +365,11 @@ useEffect(() => {
 Place shortcuts on interactive elements users will naturally hover over:
 
 ```tsx
-// ✅ Good: Toolbar buttons users interact with
-<button data-tip="Bold; ⌘B">B</button>
+// Good: Toolbar buttons users interact with
+<button data-tip="Bold" data-tip-shortcut="⌘B">B</button>
 
-// ❌ Avoid: Shortcut on non-interactive element
-<span data-tip="Bold; ⌘B">Some text</span>
+// Avoid: Shortcut on non-interactive element
+<span data-tip="Bold" data-tip-shortcut="⌘B">Some text</span>
 ```
 
 ### Be Consistent
@@ -406,15 +377,15 @@ Place shortcuts on interactive elements users will naturally hover over:
 Use the same format throughout your application:
 
 ```tsx
-// ✅ Good: Consistent format
-<button data-tip="Bold; ⌘B">Bold</button>
-<button data-tip="Italic; ⌘I">Italic</button>
-<button data-tip="Underline; ⌘U">Underline</button>
+// Good: Consistent format
+<button data-tip="Bold" data-tip-shortcut="⌘B">Bold</button>
+<button data-tip="Italic" data-tip-shortcut="⌘I">Italic</button>
+<button data-tip="Underline" data-tip-shortcut="⌘U">Underline</button>
 
-// ❌ Avoid: Inconsistent format
-<button data-tip="Bold; Cmd+B">Bold</button>
-<button data-tip="Italic; ⌘I">Italic</button>
-<button data-tip="Underline; Command-U">Underline</button>
+// Avoid: Inconsistent format
+<button data-tip="Bold" data-tip-shortcut="Cmd+B">Bold</button>
+<button data-tip="Italic" data-tip-shortcut="⌘I">Italic</button>
+<button data-tip="Underline" data-tip-shortcut="Command-U">Underline</button>
 ```
 
 ### Don't Overload
@@ -422,9 +393,9 @@ Use the same format throughout your application:
 Not every action needs a keyboard shortcut displayed:
 
 ```tsx
-// ✅ Good: Common, frequently used shortcuts
-<button data-tip="Save; ⌘S">Save</button>
-<button data-tip="Undo; ⌘Z">Undo</button>
+// Good: Common, frequently used shortcuts
+<button data-tip="Save" data-tip-shortcut="⌘S">Save</button>
+<button data-tip="Undo" data-tip-shortcut="⌘Z">Undo</button>
 
 // Consider: Less common actions might not need shortcut display
 <button data-tip="Export to PDF">Export</button>
@@ -441,7 +412,7 @@ Keyboard shortcuts improve accessibility when implemented correctly:
 Announce shortcuts to screen readers:
 
 ```tsx
-<button data-tip="Save; ⌘S" aria-keyshortcuts="Meta+S" onClick={handleSave}>
+<button data-tip="Save" data-tip-shortcut="⌘S" aria-keyshortcuts="Meta+S" onClick={handleSave}>
   Save
 </button>
 ```
@@ -452,11 +423,12 @@ Announce shortcuts to screen readers:
 - Document all shortcuts in a help section or keyboard shortcuts modal
 - Avoid conflicts with browser or OS shortcuts
 - Test with assistive technologies
+- Use TipAdvisor to make shortcuts discoverable
 
 ---
 
 ## Next Steps
 
 - See the **[Keyboard Shortcuts](?path=/story/tooltip-keyboard-shortcuts--with-shortcuts)** stories for live demos
-- Explore **[Basic Tooltips](?path=/story/tooltip-basic--simple-tooltips)** for general tooltip usage
+- Explore **[TipAdvisor](?path=/docs/tooltip-tipadvisor-documentation--docs)** for shortcut discoverability
 - Check the **[Getting Started](/docs/getting-started--docs)** guide for setup instructions

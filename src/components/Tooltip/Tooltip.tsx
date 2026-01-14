@@ -12,7 +12,6 @@ import { ANIMATION, CSS_CLASSES } from '../../constants';
 import { useTipMagicContext } from '../../context/TipMagicContext';
 import type { TooltipTransitionBehavior } from '../../types';
 import { areGroupsCompatible, shouldAnimatePosition } from '../../utils/groupCompatibility';
-import { parseContent } from '../../utils/parseDataAttributes';
 import {
   buildTooltipClassNames,
   getArrowStaticSide,
@@ -121,14 +120,10 @@ export function Tooltip() {
     return null;
   }
 
-  // Parse content to extract shortcut (per-element separator overrides provider default)
-  // Skip parsing for HTML content - HTML should be rendered as-is without separator splitting
-  // This prevents semicolons in tour titles/messages/labels from breaking the HTML
+  // Get content and shortcut from parsed data
   const isHtmlContent = tooltip.parsedData?.html ?? false;
-  const separator = tooltip.parsedData?.contentSeparator ?? config.contentSeparator;
-  const parsedContent = isHtmlContent
-    ? { main: tooltip.content, shortcut: undefined }
-    : parseContent(tooltip.content, separator);
+  const mainContent = tooltip.content;
+  const shortcut = tooltip.parsedData?.shortcut;
 
   // Extract text display options
   const isInteractive = tooltip.parsedData?.interactive ?? false;
@@ -177,15 +172,12 @@ export function Tooltip() {
     >
       <div className={CSS_CLASSES.TOOLTIP_CONTENT}>
         {isHtmlContent ? (
-          <span
-            className="tip-magic-text"
-            dangerouslySetInnerHTML={{ __html: parsedContent.main }}
-          />
+          <span className="tip-magic-text" dangerouslySetInnerHTML={{ __html: mainContent }} />
         ) : (
-          <span className="tip-magic-text">{parsedContent.main}</span>
+          <span className="tip-magic-text">{mainContent}</span>
         )}
-        {parsedContent.shortcut && config.enableShortcutStyle && (
-          <kbd className={CSS_CLASSES.TOOLTIP_SHORTCUT}>{parsedContent.shortcut}</kbd>
+        {shortcut && config.enableShortcutStyle && (
+          <kbd className={CSS_CLASSES.TOOLTIP_SHORTCUT}>{shortcut}</kbd>
         )}
       </div>
       {showArrow && (

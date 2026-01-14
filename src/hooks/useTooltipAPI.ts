@@ -70,9 +70,7 @@ export function useTooltipAPI(
           moveTransitionDuration: options.moveTransitionDuration,
         }),
         ...(options.showArrow !== undefined && { showArrow: options.showArrow }),
-        ...(options.contentSeparator !== undefined && {
-          contentSeparator: options.contentSeparator,
-        }),
+        ...(options.shortcut !== undefined && { shortcut: options.shortcut }),
       };
 
       if (state.tooltip.visible) {
