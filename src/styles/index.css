@@ -11,3 +11,6 @@
 
 /* Tour styles (navigation, images, backdrop) */
 @import './tour.css';
+
+/* TipAdvisor styles (optional menu component) */
+@import './tip-advisor.css';

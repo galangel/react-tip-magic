@@ -142,14 +142,12 @@ describe('Tooltip', () => {
       expect(kbdElement).toBeNull();
     });
 
-    it('should still parse non-HTML content for shortcuts', () => {
-      // Non-HTML content should still be parsed for keyboard shortcuts
-      const contentWithShortcut = 'Copy; ⌘C';
-
+    it('should display keyboard shortcut from data-tip-shortcut attribute', () => {
+      // Shortcuts are now specified via data-tip-shortcut attribute
       const state = createMockState({
-        content: contentWithShortcut,
+        content: 'Copy',
         parsedData: {
-          content: contentWithShortcut,
+          content: 'Copy',
           placement: 'top',
           delay: 200,
           disabled: false,
@@ -158,9 +156,10 @@ describe('Tooltip', () => {
           wordWrap: false,
           textBreak: 'normal',
           maxWidth: 300,
-          html: false, // Not HTML mode
+          html: false,
           interactive: false,
           showArrow: true,
+          shortcut: '⌘C', // Shortcut from data-tip-shortcut attribute
         } as ParsedTooltipData,
       });
 
@@ -169,7 +168,7 @@ describe('Tooltip', () => {
 
       renderTooltip(state);
 
-      // Should have the main text without the shortcut
+      // Should have the main text
       const textElement = document.querySelector('.tip-magic-text');
       expect(textElement).not.toBeNull();
       expect(textElement?.textContent).toBe('Copy');

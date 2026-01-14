@@ -133,17 +133,28 @@ describe('getTipProps', () => {
     });
   });
 
-  describe('contentSeparator property', () => {
-    it('should include separator when provided', () => {
-      const result = getTipProps({ tip: 'Hello', contentSeparator: '|' });
-      expect(result['data-tip-separator']).toBe('|');
+  describe('shortcut property', () => {
+    it('should include shortcut when provided', () => {
+      const result = getTipProps({ tip: 'Copy', shortcut: '⌘C' });
+      expect(result['data-tip-shortcut']).toBe('⌘C');
+    });
+
+    it('should not include shortcut when empty string', () => {
+      const result = getTipProps({ tip: 'Hello', shortcut: '' });
+      expect(result['data-tip-shortcut']).toBeUndefined();
+    });
+
+    it('should not include shortcut when not provided', () => {
+      const result = getTipProps({ tip: 'Hello' });
+      expect(result['data-tip-shortcut']).toBeUndefined();
     });
   });
 
   describe('complex scenarios', () => {
     it('should handle all properties together', () => {
       const result = getTipProps({
-        tip: 'Save; ⌘S',
+        tip: 'Save',
+        shortcut: '⌘S',
         id: 'save-btn',
         placement: 'bottom',
         showDelay: 100,
@@ -157,7 +168,8 @@ describe('getTipProps', () => {
         moveTransitionDuration: 150,
       });
 
-      expect(result['data-tip']).toBe('Save; ⌘S');
+      expect(result['data-tip']).toBe('Save');
+      expect(result['data-tip-shortcut']).toBe('⌘S');
       expect(result['data-tip-id']).toBe('save-btn');
       expect(result['data-tip-placement']).toBe('bottom');
       expect(result['data-tip-delay']).toBe('100');

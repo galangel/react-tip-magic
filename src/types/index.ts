@@ -83,8 +83,6 @@ export interface TipMagicOptions {
   disabled?: boolean;
   /** Portal container element */
   portalContainer?: HTMLElement;
-  /** Separator for tooltip content parsing */
-  contentSeparator?: string;
   /** Enable keyboard shortcut styling */
   enableShortcutStyle?: boolean;
   /** Respect prefers-reduced-motion */
@@ -140,8 +138,8 @@ export interface TooltipShowOptions {
   moveTransitionDuration?: number;
   /** Show/hide arrow */
   showArrow?: boolean;
-  /** Content separator for keyboard shortcuts */
-  contentSeparator?: string;
+  /** Keyboard shortcut to display */
+  shortcut?: string;
 }
 
 /**
@@ -310,8 +308,8 @@ export interface ParsedTooltipData {
   moveTransitionDuration?: number;
   /** Show or hide the arrow (default: true) */
   showArrow: boolean;
-  /** Override content separator for keyboard shortcuts (default: ';') */
-  contentSeparator?: string;
+  /** Keyboard shortcut parsed from data-tip-shortcut attribute */
+  shortcut?: string;
   /** Group identifier for controlling move transitions between grouped elements */
   group?: string;
   /** Whether to show tooltip when element receives focus */
@@ -381,3 +379,15 @@ export type {
   TourStep,
   UseTourReturn,
 } from './tour';
+
+// =============================================================================
+// TipAdvisor Types
+// =============================================================================
+
+export type {
+  TipAdvisorAPI,
+  TipAdvisorItem,
+  TipAdvisorPosition,
+  TipAdvisorPresetItem,
+  TipAdvisorProps,
+} from './tipAdvisor';

@@ -1,6 +1,7 @@
 // Main hooks
 export { useTipMagic } from './useTipMagic';
 export { useTour } from './useTour/useTour';
+export { useTipAdvisor } from './useTipAdvisor';
 
 // Internal hooks (exported for advanced usage)
 export { useFlowState } from './useFlowState';
