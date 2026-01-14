@@ -25,35 +25,41 @@ Whether you need simple tooltips, guided tours, or a way for users to discover k
     <p>Add <code>data-tip="Hello"</code> to any element. One tooltip instance moves gracefully between targets.</p>
   </div>
 
-  <div className="tip-magic-feature">
-    <h3>⌨️ Keyboard Shortcuts</h3>
-    <p>Display shortcuts with <code>data-tip-shortcut="⌘S"</code>. Styled badges that feel native to your UI.</p>
-  </div>
+<div className="tip-magic-feature">
+  <h3>⌨️ Keyboard Shortcuts</h3>
+  <p>
+    Display shortcuts with <code>data-tip-shortcut="⌘S"</code>. Styled badges that feel native to
+    your UI.
+  </p>
+</div>
 
-  <div className="tip-magic-feature">
-    <h3>🗺️ Guided Tours</h3>
-    <p>Walk users through your interface step by step. Great for onboarding or introducing new features.</p>
-  </div>
+<div className="tip-magic-feature">
+  <h3>🗺️ Guided Tours</h3>
+  <p>
+    Walk users through your interface step by step. Great for onboarding or introducing new
+    features.
+  </p>
+</div>
 
-  <div className="tip-magic-feature">
-    <h3>🔍 Tip Advisor</h3>
-    <p>A searchable menu of all shortcuts in your app. Press F1 to discover what's available.</p>
-  </div>
+<div className="tip-magic-feature">
+  <h3>🔍 Tip Advisor</h3>
+  <p>A searchable menu of all shortcuts in your app. Press F1 to discover what's available.</p>
+</div>
 
-  <div className="tip-magic-feature">
-    <h3>🎨 Smooth Transitions</h3>
-    <p>Tooltips animate between elements. Group related items for cohesive movement.</p>
-  </div>
+<div className="tip-magic-feature">
+  <h3>🎨 Smooth Transitions</h3>
+  <p>Tooltips animate between elements. Group related items for cohesive movement.</p>
+</div>
 
-  <div className="tip-magic-feature">
-    <h3>📱 Accessible</h3>
-    <p>Keyboard navigation, screen reader support, and respects reduced motion preferences.</p>
-  </div>
+<div className="tip-magic-feature">
+  <h3>📱 Accessible</h3>
+  <p>Keyboard navigation, screen reader support, and respects reduced motion preferences.</p>
+</div>
 
-  <div className="tip-magic-feature">
-    <h3>🚀 Performant</h3>
-    <p>Single global instance with event delegation. Minimal re-renders and memory footprint.</p>
-  </div>
+<div className="tip-magic-feature">
+  <h3>🚀 Performant</h3>
+  <p>Single global instance with event delegation. Minimal re-renders and memory footprint.</p>
+</div>
 
   <div className="tip-magic-feature">
     <h3>🎭 Themeable</h3>
@@ -89,10 +95,14 @@ function App() {
 ### Add Tooltips
 
 ```tsx
-<button data-tip="Save your work">Save</button>
+<button data-tip="Save your work">Save</button>;
 
-{/* With keyboard shortcut */}
-<button data-tip="Copy" data-tip-shortcut="⌘C">Copy</button>
+{
+  /* With keyboard shortcut */
+}
+<button data-tip="Copy" data-tip-shortcut="⌘C">
+  Copy
+</button>;
 ```
 
 ---
@@ -107,6 +117,7 @@ React Tip Magic uses a global singleton pattern:
 4. A single tooltip moves between targets
 
 This means:
+
 - Minimal DOM nodes
 - Smooth transitions between tooltips
 - Works with dynamically added elements

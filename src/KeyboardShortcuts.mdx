@@ -31,6 +31,7 @@ Use `data-tip-shortcut` to add a keyboard shortcut badge:
 ```
 
 The library displays:
+
 1. The main text from `data-tip`
 2. A styled `<kbd>` badge with the shortcut
 
@@ -49,11 +50,15 @@ The library displays:
   </thead>
   <tbody>
     <tr>
-      <td><code>data-tip</code></td>
+      <td>
+        <code>data-tip</code>
+      </td>
       <td>Tooltip content (main text)</td>
     </tr>
     <tr>
-      <td><code>data-tip-shortcut</code></td>
+      <td>
+        <code>data-tip-shortcut</code>
+      </td>
       <td>Keyboard shortcut to display as a styled badge</td>
     </tr>
   </tbody>
@@ -77,10 +82,16 @@ The library displays:
   </thead>
   <tbody>
     <tr>
-      <td><code>enableShortcutStyle</code></td>
+      <td>
+        <code>enableShortcutStyle</code>
+      </td>
       <td>boolean</td>
-      <td><code>true</code></td>
-      <td>Whether to render shortcuts with styled <code>&lt;kbd&gt;</code> badges</td>
+      <td>
+        <code>true</code>
+      </td>
+      <td>
+        Whether to render shortcuts with styled <code>&lt;kbd&gt;</code> badges
+      </td>
     </tr>
   </tbody>
 </table>
@@ -106,8 +117,12 @@ The library displays:
   </thead>
   <tbody>
     <tr>
-      <td><code>.tip-magic-shortcut</code></td>
-      <td>Applied to the <code>&lt;kbd&gt;</code> element containing the shortcut</td>
+      <td>
+        <code>.tip-magic-shortcut</code>
+      </td>
+      <td>
+        Applied to the <code>&lt;kbd&gt;</code> element containing the shortcut
+      </td>
     </tr>
   </tbody>
 </table>
@@ -124,13 +139,21 @@ The library displays:
   </thead>
   <tbody>
     <tr>
-      <td><code>--tip-magic-shortcut-bg</code></td>
-      <td><code>rgba(255, 255, 255, 0.15)</code></td>
+      <td>
+        <code>--tip-magic-shortcut-bg</code>
+      </td>
+      <td>
+        <code>rgba(255, 255, 255, 0.15)</code>
+      </td>
       <td>Background color of the shortcut badge</td>
     </tr>
     <tr>
-      <td><code>--tip-magic-shortcut-text</code></td>
-      <td><code>#e5e7eb</code></td>
+      <td>
+        <code>--tip-magic-shortcut-text</code>
+      </td>
+      <td>
+        <code>#e5e7eb</code>
+      </td>
       <td>Text color of the shortcut badge</td>
     </tr>
   </tbody>
@@ -190,44 +213,76 @@ Common keyboard symbols for use in shortcuts:
   </thead>
   <tbody>
     <tr>
-      <td><code>⌘</code></td>
+      <td>
+        <code>⌘</code>
+      </td>
       <td>Command (Mac)</td>
-      <td><code>⌘C</code> for copy</td>
+      <td>
+        <code>⌘C</code> for copy
+      </td>
     </tr>
     <tr>
-      <td><code>⌥</code></td>
+      <td>
+        <code>⌥</code>
+      </td>
       <td>Option/Alt (Mac)</td>
-      <td><code>⌥Tab</code> for switch</td>
+      <td>
+        <code>⌥Tab</code> for switch
+      </td>
     </tr>
     <tr>
-      <td><code>⇧</code></td>
+      <td>
+        <code>⇧</code>
+      </td>
       <td>Shift</td>
-      <td><code>⇧Enter</code> for new line</td>
+      <td>
+        <code>⇧Enter</code> for new line
+      </td>
     </tr>
     <tr>
-      <td><code>⌃</code></td>
+      <td>
+        <code>⌃</code>
+      </td>
       <td>Control (Mac)</td>
-      <td><code>⌃Space</code> for autocomplete</td>
+      <td>
+        <code>⌃Space</code> for autocomplete
+      </td>
     </tr>
     <tr>
-      <td><code>↵</code></td>
+      <td>
+        <code>↵</code>
+      </td>
       <td>Enter/Return</td>
-      <td><code>↵</code> to submit</td>
+      <td>
+        <code>↵</code> to submit
+      </td>
     </tr>
     <tr>
-      <td><code>⎋</code></td>
+      <td>
+        <code>⎋</code>
+      </td>
       <td>Escape</td>
-      <td><code>⎋</code> to cancel</td>
+      <td>
+        <code>⎋</code> to cancel
+      </td>
     </tr>
     <tr>
-      <td><code>⌫</code></td>
+      <td>
+        <code>⌫</code>
+      </td>
       <td>Backspace/Delete</td>
-      <td><code>⌫</code> to delete</td>
+      <td>
+        <code>⌫</code> to delete
+      </td>
     </tr>
     <tr>
-      <td><code>↑↓←→</code></td>
+      <td>
+        <code>↑↓←→</code>
+      </td>
       <td>Arrow keys</td>
-      <td><code>↑↓</code> to navigate</td>
+      <td>
+        <code>↑↓</code> to navigate
+      </td>
     </tr>
   </tbody>
 </table>
@@ -256,9 +311,15 @@ Common keyboard symbols for use in shortcuts:
 
 ```tsx
 <nav>
-  <a href="/home" data-tip="Home" data-tip-shortcut="⌘1">Home</a>
-  <a href="/search" data-tip="Search" data-tip-shortcut="⌘K">Search</a>
-  <a href="/settings" data-tip="Settings" data-tip-shortcut="⌘,">Settings</a>
+  <a href="/home" data-tip="Home" data-tip-shortcut="⌘1">
+    Home
+  </a>
+  <a href="/search" data-tip="Search" data-tip-shortcut="⌘K">
+    Search
+  </a>
+  <a href="/settings" data-tip="Settings" data-tip-shortcut="⌘,">
+    Settings
+  </a>
 </nav>
 ```
 
@@ -282,8 +343,12 @@ Combine shortcuts with TipAdvisor for discoverability:
 ```tsx
 <TipMagicProvider>
   <div className="toolbar">
-    <button data-tip="Copy" data-tip-shortcut="⌘C">Copy</button>
-    <button data-tip="Paste" data-tip-shortcut="⌘V">Paste</button>
+    <button data-tip="Copy" data-tip-shortcut="⌘C">
+      Copy
+    </button>
+    <button data-tip="Paste" data-tip-shortcut="⌘V">
+      Paste
+    </button>
   </div>
 
   {/* Press F1 to see all shortcuts */}
@@ -347,12 +412,7 @@ Keyboard shortcuts improve accessibility when implemented correctly:
 Announce shortcuts to screen readers:
 
 ```tsx
-<button
-  data-tip="Save"
-  data-tip-shortcut="⌘S"
-  aria-keyshortcuts="Meta+S"
-  onClick={handleSave}
->
+<button data-tip="Save" data-tip-shortcut="⌘S" aria-keyshortcuts="Meta+S" onClick={handleSave}>
   Save
 </button>
 ```
