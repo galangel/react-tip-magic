@@ -4,6 +4,7 @@ export {
   calculateProgress,
   filterVisibleSteps,
   resolveStepContent,
+  resolveTargetElement,
 } from './tourSteps';
 
 // Navigation utilities
@@ -12,9 +13,9 @@ export {
   getMergedNavigation,
   getMergedProgress,
   hasNavigationFeatures,
-  shouldShowFocus,
+  resolveFocus,
 } from './tourNavigation';
-export type { ResolvedProgressOptions } from './tourNavigation';
+export type { ResolvedProgressOptions, ResolvedTourFocus } from './tourNavigation';
 
 // Content building utilities
 export {
@@ -30,4 +31,7 @@ export {
 
 // DOM managers
 export { BackdropManager, createBackdropManager } from './backdropManager';
+export type { BackdropShowOptions } from './backdropManager';
 export { createHighlightManager, HighlightManager } from './highlightManager';
+export { createTargetWatcher, TargetWatcher } from './targetWatcher';
+export type { TargetWatcherCallbacks } from './targetWatcher';

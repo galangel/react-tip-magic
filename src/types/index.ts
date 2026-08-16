@@ -60,6 +60,16 @@ export type TooltipTransitionBehavior = 'move' | 'jump';
 export type TextBreak = 'normal' | 'break-all' | 'keep-all';
 
 /**
+ * ARIA role for the tooltip element
+ *
+ * - `'tooltip'`: a description of its target (the default, correct for hover tooltips)
+ * - `'dialog'`: a container the user can act inside. Required when the surface holds
+ *   interactive controls - `role="tooltip"` is a description, not a container, so
+ *   screen readers do not present buttons inside one. Tours set this automatically.
+ */
+export type TooltipRole = 'tooltip' | 'dialog';
+
+/**
  * Configuration options for TipMagicProvider
  */
 export interface TipMagicOptions {
@@ -73,7 +83,13 @@ export interface TipMagicOptions {
   placement?: Placement;
   /** Offset from target element (px) */
   offset?: number;
-  /** Enable/disable helper system */
+  /**
+   * Enable/disable helper system
+   *
+   * @deprecated Has no effect. There is no global helper to gate - `TipAdvisor` is
+   * opt-in by rendering `<TipAdvisor />` yourself, and the flow helper API is driven by
+   * `useTour`. Slated for removal in the next major version.
+   */
   enableHelper?: boolean;
   /** Default helper position */
   helperPosition?: HelperPosition;
@@ -85,7 +101,12 @@ export interface TipMagicOptions {
   portalContainer?: HTMLElement;
   /** Enable keyboard shortcut styling */
   enableShortcutStyle?: boolean;
-  /** Respect prefers-reduced-motion */
+  /**
+   * Respect the user's `prefers-reduced-motion` setting (default: true).
+   *
+   * When true, tooltip and tour animations are disabled for users who have asked for
+   * reduced motion. Set to false to animate regardless of the preference.
+   */
   respectReducedMotion?: boolean;
   /** Default transition behavior when moving between targets */
   transitionBehavior?: TooltipTransitionBehavior;
@@ -140,6 +161,10 @@ export interface TooltipShowOptions {
   showArrow?: boolean;
   /** Keyboard shortcut to display */
   shortcut?: string;
+  /** ARIA role for the tooltip element (default: 'tooltip') */
+  role?: TooltipRole;
+  /** id of the element that labels the tooltip - pair with `role: 'dialog'` */
+  ariaLabelledBy?: string;
 }
 
 /**
@@ -314,6 +339,10 @@ export interface ParsedTooltipData {
   group?: string;
   /** Whether to show tooltip when element receives focus */
   showOnFocus?: boolean;
+  /** ARIA role for the tooltip element (default: 'tooltip') */
+  role?: TooltipRole;
+  /** id of the element that labels the tooltip - used with role="dialog" */
+  ariaLabelledBy?: string;
 }
 
 /**
@@ -373,10 +402,13 @@ export type {
   ProgressRenderProps,
   ProgressType,
   TourDirection,
+  TourFocus,
+  TourFocusOptions,
   TourNavigation,
   TourOptions,
   TourProgress,
   TourStep,
+  TourTargetMissingAction,
   UseTourReturn,
 } from './tour';
 

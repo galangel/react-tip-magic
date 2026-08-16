@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
 import {
   buildCurrentStep,
   calculateProgress,
   filterVisibleSteps,
   resolveStepContent,
+  resolveTargetElement,
 } from '../utils/tourSteps';
 
 describe('tourSteps utilities', () => {
@@ -197,6 +198,63 @@ describe('tourSteps utilities', () => {
     it('should calculate correct progress for last step', () => {
       const result = calculateProgress(true, 4, 5);
       expect(result).toEqual({ current: 5, total: 5 });
+    });
+  });
+
+  describe('resolveStepContent with `text`', () => {
+    const stepInfo = {
+      index: 0,
+      target: 'step1',
+      isFirst: true,
+      isLast: false,
+      total: 1,
+    };
+
+    it('should escape a text step', () => {
+      const step: TourStep = { target: 'step1', text: '<b>bold</b>' };
+
+      expect(resolveStepContent(step, stepInfo)).toBe('&lt;b&gt;bold&lt;/b&gt;');
+    });
+
+    it('should take precedence over content', () => {
+      const step: TourStep = { target: 'step1', text: 'plain', content: '<b>html</b>' };
+
+      expect(resolveStepContent(step, stepInfo)).toBe('plain');
+    });
+
+    it('should return an empty string when a step has neither', () => {
+      const step: TourStep = { target: 'step1' };
+
+      expect(resolveStepContent(step, stepInfo)).toBe('');
+    });
+
+    it('should leave `content` as the raw HTML it is documented to be', () => {
+      const step: TourStep = { target: 'step1', content: '<b>bold</b>' };
+
+      expect(resolveStepContent(step, stepInfo)).toBe('<b>bold</b>');
+    });
+  });
+
+  describe('resolveTargetElement', () => {
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('should find an element by data-tip-id', () => {
+      document.body.innerHTML = '<div data-tip-id="sidebar">Sidebar</div>';
+
+      expect(resolveTargetElement('sidebar')?.textContent).toBe('Sidebar');
+    });
+
+    it('should return null when the element is absent', () => {
+      expect(resolveTargetElement('nowhere')).toBeNull();
+    });
+
+    it('should not break on a target containing a quote', () => {
+      document.body.innerHTML = `<div data-tip-id='say "hi"'>Quoted</div>`;
+
+      expect(() => resolveTargetElement('say "hi"')).not.toThrow();
+      expect(resolveTargetElement('say "hi"')?.textContent).toBe('Quoted');
     });
   });
 });

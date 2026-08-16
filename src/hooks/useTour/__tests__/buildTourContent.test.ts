@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../../types/tour';
-import { DEFAULT_NAVIGATION, TOUR_CSS_CLASSES } from '../constants';
+import { DEFAULT_NAVIGATION, TOUR_CSS_CLASSES, TOUR_ELEMENT_IDS } from '../constants';
 import {
   buildFooterHtml,
   buildHeaderHtml,
@@ -475,6 +475,68 @@ describe('buildTourContent utilities', () => {
       expect(result).toContain(TOUR_CSS_CLASSES.FOOTER);
       expect(result).toContain(TOUR_CSS_CLASSES.PROGRESS);
       expect(result).toContain(TOUR_CSS_CLASSES.NAV);
+    });
+  });
+
+  describe('escaping', () => {
+    it('should escape the step title', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        title: '<img src=x onerror="alert(1)">',
+      };
+
+      const result = buildHeaderHtml(step, DEFAULT_NAVIGATION);
+      expect(result).not.toContain('<img');
+      expect(result).toContain('&lt;img');
+    });
+
+    it('should give the title an id for aria-labelledby', () => {
+      const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
+
+      expect(buildHeaderHtml(step, DEFAULT_NAVIGATION)).toContain(`id="${TOUR_ELEMENT_IDS.TITLE}"`);
+    });
+
+    it('should escape an image src so it cannot break out of the attribute', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        image: 'x.png" onerror="alert(1)',
+      };
+
+      const result = buildMediaHtml(step);
+      expect(result).not.toContain('onerror="alert(1)"');
+      expect(result).toContain('&quot;');
+    });
+
+    it('should escape a native video src', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        video: { src: 'clip.mp4" onerror="alert(1)' },
+      };
+
+      expect(buildMediaHtml(step)).not.toContain('onerror="alert(1)"');
+    });
+
+    it('should escape an embed video src', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        video: { src: 'https://example.com/v"><script>', type: 'embed' },
+      };
+
+      expect(buildMediaHtml(step)).not.toContain('<script>');
+    });
+
+    it('should use a spec-compliant semicolon-separated allow list on embeds', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        video: { src: 'https://example.com/v', type: 'embed' },
+      };
+
+      expect(buildMediaHtml(step)).toContain('allow="accelerometer; autoplay;');
     });
   });
 });

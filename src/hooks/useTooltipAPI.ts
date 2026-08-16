@@ -71,6 +71,8 @@ export function useTooltipAPI(
         }),
         ...(options.showArrow !== undefined && { showArrow: options.showArrow }),
         ...(options.shortcut !== undefined && { shortcut: options.shortcut }),
+        ...(options.role !== undefined && { role: options.role }),
+        ...(options.ariaLabelledBy !== undefined && { ariaLabelledBy: options.ariaLabelledBy }),
       };
 
       if (state.tooltip.visible) {

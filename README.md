@@ -105,9 +105,12 @@ import { useTour } from '@galangel/react-tip-magic';
 function App() {
   const tour = useTour({
     steps: [
-      { target: 'dashboard', title: 'Welcome', message: 'This is your dashboard.' },
-      { target: 'create-btn', title: 'Create', message: 'Click here to get started.' },
+      { target: 'dashboard', title: 'Welcome', content: 'This is your dashboard.' },
+      { target: 'create-btn', title: 'Create', content: 'Click here to get started.' },
     ],
+    // Built-in Back/Next controls are off by default—turn them on for multi-step tours
+    navigation: { showControls: true },
+    progress: { show: true },
   });
 
   return (
@@ -121,7 +124,53 @@ function App() {
 }
 ```
 
-Tours include navigation controls, progress indicators, keyboard support, and backdrop highlighting—all configurable to fit your needs.
+`useTour` is headless by default: leave `navigation.showControls` unset and render your own controls from the returned `next`, `prev`, `end` and `progress`.
+
+```tsx
+const tour = useTour({ steps });
+
+{
+  tour.isActive && (
+    <div>
+      <span>
+        {tour.progress.current} of {tour.progress.total}
+      </span>
+      <button onClick={tour.prev} disabled={tour.currentStep?.isFirst}>
+        Back
+      </button>
+      <button onClick={tour.next}>{tour.currentStep?.isLast ? 'Finish' : 'Next'}</button>
+    </div>
+  );
+}
+```
+
+### Step content is HTML
+
+Step `content` is injected as HTML so that titles, media and controls work. Use `text` instead when the value is plain text the library should escape for you:
+
+```tsx
+{ target: 'profile', text: `Signed in as ${user.name}` }
+```
+
+### When a target isn't there
+
+`start()` returns `false` and changes nothing—no `onStart`, no `onStepChange`—if no step's target is in the DOM, so a tour that can't render never reports itself as shown. Supply `onTargetMissing` to handle it yourself (and to keep the library off `console.warn`):
+
+```tsx
+const tour = useTour({
+  steps,
+  onTargetMissing: (step) => {
+    logger.warn('tour target missing', { target: step.target });
+    return 'skip'; // or end the tour, which is the default
+  },
+});
+
+if (tour.start()) {
+  markTourAsSeen();
+}
+```
+
+Tours also support progress indicators, keyboard support, and backdrop highlighting (`focus: true`, or `focus: { dismissOnClick: true }` to let a click on the backdrop end the tour)—all configurable to fit your needs.
 
 ---
 

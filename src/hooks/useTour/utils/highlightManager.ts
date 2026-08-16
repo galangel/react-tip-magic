@@ -51,6 +51,27 @@ export class HighlightManager {
   }
 
   /**
+   * Re-apply the highlight class to the current element
+   *
+   * The class is the consumer's own styling hook, so it has to stay a class rather
+   * than move to a data attribute. That leaves it exposed to React rewriting the
+   * target's `class` attribute, which the tour's target watcher recovers from by
+   * calling this.
+   */
+  reapply(): void {
+    if (!this.currentElement || !this.highlightClass) {
+      return;
+    }
+
+    // Only write when the class is actually missing. `DOMTokenList.add` re-sets the
+    // `class` attribute even for a token that is already there, which would notify the
+    // watcher that called this and loop.
+    if (!this.currentElement.classList.contains(this.highlightClass)) {
+      this.currentElement.classList.add(this.highlightClass);
+    }
+  }
+
+  /**
    * Clear any current highlight
    */
   clear(): void {

@@ -1,4 +1,6 @@
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
+import { escapeHtml } from '../../../utils/escapeHtml';
+import { TOUR_DATA_ATTRIBUTES } from '../constants';
 
 /**
  * Filter steps based on their condition functions
@@ -12,7 +14,22 @@ export function filterVisibleSteps(steps: TourStep[]): TourStep[] {
 }
 
 /**
- * Resolve step content - handles both string and function content
+ * Find a step's target element in the document
+ *
+ * @param target - The target's data-tip-id value
+ * @returns The element, or null if it is not in the DOM
+ */
+export function resolveTargetElement(target: string): HTMLElement | null {
+  // Quote and backslash would otherwise break out of the attribute selector
+  const escaped = target.replace(/["\\]/g, '\\$&');
+  return document.querySelector(`[${TOUR_DATA_ATTRIBUTES.TIP_ID}="${escaped}"]`);
+}
+
+/**
+ * Resolve step content - handles `text`, string content and function content
+ *
+ * `text` takes precedence and is HTML-escaped; `content` is passed through as the raw
+ * HTML it is documented to be.
  *
  * @param step - The tour step
  * @param stepInfo - Current step metadata (without content)
@@ -22,6 +39,14 @@ export function resolveStepContent(
   step: TourStep,
   stepInfo: Omit<CurrentTourStep, 'content'>
 ): string {
+  if (step.text !== undefined) {
+    return escapeHtml(step.text);
+  }
+
+  if (step.content === undefined) {
+    return '';
+  }
+
   return typeof step.content === 'function'
     ? step.content(stepInfo as CurrentTourStep)
     : step.content;

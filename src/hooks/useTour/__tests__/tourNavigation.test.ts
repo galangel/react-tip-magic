@@ -5,7 +5,7 @@ import {
   getMergedNavigation,
   getMergedProgress,
   hasNavigationFeatures,
-  shouldShowFocus,
+  resolveFocus,
 } from '../utils/tourNavigation';
 
 describe('tourNavigation utilities', () => {
@@ -68,29 +68,6 @@ describe('tourNavigation utilities', () => {
       expect(result.showControls).toBe(true);
       expect(result.showClose).toBe(false);
       expect(result.nextLabel).toBe('Next'); // default
-    });
-  });
-
-  describe('shouldShowFocus', () => {
-    it('should return tour focus when step focus is undefined', () => {
-      const step: TourStep = { target: 'step1', content: 'Content' };
-
-      expect(shouldShowFocus(true, step)).toBe(true);
-      expect(shouldShowFocus(false, step)).toBe(false);
-    });
-
-    it('should override with step focus when defined', () => {
-      const stepWithFocus: TourStep = { target: 'step1', content: 'Content', focus: true };
-      const stepWithoutFocus: TourStep = { target: 'step1', content: 'Content', focus: false };
-
-      // Step focus overrides tour focus
-      expect(shouldShowFocus(false, stepWithFocus)).toBe(true);
-      expect(shouldShowFocus(true, stepWithoutFocus)).toBe(false);
-    });
-
-    it('should handle explicit false step focus', () => {
-      const step: TourStep = { target: 'step1', content: 'Content', focus: false };
-      expect(shouldShowFocus(true, step)).toBe(false);
     });
   });
 
@@ -211,6 +188,66 @@ describe('tourNavigation utilities', () => {
       const step: TourStep = { target: 'step1', content: 'Content' };
 
       expect(hasNavigationFeatures(nav, step, false)).toBe(false);
+    });
+  });
+
+  describe('resolveFocus', () => {
+    const step: TourStep = { target: 'step1', content: 'Content' };
+
+    it('should resolve a disabled backdrop', () => {
+      expect(resolveFocus(false, step)).toEqual({
+        enabled: false,
+        block: false,
+        dismissOnClick: false,
+      });
+    });
+
+    it('should resolve a purely visual backdrop for `true`', () => {
+      expect(resolveFocus(true, step)).toEqual({
+        enabled: true,
+        block: false,
+        dismissOnClick: false,
+      });
+    });
+
+    it('should enable the backdrop when given an options object', () => {
+      expect(resolveFocus({ block: true }, step)).toEqual({
+        enabled: true,
+        block: true,
+        dismissOnClick: false,
+      });
+    });
+
+    it('should resolve dismissOnClick', () => {
+      expect(resolveFocus({ dismissOnClick: true }, step)).toEqual({
+        enabled: true,
+        block: false,
+        dismissOnClick: true,
+      });
+    });
+
+    it('should treat an empty options object as enabled with defaults', () => {
+      expect(resolveFocus({}, step)).toEqual({
+        enabled: true,
+        block: false,
+        dismissOnClick: false,
+      });
+    });
+
+    it('should let a step override the tour-level setting', () => {
+      const overriding: TourStep = { ...step, focus: { block: true } };
+
+      expect(resolveFocus(false, overriding)).toEqual({
+        enabled: true,
+        block: true,
+        dismissOnClick: false,
+      });
+    });
+
+    it('should let a step opt out of a tour-level backdrop', () => {
+      const overriding: TourStep = { ...step, focus: false };
+
+      expect(resolveFocus(true, overriding).enabled).toBe(false);
     });
   });
 });

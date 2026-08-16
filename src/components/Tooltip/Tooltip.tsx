@@ -26,6 +26,7 @@ export function Tooltip() {
   const { state, dispatch } = useTipMagicContext();
   const { tooltip, config } = state;
   const arrowRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const [shouldShow, setShouldShow] = useState(false);
   const [hasBeenPositioned, setHasBeenPositioned] = useState(false);
 
@@ -97,6 +98,37 @@ export function Tooltip() {
     }
   }, [tooltip.visible, isPositioned]);
 
+  // A tooltip presented as a dialog holds interactive controls, so it needs the focus
+  // management a description-only tooltip does not
+  const isDialog = tooltip.parsedData?.role === 'dialog';
+  const isDialogOpen = isDialog && tooltip.visible;
+
+  // Remember what had focus before the dialog opened, and hand it back on close
+  useEffect(() => {
+    if (!isDialogOpen) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    return () => {
+      const previous = previouslyFocusedRef.current;
+      previouslyFocusedRef.current = null;
+      if (previous?.isConnected) {
+        previous.focus({ preventScroll: true });
+      }
+    };
+  }, [isDialogOpen]);
+
+  // Move focus into the panel on open and on every content change (a tour step change),
+  // so the new controls are reachable
+  useEffect(() => {
+    if (!isDialogOpen || !isPositioned) return;
+
+    const panel = refs.floating.current;
+    if (panel && !panel.contains(document.activeElement)) {
+      panel.focus({ preventScroll: true });
+    }
+  }, [isDialogOpen, isPositioned, tooltip.content, refs]);
+
   // Handle transition end - only clear transitioning state when transform finishes
   // (or opacity if not animating position)
   const handleTransitionEnd = useCallback(
@@ -151,7 +183,10 @@ export function Tooltip() {
   return (
     <div
       ref={refs.setFloating}
-      role="tooltip"
+      role={tooltip.parsedData?.role ?? 'tooltip'}
+      aria-labelledby={tooltip.parsedData?.ariaLabelledBy}
+      // Focusable only as a programmatic focus destination, never in the tab order
+      tabIndex={isDialog ? -1 : undefined}
       className={classNames}
       style={
         {
@@ -169,6 +204,8 @@ export function Tooltip() {
       data-placement={context.placement}
       data-transition-behavior={transitionBehavior}
       data-interactive={isInteractive ? '' : undefined}
+      // Opts the stylesheet's prefers-reduced-motion guards back out
+      data-tip-magic-motion={config.respectReducedMotion ? undefined : 'always'}
     >
       <div className={CSS_CLASSES.TOOLTIP_CONTENT}>
         {isHtmlContent ? (

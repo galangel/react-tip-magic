@@ -5,22 +5,25 @@ import type {
   TourDirection,
   TourOptions,
   TourProgress,
+  TourTargetMissingAction,
   UseTourReturn,
 } from '../../types/tour';
 import { useTipMagic } from '../useTipMagic';
-import { TOUR_ACTIONS, TOUR_DATA_ATTRIBUTES } from './constants';
+import { TOUR_ACTIONS, TOUR_DATA_ATTRIBUTES, TOUR_ELEMENT_IDS } from './constants';
 import {
   buildCurrentStep,
   buildTourContent,
   calculateProgress,
   createBackdropManager,
   createHighlightManager,
+  createTargetWatcher,
   filterVisibleSteps,
   getMergedNavigation,
   getMergedProgress,
   hasNavigationFeatures,
+  resolveFocus,
   resolveStepContent,
-  shouldShowFocus,
+  resolveTargetElement,
 } from './utils';
 
 /**
@@ -62,6 +65,19 @@ import {
  *
  * @example
  * ```tsx
+ * // Built-in controls instead of your own
+ * const tour = useTour({
+ *   steps: [
+ *     { target: 'sidebar', content: 'Navigate from here' },
+ *     { target: 'search', content: 'Search for items' },
+ *   ],
+ *   navigation: { showControls: true },
+ *   progress: { show: true },
+ * });
+ * ```
+ *
+ * @example
+ * ```tsx
  * // Advanced usage with callbacks
  * const tour = useTour({
  *   steps: [
@@ -81,9 +97,15 @@ import {
  *   onStart: () => console.log('Tour started'),
  *   onEnd: (completed) => console.log(completed ? 'Completed!' : 'Skipped'),
  *   onStepChange: (step, direction) => trackStep(step),
+ *   onTargetMissing: (step) => logger.warn('missing target', step.target),
  *   tooltipOptions: { placement: 'bottom', interactive: true },
  *   autoScroll: true,
  * });
+ *
+ * // start() reports whether the tour actually opened
+ * if (tour.start()) {
+ *   markTourAsSeen();
+ * }
  * ```
  */
 export function useTour(options: TourOptions): UseTourReturn {
@@ -92,6 +114,7 @@ export function useTour(options: TourOptions): UseTourReturn {
     onStart,
     onEnd,
     onStepChange,
+    onTargetMissing,
     tooltipOptions,
     autoScroll = true,
     highlightClass,
@@ -106,20 +129,24 @@ export function useTour(options: TourOptions): UseTourReturn {
   const [isActive, setIsActive] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(-1);
 
-  // Keep a ref of currentIndex that's always up to date (for use in callbacks)
+  // Keep refs of the state that's read from callbacks and observers, always up to date
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
+  const isActiveRef = useRef(isActive);
+  isActiveRef.current = isActive;
 
   // DOM managers (created once and reused)
   const backdropManagerRef = useRef(createBackdropManager());
   const highlightManagerRef = useRef(
     createHighlightManager(highlightClass ?? config.tourHighlightClass)
   );
+  const targetWatcherRef = useRef(createTargetWatcher());
 
   // Refs for navigation handlers to avoid stale closures
   const nextRef = useRef<() => void>(() => {});
   const prevRef = useRef<() => void>(() => {});
   const endRef = useRef<() => void>(() => {});
+  const targetLostRef = useRef<() => void>(() => {});
 
   // Compute visible steps (filter out steps with condition returning false)
   const visibleSteps = useMemo(() => filterVisibleSteps(steps), [steps]);
@@ -133,35 +160,80 @@ export function useTour(options: TourOptions): UseTourReturn {
   }, [effectiveHighlightClass]);
 
   /**
+   * Report a target that could not be resolved, and ask how to recover
+   *
+   * The console warning is the fallback for consumers who have not supplied a handler;
+   * hosts that ban `console.*` provide `onTargetMissing` and route it themselves.
+   */
+  const notifyTargetMissing = useCallback(
+    (step: CurrentTourStep): TourTargetMissingAction | void => {
+      if (onTargetMissing) {
+        return onTargetMissing(step);
+      }
+      console.warn(`useTour: Could not find target element with data-tip-id="${step.target}"`);
+    },
+    [onTargetMissing]
+  );
+
+  /**
+   * Walk from an index until a step whose target is in the DOM is found
+   *
+   * @param fromIndex - Where to start looking
+   * @param delta - Direction to walk (1 forward, -1 backward)
+   * @returns The resolvable step index, or -1 if there is none to continue with
+   */
+  const findResolvableStep = useCallback(
+    (fromIndex: number, delta: 1 | -1): number => {
+      for (let index = fromIndex; index >= 0 && index < visibleSteps.length; index += delta) {
+        if (resolveTargetElement(visibleSteps[index].target)) {
+          return index;
+        }
+
+        const stepData = buildCurrentStep(visibleSteps, index);
+        if (!stepData || notifyTargetMissing(stepData) !== 'skip') {
+          return -1;
+        }
+      }
+
+      return -1;
+    },
+    [visibleSteps, notifyTargetMissing]
+  );
+
+  /**
    * Show tooltip for a step
+   *
+   * The target element is resolved by the caller, so this is only ever reached for a
+   * step that can actually render.
    */
   const showStepTooltip = useCallback(
-    (stepIndex: number) => {
+    (stepIndex: number, targetElement: HTMLElement) => {
       const step = visibleSteps[stepIndex];
-      if (!step) return;
-
       const currentStepData = buildCurrentStep(visibleSteps, stepIndex);
-      if (!currentStepData) return;
-
-      // Find target element
-      const targetSelector = `[${TOUR_DATA_ATTRIBUTES.TIP_ID}="${step.target}"]`;
-      const targetElement = document.querySelector(targetSelector) as HTMLElement | null;
-
-      if (!targetElement) {
-        console.warn(`useTour: Could not find target element with data-tip-id="${step.target}"`);
-        return;
-      }
+      if (!step || !currentStepData) return;
 
       // Highlight element
       highlightManagerRef.current.highlight(targetElement);
 
       // Handle focus/backdrop
-      const useFocus = shouldShowFocus(tourFocus, step);
-      if (useFocus) {
-        backdropManagerRef.current.show(targetElement);
+      const focusOptions = resolveFocus(tourFocus, step);
+      if (focusOptions.enabled) {
+        backdropManagerRef.current.show(targetElement, {
+          blockInteraction: focusOptions.block,
+          onClick: focusOptions.dismissOnClick ? () => endRef.current() : undefined,
+        });
       } else {
         backdropManagerRef.current.hide();
       }
+
+      // Notice when the host app rewrites the target's class or unmounts it entirely
+      targetWatcherRef.current.watch(targetElement, {
+        onClassRewritten: () => {
+          backdropManagerRef.current.reapply();
+          highlightManagerRef.current.reapply();
+        },
+        onDetached: () => targetLostRef.current(),
+      });
 
       // Scroll into view if enabled
       if (autoScroll) {
@@ -193,16 +265,24 @@ export function useTour(options: TourOptions): UseTourReturn {
           )
         : resolvedContent;
 
-      // Merge tooltip options: tour defaults < step overrides
+      // Merge tooltip options: tour panel defaults < tour options < step overrides <
+      // the values the tour panel cannot function without
       const mergedOptions: TooltipShowOptions = {
+        // The panel holds prose, a header row and a nav row - it has to be able to wrap.
+        // Overridable, unlike the forced values below.
+        ...(hasNavFeatures && { wordWrap: true }),
         ...tooltipOptions,
         ...step.tooltipOptions,
         content: finalContent,
         placement: step.placement ?? tooltipOptions?.placement,
-        // Enable html and interactive when using navigation features
+        // Enable html and interactive when using navigation features, and present the
+        // panel as a dialog - role="tooltip" is a description, so screen readers would
+        // not expose the buttons inside it
         ...(hasNavFeatures && {
           html: true,
           interactive: true,
+          role: 'dialog' as const,
+          ariaLabelledBy: step.title ? TOUR_ELEMENT_IDS.TITLE : undefined,
         }),
       };
 
@@ -213,13 +293,42 @@ export function useTour(options: TourOptions): UseTourReturn {
   );
 
   /**
-   * Clean up highlight, backdrop, and hide tooltip
+   * Clean up highlight, backdrop, watcher, and hide tooltip
    */
   const cleanup = useCallback(() => {
     tooltip.hide();
+    targetWatcherRef.current.unwatch();
     backdropManagerRef.current.hide();
     highlightManagerRef.current.clear();
   }, [tooltip]);
+
+  /**
+   * Tear the tour down and report the outcome
+   */
+  const finishTour = useCallback(
+    (completed: boolean) => {
+      // Use ref for current index to always get latest value
+      const idx = currentIndexRef.current;
+
+      // Call onExit for current step
+      const currentStep = visibleSteps[idx];
+      if (currentStep?.onExit) {
+        currentStep.onExit();
+      }
+
+      cleanup();
+      helper.endFlow();
+      setIsActive(false);
+      isActiveRef.current = false;
+      setCurrentIndex(-1);
+      currentIndexRef.current = -1;
+
+      if (onEnd) {
+        onEnd(completed);
+      }
+    },
+    [visibleSteps, cleanup, helper, onEnd]
+  );
 
   /**
    * Navigate to a specific step
@@ -230,10 +339,22 @@ export function useTour(options: TourOptions): UseTourReturn {
         return;
       }
 
+      // A step whose target has gone missing must not leave the previous step's
+      // highlight, backdrop and content on screen while the index moves on
+      const delta = direction === 'prev' ? -1 : 1;
+      const targetIndex = findResolvableStep(newIndex, delta);
+      const targetElement =
+        targetIndex === -1 ? null : resolveTargetElement(visibleSteps[targetIndex].target);
+
+      if (targetIndex === -1 || !targetElement) {
+        finishTour(false);
+        return;
+      }
+
       // Use ref for current index to get the previous step
       const prevIdx = currentIndexRef.current;
       const previousStep = visibleSteps[prevIdx];
-      const nextStep = visibleSteps[newIndex];
+      const nextStep = visibleSteps[targetIndex];
 
       // Call onExit for previous step
       if (previousStep?.onExit) {
@@ -241,10 +362,11 @@ export function useTour(options: TourOptions): UseTourReturn {
       }
 
       // Update state
-      setCurrentIndex(newIndex);
+      setCurrentIndex(targetIndex);
+      currentIndexRef.current = targetIndex;
 
       // Show tooltip for new step
-      showStepTooltip(newIndex);
+      showStepTooltip(targetIndex, targetElement);
 
       // Call onEnter for new step
       if (nextStep?.onEnter) {
@@ -252,39 +374,52 @@ export function useTour(options: TourOptions): UseTourReturn {
       }
 
       // Call onStepChange callback
-      const currentStepData = buildCurrentStep(visibleSteps, newIndex);
+      const currentStepData = buildCurrentStep(visibleSteps, targetIndex);
       if (currentStepData && onStepChange) {
         onStepChange(currentStepData, direction);
       }
     },
-    [visibleSteps, showStepTooltip, onStepChange]
+    [visibleSteps, showStepTooltip, onStepChange, findResolvableStep, finishTour]
   );
 
   /**
    * Start the tour
    */
-  const start = useCallback(() => {
+  const start = useCallback((): boolean => {
     if (visibleSteps.length === 0) {
       console.warn('useTour: No steps available to start the tour');
-      return;
+      return false;
+    }
+
+    // Resolve before mutating anything: a tour that cannot render must not report
+    // itself as started, or consumers using onStart to mark it seen retire a tour the
+    // user never saw
+    const startIndex = findResolvableStep(0, 1);
+    const targetElement =
+      startIndex === -1 ? null : resolveTargetElement(visibleSteps[startIndex].target);
+
+    if (startIndex === -1 || !targetElement) {
+      return false;
     }
 
     setIsActive(true);
-    setCurrentIndex(0);
+    isActiveRef.current = true;
+    setCurrentIndex(startIndex);
+    currentIndexRef.current = startIndex;
 
     // Sync with helper flow state
     const flowSteps = visibleSteps.map((step, index) => ({
       id: `tour-step-${index}`,
       targetId: step.target,
-      message: typeof step.content === 'string' ? step.content : '',
+      message: step.text ?? (typeof step.content === 'string' ? step.content : ''),
     }));
     helper.startFlow(flowSteps);
 
     // Show first step tooltip
-    showStepTooltip(0);
+    showStepTooltip(startIndex, targetElement);
 
     // Call onEnter for first step
-    const firstStep = visibleSteps[0];
+    const firstStep = visibleSteps[startIndex];
     if (firstStep?.onEnter) {
       firstStep.onEnter();
     }
@@ -295,70 +430,41 @@ export function useTour(options: TourOptions): UseTourReturn {
     }
 
     // Call onStepChange for initial step
-    const currentStepData = buildCurrentStep(visibleSteps, 0);
+    const currentStepData = buildCurrentStep(visibleSteps, startIndex);
     if (currentStepData && onStepChange) {
       onStepChange(currentStepData, 'next');
     }
-  }, [visibleSteps, helper, showStepTooltip, onStart, onStepChange]);
+
+    return true;
+  }, [visibleSteps, helper, showStepTooltip, onStart, onStepChange, findResolvableStep]);
 
   /**
    * End the tour (incomplete)
    */
   const end = useCallback(() => {
-    if (!isActive) return;
+    if (!isActiveRef.current) return;
 
-    // Use ref for current index to always get latest value
-    const idx = currentIndexRef.current;
-
-    // Call onExit for current step
-    const currentStep = visibleSteps[idx];
-    if (currentStep?.onExit) {
-      currentStep.onExit();
-    }
-
-    cleanup();
-    helper.endFlow();
-    setIsActive(false);
-    setCurrentIndex(-1);
-
-    // Call onEnd callback with completed=false
-    if (onEnd) {
-      onEnd(false);
-    }
-  }, [isActive, visibleSteps, cleanup, helper, onEnd]);
+    finishTour(false);
+  }, [finishTour]);
 
   /**
    * Go to next step
    */
   const next = useCallback(() => {
-    if (!isActive) return;
+    if (!isActiveRef.current) return;
 
     // Use ref for current index to always get latest value
     const idx = currentIndexRef.current;
     const isLastStep = idx === visibleSteps.length - 1;
 
     if (isLastStep) {
-      // Call onExit for current step
-      const currentStep = visibleSteps[idx];
-      if (currentStep?.onExit) {
-        currentStep.onExit();
-      }
-
       // End tour as complete
-      cleanup();
-      helper.endFlow();
-      setIsActive(false);
-      setCurrentIndex(-1);
-
-      // Call onEnd callback with completed=true
-      if (onEnd) {
-        onEnd(true);
-      }
+      finishTour(true);
     } else {
       helper.nextStep();
       navigateToStep(idx + 1, 'next');
     }
-  }, [isActive, visibleSteps, cleanup, helper, navigateToStep, onEnd]);
+  }, [visibleSteps.length, helper, navigateToStep, finishTour]);
 
   /**
    * Go to previous step
@@ -366,22 +472,41 @@ export function useTour(options: TourOptions): UseTourReturn {
   const prev = useCallback(() => {
     // Use ref for current index to always get latest value
     const idx = currentIndexRef.current;
-    if (!isActive || idx === 0) return;
+    if (!isActiveRef.current || idx === 0) return;
 
     navigateToStep(idx - 1, 'prev');
-  }, [isActive, navigateToStep]);
+  }, [navigateToStep]);
+
+  /**
+   * Recover from the current step's target leaving the DOM
+   */
+  const handleTargetLost = useCallback(() => {
+    if (!isActiveRef.current) return;
+
+    const idx = currentIndexRef.current;
+    const stepData = buildCurrentStep(visibleSteps, idx);
+    const action = stepData ? notifyTargetMissing(stepData) : undefined;
+
+    if (action === 'skip' && idx + 1 < visibleSteps.length) {
+      navigateToStep(idx + 1, 'next');
+      return;
+    }
+
+    finishTour(false);
+  }, [visibleSteps, notifyTargetMissing, navigateToStep, finishTour]);
 
   // Update refs synchronously during render (before any effects run)
   nextRef.current = next;
   prevRef.current = prev;
   endRef.current = end;
+  targetLostRef.current = handleTargetLost;
 
   /**
    * Jump to a specific step
    */
   const goTo = useCallback(
     (index: number) => {
-      if (!isActive) return;
+      if (!isActiveRef.current) return;
 
       if (index < 0 || index >= visibleSteps.length) {
         console.warn(
@@ -395,7 +520,7 @@ export function useTour(options: TourOptions): UseTourReturn {
 
       navigateToStep(index, 'jump');
     },
-    [isActive, visibleSteps.length, navigateToStep]
+    [visibleSteps.length, navigateToStep]
   );
 
   // Build current step data
@@ -471,7 +596,9 @@ export function useTour(options: TourOptions): UseTourReturn {
   useEffect(() => {
     const backdropManager = backdropManagerRef.current;
     const highlightManager = highlightManagerRef.current;
+    const targetWatcher = targetWatcherRef.current;
     return () => {
+      targetWatcher.destroy();
       backdropManager.destroy();
       highlightManager.destroy();
     };

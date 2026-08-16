@@ -1,5 +1,6 @@
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../../types/tour';
-import { TOUR_ACTIONS, TOUR_CSS_CLASSES } from '../constants';
+import { escapeHtml } from '../../../utils/escapeHtml';
+import { TOUR_ACTIONS, TOUR_CSS_CLASSES, TOUR_ELEMENT_IDS } from '../constants';
 import type { ResolvedProgressOptions } from './tourNavigation';
 
 /**
@@ -14,22 +15,21 @@ export function buildMediaHtml(step: TourStep): string {
 
     if (type === 'embed') {
       // Embed video (YouTube, Vimeo, etc.)
-      // Note: Using spaces instead of semicolons in allow attribute to avoid parseContent splitting
       return `<div class="${TOUR_CSS_CLASSES.VIDEO} ${TOUR_CSS_CLASSES.VIDEO_EMBED}">
-        <iframe src="${src}" frameborder="0" allow="accelerometer autoplay clipboard-write encrypted-media gyroscope picture-in-picture" allowfullscreen></iframe>
+        <iframe src="${escapeHtml(src)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div>`;
     } else {
       // Native video (mp4, webm)
       return `<div class="${TOUR_CSS_CLASSES.VIDEO}">
         <video ${autoplay ? 'autoplay' : ''} ${loop ? 'loop' : ''} ${muted ? 'muted' : ''} playsinline>
-          <source src="${src}" type="video/mp4">
+          <source src="${escapeHtml(src)}" type="video/mp4">
         </video>
       </div>`;
     }
   }
 
   if (step.image) {
-    return `<div class="${TOUR_CSS_CLASSES.IMAGE}"><img src="${step.image}" alt="" /></div>`;
+    return `<div class="${TOUR_CSS_CLASSES.IMAGE}"><img src="${escapeHtml(step.image)}" alt="" /></div>`;
   }
 
   return '';
@@ -49,8 +49,13 @@ export function buildHeaderHtml(step: TourStep, nav: Required<TourNavigation>): 
     return '';
   }
 
+  // The title carries an id so the panel can point aria-labelledby at it
+  const titleHtml = step.title
+    ? `<div class="${TOUR_CSS_CLASSES.TITLE}" id="${TOUR_ELEMENT_IDS.TITLE}">${escapeHtml(step.title)}</div>`
+    : '<div></div>';
+
   return `<div class="${TOUR_CSS_CLASSES.HEADER}">
-    ${step.title ? `<div class="${TOUR_CSS_CLASSES.TITLE}">${step.title}</div>` : '<div></div>'}
+    ${titleHtml}
     ${nav.showClose ? `<button class="${TOUR_CSS_CLASSES.CLOSE}" data-tour-action="${TOUR_ACTIONS.CLOSE}" aria-label="Close">×</button>` : ''}
   </div>`;
 }

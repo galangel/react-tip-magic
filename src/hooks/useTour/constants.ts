@@ -51,6 +51,26 @@ export const TOUR_DATA_ATTRIBUTES = {
    * @example <header data-tip-always-visible>...</header>
    */
   ALWAYS_VISIBLE: 'data-tip-always-visible',
+  /**
+   * Applied by the library to elevate the current step's target above the backdrop.
+   * An attribute rather than a class because React rewrites `class` wholesale on
+   * re-render and would drop it.
+   */
+  FOCUS: 'data-tip-magic-focus',
+  /** Applied by the library to elevate `data-tip-always-visible` elements */
+  ELEVATED: 'data-tip-magic-elevated',
+  /** Applied to the backdrop when it should capture pointer events */
+  BACKDROP_INTERACTIVE: 'data-tip-magic-backdrop-interactive',
+} as const;
+
+/**
+ * Element ids used inside the tour panel
+ *
+ * A single tooltip element is rendered at a time, so a constant id is unambiguous.
+ */
+export const TOUR_ELEMENT_IDS = {
+  /** The step title, referenced by the panel's `aria-labelledby` */
+  TITLE: 'tip-magic-tour-title',
 } as const;
 
 /**

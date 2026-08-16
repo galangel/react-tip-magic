@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { HighlightManager, createHighlightManager } from '../utils/highlightManager';
 
 describe('HighlightManager', () => {
@@ -98,6 +98,43 @@ describe('HighlightManager', () => {
       manager.destroy();
 
       expect(element1.classList.contains(highlightClass)).toBe(false);
+    });
+  });
+
+  describe('reapply', () => {
+    it('should restore the class after the host app rewrites className', () => {
+      manager.highlight(element1);
+
+      // React writes the whole class attribute on re-render
+      element1.className = 'css-generated-hash';
+      expect(element1.classList.contains(highlightClass)).toBe(false);
+
+      manager.reapply();
+
+      expect(element1.classList.contains(highlightClass)).toBe(true);
+    });
+
+    it('should not touch the DOM when the class is already present', () => {
+      manager.highlight(element1);
+
+      // A no-op reapply must not write the class attribute - the tour's target watcher
+      // observes it, and a write would notify the watcher that called reapply
+      const addSpy = vi.spyOn(element1.classList, 'add');
+      manager.reapply();
+
+      expect(addSpy).not.toHaveBeenCalled();
+      addSpy.mockRestore();
+    });
+
+    it('should be a no-op with no highlighted element', () => {
+      expect(() => manager.reapply()).not.toThrow();
+    });
+
+    it('should be a no-op with no highlight class configured', () => {
+      const noClassManager = createHighlightManager();
+      noClassManager.highlight(element1);
+
+      expect(() => noClassManager.reapply()).not.toThrow();
     });
   });
 });
