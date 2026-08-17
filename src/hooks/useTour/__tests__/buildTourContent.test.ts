@@ -477,4 +477,91 @@ describe('buildTourContent utilities', () => {
       expect(result).toContain(TOUR_CSS_CLASSES.NAV);
     });
   });
+
+  describe('escaping', () => {
+    it('should escape the step title', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        title: '<img src=x onerror="alert(1)">',
+      };
+
+      const result = buildHeaderHtml(step, DEFAULT_NAVIGATION);
+      expect(result).not.toContain('<img');
+      expect(result).toContain('&lt;img');
+    });
+
+    it('should put the supplied id on the title for aria-labelledby', () => {
+      const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
+
+      expect(buildHeaderHtml(step, DEFAULT_NAVIGATION, 'tip-magic-7-title')).toContain(
+        'id="tip-magic-7-title"'
+      );
+    });
+
+    it('should omit the id when none is supplied', () => {
+      const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
+
+      expect(buildHeaderHtml(step, DEFAULT_NAVIGATION)).not.toContain('id=');
+    });
+
+    it('should give the nav and close buttons an explicit type', () => {
+      const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
+      const stepInfo: CurrentTourStep = {
+        index: 1,
+        target: 'step1',
+        content: 'Content',
+        isFirst: false,
+        isLast: false,
+        total: 3,
+      };
+      const nav: Required<TourNavigation> = { ...DEFAULT_NAVIGATION, showControls: true };
+
+      expect(buildHeaderHtml(step, nav)).toContain('<button type="button"');
+      const navHtml = buildNavHtml(stepInfo, nav);
+      expect(navHtml.match(/<button type="button"/g)).toHaveLength(2);
+    });
+
+    it('should escape an image src so it cannot break out of the attribute', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        image: 'x.png" onerror="alert(1)',
+      };
+
+      const result = buildMediaHtml(step);
+      expect(result).not.toContain('onerror="alert(1)"');
+      expect(result).toContain('&quot;');
+    });
+
+    it('should escape a native video src', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        video: { src: 'clip.mp4" onerror="alert(1)' },
+      };
+
+      expect(buildMediaHtml(step)).not.toContain('onerror="alert(1)"');
+    });
+
+    it('should escape an embed video src', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        video: { src: 'https://example.com/v"><script>', type: 'embed' },
+      };
+
+      expect(buildMediaHtml(step)).not.toContain('<script>');
+    });
+
+    it('should use a spec-compliant semicolon-separated allow list on embeds', () => {
+      const step: TourStep = {
+        target: 'step1',
+        content: 'Content',
+        video: { src: 'https://example.com/v', type: 'embed' },
+      };
+
+      expect(buildMediaHtml(step)).toContain('allow="accelerometer; autoplay;');
+    });
+  });
 });

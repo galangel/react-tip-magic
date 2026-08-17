@@ -62,8 +62,19 @@
   /* Backdrop / Focus */
   --tip-magic-tour-backdrop-blur: 4px;
   --tip-magic-tour-backdrop-bg: rgba(0, 0, 0, 0.3);
-  /* Backdrop: 9997, Focus target: 9998, Tooltip: 9999 */
-  --tip-magic-tour-backdrop-z-index: 9997;
+
+  /**
+   * Layering. Override --tip-magic-tour-z-base to move the whole tour as a unit;
+   * override an individual variable to place one layer by hand.
+   *
+   * Backdrop: base (9997) < Focus target: base + 1 (9998) < Tooltip: 9999
+   *
+   * The tooltip sits on top and is set from JS - use the provider's `zIndex` option.
+   * Raise both together when the host app has its own high-z surfaces.
+   */
+  --tip-magic-tour-z-base: 9997;
+  --tip-magic-tour-backdrop-z-index: var(--tip-magic-tour-z-base);
+  --tip-magic-tour-focus-z-index: calc(var(--tip-magic-tour-z-base) + 1);
 }
 
 /* =============================================================================
@@ -339,10 +350,28 @@
   pointer-events: none; /* Allow clicks through to target */
 }
 
-/* Target element when focus is active - ensure it's above backdrop but below tooltip */
-.tip-magic-tour-focus-target {
+/**
+ * Set when the tour is configured with `focus: { block: true }` or
+ * `focus: { dismissOnClick: true }` - the backdrop then swallows clicks aimed at the
+ * app behind it, so the target cannot be unmounted from under a running tour.
+ */
+.tip-magic-tour-backdrop[data-tip-magic-backdrop-interactive] {
+  pointer-events: auto;
+}
+
+/**
+ * Target element when focus is active - above the backdrop, below the tooltip.
+ *
+ * Keyed on the data attribute rather than the class alone: React rewrites the whole
+ * `class` attribute when a component re-renders (a CSS-in-JS theme switch generates a
+ * new hash, for instance), which would drop a library-applied class and silently
+ * un-elevate the highlighted element. React never touches attributes it does not
+ * render, so the attribute survives. The class is still applied as a styling hook.
+ */
+.tip-magic-tour-focus-target,
+[data-tip-magic-focus] {
   position: relative;
-  z-index: 9998 !important; /* Above backdrop (9997), below tooltip (9999) */
+  z-index: var(--tip-magic-tour-focus-z-index) !important;
 }
 
 /**
@@ -350,7 +379,29 @@
  * Useful for headers, sidebars, and other persistent UI elements that should
  * not be masked during a tour.
  */
-.tip-magic-tour-always-visible {
+.tip-magic-tour-always-visible,
+[data-tip-magic-elevated] {
   position: relative;
-  z-index: 9998 !important; /* Same as focus target - above backdrop, below tooltip */
+  z-index: var(--tip-magic-tour-focus-z-index) !important;
+}
+
+/* =============================================================================
+   Accessibility
+   ============================================================================= */
+
+/**
+ * The tour renders inside the tooltip element, so scoping to it covers every
+ * animated surface the tour owns. `data-tip-magic-motion="always"` is set by the
+ * provider when `respectReducedMotion` is disabled.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .tip-magic-tooltip:not([data-tip-magic-motion='always']) .tip-magic-tour-close,
+  .tip-magic-tooltip:not([data-tip-magic-motion='always']) .tip-magic-tour-btn,
+  .tip-magic-tooltip:not([data-tip-magic-motion='always']) .tip-magic-tour-progress-ring-fill {
+    transition: none;
+  }
+
+  .tip-magic-tooltip:not([data-tip-magic-motion='always']) .tip-magic-tour-btn:active {
+    transform: none;
+  }
 }

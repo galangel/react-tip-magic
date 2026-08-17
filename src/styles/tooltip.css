@@ -9,6 +9,17 @@
    TOOLTIP CONTAINER
    ========================================================================== */
 
+/**
+ * Own the box model so the tooltip measures the same in every host, regardless of
+ * whether the app ships a `* { box-sizing: border-box }` reset.
+ */
+.tip-magic-tooltip,
+.tip-magic-tooltip *,
+.tip-magic-tooltip *::before,
+.tip-magic-tooltip *::after {
+  box-sizing: border-box;
+}
+
 .tip-magic-tooltip {
   position: absolute;
   top: 0;
@@ -173,8 +184,12 @@
    ACCESSIBILITY
    ========================================================================== */
 
+/**
+ * `data-tip-magic-motion="always"` is set by the provider when the
+ * `respectReducedMotion` option is disabled, opting the tooltip back into animation.
+ */
 @media (prefers-reduced-motion: reduce) {
-  .tip-magic-tooltip {
+  .tip-magic-tooltip:not([data-tip-magic-motion='always']) {
     transition: none;
   }
 }

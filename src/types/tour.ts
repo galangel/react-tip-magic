@@ -10,6 +10,45 @@ import type { Placement, TooltipShowOptions } from './index';
 export type TourDirection = 'next' | 'prev' | 'jump';
 
 /**
+ * How the tour should recover when a step's target element cannot be found
+ *
+ * - `'skip'`: move past the step and continue with the next resolvable one
+ * - `'end'`: end the tour (the default when no handler is provided)
+ */
+export type TourTargetMissingAction = 'skip' | 'end';
+
+/**
+ * Backdrop behaviour when focus mode is enabled
+ *
+ * By default the backdrop is purely visual - it does not capture pointer events, so
+ * the app behind it stays fully interactive and the user can navigate away from (or
+ * unmount) the highlighted element mid-tour.
+ *
+ * @example
+ * ```tsx
+ * // Dim the app and stop clicks from reaching it
+ * focus: { block: true }
+ *
+ * // Dim the app and let a click on the backdrop end the tour
+ * focus: { dismissOnClick: true }
+ * ```
+ */
+export interface TourFocusOptions {
+  /** Whether the backdrop should swallow clicks aimed at the app behind it (default: false) */
+  block?: boolean;
+  /** Whether clicking the backdrop ends the tour (default: false). Implies `block`. */
+  dismissOnClick?: boolean;
+}
+
+/**
+ * Focus/backdrop configuration
+ *
+ * `true` is shorthand for a purely visual backdrop; pass an object to control
+ * pointer interaction.
+ */
+export type TourFocus = boolean | TourFocusOptions;
+
+/**
  * Navigation configuration for tours
  *
  * Controls the built-in navigation UI (buttons inside the tooltip).
@@ -49,7 +88,10 @@ export interface CurrentTourStep {
   target: string;
   /** Optional step title */
   title?: string;
-  /** Resolved content (if function was provided, it has been called) */
+  /**
+   * Resolved content, exactly as rendered. If the step used `text`, this is the
+   * HTML-escaped form of that string.
+   */
   content: string;
   /** Whether this is the first step */
   isFirst: boolean;
@@ -73,12 +115,10 @@ export interface CurrentTourStep {
  * };
  * ```
  */
-export interface TourStep {
+export interface TourStepBase {
   /** Target element's data-tip-id value */
   target: string;
-  /** Tooltip content - can be a string or a function that receives current step info */
-  content: string | ((step: CurrentTourStep) => string);
-  /** Optional step title (will be prepended to content with bold styling if html is enabled) */
+  /** Optional step title (escaped by the library) */
   title?: string;
   /** Tooltip placement for this step */
   placement?: Placement;
@@ -108,10 +148,61 @@ export interface TourStep {
   /** Override tour-level navigation config for this step */
   navigation?: Partial<TourNavigation>;
   /** Override tour-level focus setting for this step */
-  focus?: boolean;
+  focus?: TourFocus;
   /** Override tour-level progress options for this step */
   progress?: Partial<ProgressOptions>;
 }
+
+/**
+ * The body of a step: raw HTML via `content`, or plain text via `text`.
+ *
+ * Exactly one is required. Expressing it as a union rather than two optionals means a
+ * step with neither does not compile, and a step with both does not either - so there is
+ * no precedence rule to remember.
+ */
+export type TourStepContent =
+  | {
+      /**
+       * Tooltip content - a string or a function that receives current step info.
+       *
+       * @remarks
+       * **This value is injected as HTML.** Steps are rendered with
+       * `dangerouslySetInnerHTML` so that titles, media and navigation controls work,
+       * which means any interpolated value - a user-supplied name, an account label -
+       * must be escaped by the caller. The exported `escapeHtml` helper is there for
+       * interpolating into markup; prefer `text` when the whole body is plain text.
+       */
+      content: string | ((step: CurrentTourStep) => string);
+      text?: never;
+    }
+  | {
+      /**
+       * Plain-text body, escaped by the library before it is rendered.
+       *
+       * @example
+       * ```tsx
+       * { target: 'profile', text: `Signed in as ${user.name}` }
+       * ```
+       */
+      text: string;
+      content?: never;
+    };
+
+/**
+ * Tour step definition
+ *
+ * @example
+ * ```tsx
+ * const step: TourStep = {
+ *   target: 'sidebar',
+ *   content: 'Navigate from here',
+ *   title: 'Navigation',
+ *   placement: 'right',
+ *   onEnter: () => analytics.track('tour_step_1'),
+ * };
+ * ```
+ */
+export type TourStep = TourStepBase & TourStepContent;
 
 /**
  * Tour progress information
@@ -156,8 +247,9 @@ export type ProgressType = 'steps' | 'ring';
  * }
  * ```
  *
- * @note When using a custom render function, avoid semicolons (`;`) in inline styles
- * as they conflict with the tooltip content parsing. Use CSS classes instead.
+ * @remarks
+ * A custom `render` function returns raw HTML that is injected as-is. Escape any
+ * interpolated value.
  */
 export interface ProgressOptions {
   /** Whether to show progress indicator (default: false) */
@@ -193,6 +285,23 @@ export interface TourOptions {
   onEnd?: (completed: boolean) => void;
   /** Callback when step changes */
   onStepChange?: (step: CurrentTourStep, direction: TourDirection) => void;
+  /**
+   * Callback when a step's target element cannot be found in the DOM.
+   *
+   * Fires instead of the library's `console.warn`, so hosts that route through their
+   * own logger can handle it. Return `'skip'` to continue with the next resolvable
+   * step; anything else (including no return value) ends the tour, or prevents it from
+   * starting when the failure is on the first step.
+   *
+   * @example
+   * ```tsx
+   * onTargetMissing: (step) => {
+   *   logger.warn('tour target missing', { target: step.target });
+   *   return 'skip';
+   * }
+   * ```
+   */
+  onTargetMissing?: (step: CurrentTourStep) => TourTargetMissingAction | void;
   /** Default tooltip options applied to all steps (can be overridden per step) */
   tooltipOptions?: TooltipShowOptions;
   /** Whether to scroll target elements into view (default: true) */
@@ -201,8 +310,11 @@ export interface TourOptions {
   highlightClass?: string;
   /** Navigation configuration for built-in controls */
   navigation?: TourNavigation;
-  /** Whether to show a backdrop blur effect highlighting the target (default: false) */
-  focus?: boolean;
+  /**
+   * Whether to show a backdrop blur effect highlighting the target (default: false).
+   * Pass an object to also control pointer interaction - see {@link TourFocusOptions}.
+   */
+  focus?: TourFocus;
   /** Progress indicator options */
   progress?: ProgressOptions;
 }
@@ -232,16 +344,35 @@ export interface TourOptions {
  * ```
  */
 export interface UseTourReturn {
-  /** Start the tour from the first step */
-  start: () => void;
+  /**
+   * Start the tour from the first step.
+   *
+   * Returns `false` without starting - no state change, no `onStart`, no
+   * `onStepChange` - when there are no steps to show or no step's target can be
+   * resolved. A tour that cannot render never reports itself as shown, so `onStart` is
+   * safe to use for "mark this tour as seen".
+   */
+  start: () => boolean;
   /** End the tour (marks as incomplete) */
   end: () => void;
   /** Go to next step (if on last step, ends tour as complete) */
   next: () => void;
-  /** Go to previous step (no-op if on first step) */
+  /**
+   * Go to previous step.
+   *
+   * A no-op on the first step, and also when the previous step's target is not in the
+   * DOM - the tour stays where it is rather than ending, since the current step is
+   * still rendering.
+   */
   prev: () => void;
-  /** Jump to a specific step by index (0-based) */
-  goTo: (index: number) => void;
+  /**
+   * Jump to a specific step by index (0-based).
+   *
+   * Returns `false` without moving if the index is out of range or that step's target
+   * is not in the DOM. Unlike `next`, a jump never skips to a different step - landing
+   * somewhere the caller did not ask for is worse than not moving.
+   */
+  goTo: (index: number) => boolean;
   /** Whether the tour is currently active */
   isActive: boolean;
   /** Current step data with navigation metadata, null if tour is not active */

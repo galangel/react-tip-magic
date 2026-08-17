@@ -51,6 +51,16 @@ export const TOUR_DATA_ATTRIBUTES = {
    * @example <header data-tip-always-visible>...</header>
    */
   ALWAYS_VISIBLE: 'data-tip-always-visible',
+  /**
+   * Applied by the library to elevate the current step's target above the backdrop.
+   * An attribute rather than a class because React rewrites `class` wholesale on
+   * re-render and would drop it.
+   */
+  FOCUS: 'data-tip-magic-focus',
+  /** Applied by the library to elevate `data-tip-always-visible` elements */
+  ELEVATED: 'data-tip-magic-elevated',
+  /** Applied to the backdrop when it should capture pointer events */
+  BACKDROP_INTERACTIVE: 'data-tip-magic-backdrop-interactive',
 } as const;
 
 /**

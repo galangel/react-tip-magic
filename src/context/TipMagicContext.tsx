@@ -111,6 +111,7 @@ export type TipMagicAction =
   | { type: 'START_FLOW'; payload: FlowStep[] }
   | { type: 'NEXT_FLOW_STEP' }
   | { type: 'PREV_FLOW_STEP' }
+  | { type: 'SET_FLOW_STEP'; payload: number }
   | { type: 'END_FLOW' };
 
 /**
@@ -243,6 +244,18 @@ export function tipMagicReducer(state: TipMagicState, action: TipMagicAction): T
         flow: {
           ...state.flow,
           currentIndex: Math.max(state.flow.currentIndex - 1, 0),
+        },
+      };
+
+    case 'SET_FLOW_STEP':
+      return {
+        ...state,
+        flow: {
+          ...state.flow,
+          currentIndex: Math.min(
+            Math.max(action.payload, 0),
+            Math.max(state.flow.steps.length - 1, 0)
+          ),
         },
       };
 

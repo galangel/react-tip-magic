@@ -35,14 +35,20 @@ export type {
   TipMagicOptions,
   TipMagicState,
   TooltipAPI,
+  TooltipRole,
   TooltipShowOptions,
   TooltipState,
   TooltipTransitionBehavior,
   TourDirection,
+  TourFocus,
+  TourFocusOptions,
   TourNavigation,
   TourOptions,
   TourProgress,
   TourStep,
+  TourStepBase,
+  TourStepContent,
+  TourTargetMissingAction,
   UseTipMagicReturn,
   UseTourReturn,
   // TipAdvisor types
@@ -57,6 +63,7 @@ export type {
 export { ANIMATION, CSS_CLASSES, DEFAULT_OPTIONS } from './constants';
 
 // Utilities
+export { escapeHtml } from './utils/escapeHtml';
 export { getTipProps } from './utils/getTipProps';
 export type { TipPropsOptions, TipPropsResult } from './utils/getTipProps';
 export { generateTooltipId, parseDataAttributes } from './utils/parseDataAttributes';

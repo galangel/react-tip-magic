@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOUR_CSS_CLASSES, TOUR_DATA_ATTRIBUTES } from '../constants';
 import { BackdropManager, createBackdropManager } from '../utils/backdropManager';
 
@@ -225,6 +225,118 @@ describe('BackdropManager', () => {
       expect(headerElement.classList.contains(TOUR_CSS_CLASSES.ALWAYS_VISIBLE)).toBe(true);
 
       target2.remove();
+    });
+  });
+
+  describe('attribute-based elevation', () => {
+    it('should mark the focus target with the elevation attribute', () => {
+      manager.show(targetElement);
+
+      expect(targetElement.hasAttribute(TOUR_DATA_ATTRIBUTES.FOCUS)).toBe(true);
+    });
+
+    it('should mark always-visible elements with the elevation attribute', () => {
+      const header = document.createElement('header');
+      header.setAttribute(TOUR_DATA_ATTRIBUTES.ALWAYS_VISIBLE, '');
+      document.body.appendChild(header);
+
+      manager.show(targetElement);
+
+      expect(header.hasAttribute(TOUR_DATA_ATTRIBUTES.ELEVATED)).toBe(true);
+
+      header.remove();
+    });
+
+    it('should remove the elevation attribute on hide', () => {
+      manager.show(targetElement);
+      manager.hide();
+
+      expect(targetElement.hasAttribute(TOUR_DATA_ATTRIBUTES.FOCUS)).toBe(false);
+    });
+
+    it('should restore the class after the host app rewrites className', () => {
+      manager.show(targetElement);
+
+      // React writes the whole class attribute on re-render
+      targetElement.className = 'css-generated-hash';
+      expect(targetElement.classList.contains(TOUR_CSS_CLASSES.FOCUS_TARGET)).toBe(false);
+      // The attribute the stylesheet keys off was never React's to remove
+      expect(targetElement.hasAttribute(TOUR_DATA_ATTRIBUTES.FOCUS)).toBe(true);
+
+      manager.reapplyFocusTarget();
+
+      expect(targetElement.classList.contains(TOUR_CSS_CLASSES.FOCUS_TARGET)).toBe(true);
+    });
+
+    it('should not touch the DOM when reapply has nothing to restore', () => {
+      manager.show(targetElement);
+
+      // A no-op reapply must not write the class attribute - the tour's target watcher
+      // observes it, and a write would notify the watcher that called reapply
+      const setAttributeSpy = vi.spyOn(targetElement, 'setAttribute');
+      const addSpy = vi.spyOn(targetElement.classList, 'add');
+
+      manager.reapplyFocusTarget();
+
+      expect(setAttributeSpy).not.toHaveBeenCalled();
+      expect(addSpy).not.toHaveBeenCalled();
+
+      setAttributeSpy.mockRestore();
+      addSpy.mockRestore();
+    });
+  });
+
+  describe('pointer interaction', () => {
+    it('should leave the backdrop non-interactive by default', () => {
+      manager.show(targetElement);
+
+      const backdrop = document.querySelector(`.${TOUR_CSS_CLASSES.BACKDROP}`);
+      expect(backdrop?.hasAttribute(TOUR_DATA_ATTRIBUTES.BACKDROP_INTERACTIVE)).toBe(false);
+    });
+
+    it('should mark the backdrop interactive when blocking', () => {
+      manager.show(targetElement, { blockInteraction: true });
+
+      const backdrop = document.querySelector(`.${TOUR_CSS_CLASSES.BACKDROP}`);
+      expect(backdrop?.hasAttribute(TOUR_DATA_ATTRIBUTES.BACKDROP_INTERACTIVE)).toBe(true);
+    });
+
+    it('should mark the backdrop interactive when a click handler is supplied', () => {
+      manager.show(targetElement, { onClick: () => {} });
+
+      const backdrop = document.querySelector(`.${TOUR_CSS_CLASSES.BACKDROP}`);
+      expect(backdrop?.hasAttribute(TOUR_DATA_ATTRIBUTES.BACKDROP_INTERACTIVE)).toBe(true);
+    });
+
+    it('should invoke the click handler when the backdrop is clicked', () => {
+      const onClick = vi.fn();
+      manager.show(targetElement, { onClick });
+
+      const backdrop = document.querySelector(`.${TOUR_CSS_CLASSES.BACKDROP}`) as HTMLElement;
+      backdrop.click();
+
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should use the handler from the most recent show call', () => {
+      const first = vi.fn();
+      const second = vi.fn();
+      manager.show(targetElement, { onClick: first });
+      manager.show(targetElement, { onClick: second });
+
+      const backdrop = document.querySelector(`.${TOUR_CSS_CLASSES.BACKDROP}`) as HTMLElement;
+      backdrop.click();
+
+      expect(first).not.toHaveBeenCalled();
+      expect(second).toHaveBeenCalledTimes(1);
+    });
+
+    it('should drop the interactive marker when a later step does not need it', () => {
+      manager.show(targetElement, { blockInteraction: true });
+      manager.show(targetElement);
+
+      const backdrop = document.querySelector(`.${TOUR_CSS_CLASSES.BACKDROP}`);
+      expect(backdrop?.hasAttribute(TOUR_DATA_ATTRIBUTES.BACKDROP_INTERACTIVE)).toBe(false);
     });
   });
 });

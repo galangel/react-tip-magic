@@ -1,4 +1,10 @@
-import type { ProgressOptions, ProgressType, TourNavigation, TourStep } from '../../../types/tour';
+import type {
+  ProgressOptions,
+  ProgressType,
+  TourFocus,
+  TourNavigation,
+  TourStep,
+} from '../../../types/tour';
 import { DEFAULT_NAVIGATION } from '../constants';
 
 /**
@@ -28,14 +34,36 @@ export function getMergedNavigation(
 }
 
 /**
- * Determine if focus/backdrop should be enabled for a step
+ * Fully resolved focus/backdrop configuration for a step
+ */
+export interface ResolvedTourFocus {
+  /** Whether the backdrop should be shown at all */
+  enabled: boolean;
+  /** Whether the backdrop should swallow clicks aimed at the app behind it */
+  block: boolean;
+  /** Whether clicking the backdrop ends the tour */
+  dismissOnClick: boolean;
+}
+
+/**
+ * Resolve focus/backdrop options for a step: tour-level < step-level
  *
  * @param tourFocus - Tour-level focus setting
  * @param step - Current step (may have step-level override)
- * @returns Whether focus should be shown
+ * @returns Resolved focus configuration
  */
-export function shouldShowFocus(tourFocus: boolean, step: TourStep): boolean {
-  return step.focus !== undefined ? step.focus : tourFocus;
+export function resolveFocus(tourFocus: TourFocus, step: TourStep): ResolvedTourFocus {
+  const value = step.focus !== undefined ? step.focus : tourFocus;
+
+  if (typeof value === 'boolean') {
+    return { enabled: value, block: false, dismissOnClick: false };
+  }
+
+  return {
+    enabled: true,
+    block: value.block ?? false,
+    dismissOnClick: value.dismissOnClick ?? false,
+  };
 }
 
 /**
