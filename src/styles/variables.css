@@ -23,6 +23,10 @@
  *     --tip-magic-bg: #your-color;
  *   }
  *
+ * All three work because the defaults below are declared on `:root`. Declaring them
+ * on `.tip-magic-tooltip` instead would silently break Option 1 - a custom property
+ * set on the element itself always beats one inherited from an ancestor.
+ *
  * ============================================================================
  */
 
@@ -30,7 +34,7 @@
    TOOLTIP VARIABLES
    ========================================================================== */
 
-.tip-magic-tooltip {
+:root {
   /* --------------------------------------------------------------------------
      COLORS
      -------------------------------------------------------------------------- */

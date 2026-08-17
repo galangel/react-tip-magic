@@ -6,7 +6,10 @@ import { defineConfig } from 'vite';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
- * Plugin to copy and concatenate CSS files to dist
+ * Plugin to concatenate the stylesheets imported by src/styles/index.css into dist/styles.css
+ *
+ * The file list is derived from index.css rather than hardcoded, so a new stylesheet
+ * only has to be imported there to be published.
  */
 function cssPlugin() {
   return {
@@ -19,17 +22,28 @@ function cssPlugin() {
         mkdirSync(distDir, { recursive: true });
       }
 
-      // Read all CSS files in order
-      const cssFiles = ['variables.css', 'tooltip.css', 'tour.css', 'index.css'];
+      // Read the imports out of index.css, in order
+      const entryCss = readFileSync(join(stylesDir, 'index.css'), 'utf-8');
+      const cssFiles = [...entryCss.matchAll(/@import\s+['"]\.\/([^'"]+)['"]/g)].map(
+        (match) => match[1]
+      );
+
       let combinedCss = '/* React Tip Magic Styles */\n\n';
 
       for (const file of cssFiles) {
         const filePath = join(stylesDir, file);
-        if (existsSync(filePath)) {
-          combinedCss += `/* ${file} */\n`;
-          combinedCss += readFileSync(filePath, 'utf-8');
-          combinedCss += '\n\n';
+        if (!existsSync(filePath)) {
+          throw new Error(`css-plugin: index.css imports "${file}", which does not exist`);
         }
+        combinedCss += `/* ${file} */\n`;
+        combinedCss += readFileSync(filePath, 'utf-8');
+        combinedCss += '\n\n';
+      }
+
+      // An unresolved @import would silently ship a broken stylesheet - browsers ignore
+      // @import rules that follow other rules, so this never surfaces at runtime.
+      if (combinedCss.includes('@import')) {
+        throw new Error('css-plugin: bundled stylesheet still contains unresolved @import rules');
       }
 
       writeFileSync(join(distDir, 'styles.css'), combinedCss);
