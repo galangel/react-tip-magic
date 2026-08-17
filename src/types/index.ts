@@ -279,6 +279,8 @@ export interface HelperAPI {
   startFlow: (steps: FlowStep[]) => void;
   /** Move to next flow step */
   nextStep: () => void;
+  /** Move to a specific flow step (clamped to the flow's bounds) */
+  goToStep: (index: number) => void;
   /** End current flow */
   endFlow: () => void;
   /** Current step data including index, targetId, message, etc. Null if no flow is active. */
@@ -408,6 +410,8 @@ export type {
   TourOptions,
   TourProgress,
   TourStep,
+  TourStepBase,
+  TourStepContent,
   TourTargetMissingAction,
   UseTourReturn,
 } from './tour';

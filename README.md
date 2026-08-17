@@ -152,6 +152,14 @@ Step `content` is injected as HTML so that titles, media and controls work. Use 
 { target: 'profile', text: `Signed in as ${user.name}` }
 ```
 
+Exactly one of `content` or `text` is required — a step with neither, or with both, won't compile. For markup with an interpolated value, keep `content` and escape the value with the exported `escapeHtml`:
+
+```tsx
+import { escapeHtml } from '@galangel/react-tip-magic';
+
+{ target: 'profile', content: `Signed in as <b>${escapeHtml(user.name)}</b>` }
+```
+
 ### When a target isn't there
 
 `start()` returns `false` and changes nothing—no `onStart`, no `onStepChange`—if no step's target is in the DOM, so a tour that can't render never reports itself as shown. Supply `onTargetMissing` to handle it yourself (and to keep the library off `console.warn`):
@@ -169,6 +177,8 @@ if (tour.start()) {
   markTourAsSeen();
 }
 ```
+
+Recovery depends on the direction of travel: `next()` skips or ends the tour, while `prev()` and `goTo()` leave it where it is — the step on screen is still fine. `goTo()` never skips, so it lands on the step you asked for or returns `false`.
 
 Tours also support progress indicators, keyboard support, and backdrop highlighting (`focus: true`, or `focus: { dismissOnClick: true }` to let a click on the backdrop end the tour)—all configurable to fit your needs.
 

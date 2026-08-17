@@ -79,12 +79,56 @@ const tour = useTour({
   tooltipOptions: {...},  // Optional: Default tooltip options for all steps
   navigation: {...},      // Optional: Navigation configuration
   progress: {...},        // Optional: Progress indicator options
-  focus: false,           // Optional: Enable focus mode (backdrop)
+  focus: false,           // Optional: Backdrop - boolean, or { block, dismissOnClick }
   onStart: () => {},      // Optional: Called when tour starts
   onEnd: (completed) => {},  // Optional: Called when tour ends
   onStepChange: (step, direction) => {},  // Optional: Called on navigation
+  onTargetMissing: (step) => {},  // Optional: A step's target is not in the DOM
 });
 ```
+
+### Focus mode
+
+`focus: true` dims the app behind a purely visual backdrop - it does not capture pointer
+events, so the app stays interactive and the user can navigate away from the highlighted
+element. Pass an object to change that:
+
+```tsx
+focus: {
+  block: true;
+} // Stop clicks from reaching the app behind the backdrop
+focus: {
+  dismissOnClick: true;
+} // Clicking the backdrop ends the tour (implies block)
+```
+
+### When a target is missing
+
+`start()` returns `false` and changes nothing - no `onStart`, no `onStepChange` - if no
+step's target is in the DOM, so a tour that cannot render never reports itself as shown:
+
+```tsx
+if (tour.start()) {
+  markTourAsSeen();
+}
+```
+
+`onTargetMissing` fires instead of the library's `console.warn`, which lets a host route
+it through its own logger. Return `'skip'` to continue with the next resolvable step;
+anything else ends the tour, or prevents it from starting when the first step fails.
+
+```tsx
+onTargetMissing: (step) => {
+  logger.warn('tour target missing', { target: step.target });
+  return 'skip';
+};
+```
+
+Recovery depends on the direction of travel. `next()` skips or ends. `prev()` and
+`goTo()` leave the tour where it is instead, since the step on screen is still fine, and
+`goTo()` never skips - it lands on the step you asked for or returns `false`.
+
+A target that is unmounted while the tour is running is treated the same way.
 
 ---
 
@@ -117,8 +161,21 @@ Each step in the `steps` array can have the following properties:
         <code>content</code>
       </td>
       <td>string | function</td>
-      <td>Yes</td>
-      <td>Step content (can be dynamic)</td>
+      <td>Yes*</td>
+      <td>
+        Step content, injected as <strong>HTML</strong> (can be dynamic). Escape any interpolated
+        value - the exported <code>escapeHtml</code> helper is there for it.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>text</code>
+      </td>
+      <td>string</td>
+      <td>Yes*</td>
+      <td>
+        Plain-text body, escaped by the library. Use instead of <code>content</code>.
+      </td>
     </tr>
     <tr>
       <td>
@@ -126,7 +183,7 @@ Each step in the `steps` array can have the following properties:
       </td>
       <td>string</td>
       <td>No</td>
-      <td>Optional title displayed above content</td>
+      <td>Optional title displayed above content (escaped by the library)</td>
     </tr>
     <tr>
       <td>
@@ -156,7 +213,7 @@ Each step in the `steps` array can have the following properties:
       <td>
         <code>focus</code>
       </td>
-      <td>boolean</td>
+      <td>boolean | TourFocusOptions</td>
       <td>No</td>
       <td>Enable focus mode for this step only</td>
     </tr>
@@ -203,6 +260,9 @@ Each step in the `steps` array can have the following properties:
   </tbody>
 </table>
 
+\* Exactly one of `content` or `text` is required. The types enforce it: a step with
+neither, or with both, will not compile.
+
 ### Dynamic Content
 
 Step content can be a function that receives step info:
@@ -233,8 +293,11 @@ The `useTour` hook returns an object with these properties and methods:
       <td>
         <code>start()</code>
       </td>
-      <td>function</td>
-      <td>Start the tour from the first step</td>
+      <td>() =&gt; boolean</td>
+      <td>
+        Start the tour from the first step. Returns <code>false</code> without starting if no
+        step&apos;s target is in the DOM.
+      </td>
     </tr>
     <tr>
       <td>
@@ -255,14 +318,21 @@ The `useTour` hook returns an object with these properties and methods:
         <code>prev()</code>
       </td>
       <td>function</td>
-      <td>Go to the previous step</td>
+      <td>
+        Go to the previous step. A no-op on the first step, or if that step&apos;s target is
+        missing.
+      </td>
     </tr>
     <tr>
       <td>
         <code>goTo(index)</code>
       </td>
-      <td>function</td>
-      <td>Jump to a specific step by index</td>
+      <td>(index: number) =&gt; boolean</td>
+      <td>
+        Jump to a specific step by index. Returns <code>false</code> without moving if the index is
+        out of range or that step&apos;s target is missing - a jump never lands on a step you did
+        not ask for.
+      </td>
     </tr>
     <tr>
       <td>

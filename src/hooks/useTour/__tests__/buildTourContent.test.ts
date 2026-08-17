@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../../types/tour';
-import { DEFAULT_NAVIGATION, TOUR_CSS_CLASSES, TOUR_ELEMENT_IDS } from '../constants';
+import { DEFAULT_NAVIGATION, TOUR_CSS_CLASSES } from '../constants';
 import {
   buildFooterHtml,
   buildHeaderHtml,
@@ -491,10 +491,35 @@ describe('buildTourContent utilities', () => {
       expect(result).toContain('&lt;img');
     });
 
-    it('should give the title an id for aria-labelledby', () => {
+    it('should put the supplied id on the title for aria-labelledby', () => {
       const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
 
-      expect(buildHeaderHtml(step, DEFAULT_NAVIGATION)).toContain(`id="${TOUR_ELEMENT_IDS.TITLE}"`);
+      expect(buildHeaderHtml(step, DEFAULT_NAVIGATION, 'tip-magic-7-title')).toContain(
+        'id="tip-magic-7-title"'
+      );
+    });
+
+    it('should omit the id when none is supplied', () => {
+      const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
+
+      expect(buildHeaderHtml(step, DEFAULT_NAVIGATION)).not.toContain('id=');
+    });
+
+    it('should give the nav and close buttons an explicit type', () => {
+      const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
+      const stepInfo: CurrentTourStep = {
+        index: 1,
+        target: 'step1',
+        content: 'Content',
+        isFirst: false,
+        isLast: false,
+        total: 3,
+      };
+      const nav: Required<TourNavigation> = { ...DEFAULT_NAVIGATION, showControls: true };
+
+      expect(buildHeaderHtml(step, nav)).toContain('<button type="button"');
+      const navHtml = buildNavHtml(stepInfo, nav);
+      expect(navHtml.match(/<button type="button"/g)).toHaveLength(2);
     });
 
     it('should escape an image src so it cannot break out of the attribute', () => {

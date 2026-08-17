@@ -46,6 +46,8 @@ export type {
   TourOptions,
   TourProgress,
   TourStep,
+  TourStepBase,
+  TourStepContent,
   TourTargetMissingAction,
   UseTipMagicReturn,
   UseTourReturn,

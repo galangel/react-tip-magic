@@ -64,16 +64,6 @@ export const TOUR_DATA_ATTRIBUTES = {
 } as const;
 
 /**
- * Element ids used inside the tour panel
- *
- * A single tooltip element is rendered at a time, so a constant id is unambiguous.
- */
-export const TOUR_ELEMENT_IDS = {
-  /** The step title, referenced by the panel's `aria-labelledby` */
-  TITLE: 'tip-magic-tour-title',
-} as const;
-
-/**
  * Tour action values
  */
 export const TOUR_ACTIONS = {

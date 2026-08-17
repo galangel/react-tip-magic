@@ -1,6 +1,6 @@
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../../types/tour';
 import { escapeHtml } from '../../../utils/escapeHtml';
-import { TOUR_ACTIONS, TOUR_CSS_CLASSES, TOUR_ELEMENT_IDS } from '../constants';
+import { TOUR_ACTIONS, TOUR_CSS_CLASSES } from '../constants';
 import type { ResolvedProgressOptions } from './tourNavigation';
 
 /**
@@ -40,23 +40,29 @@ export function buildMediaHtml(step: TourStep): string {
  *
  * @param step - The tour step
  * @param nav - Navigation configuration
+ * @param titleId - id to put on the title, for the panel's `aria-labelledby`. Must be
+ *   unique on the page, so it is generated per tour rather than hardcoded.
  * @returns HTML string for the header
  */
-export function buildHeaderHtml(step: TourStep, nav: Required<TourNavigation>): string {
+export function buildHeaderHtml(
+  step: TourStep,
+  nav: Required<TourNavigation>,
+  titleId?: string
+): string {
   const hasHeader = step.title || nav.showClose;
 
   if (!hasHeader) {
     return '';
   }
 
-  // The title carries an id so the panel can point aria-labelledby at it
+  const titleIdAttr = titleId ? ` id="${escapeHtml(titleId)}"` : '';
   const titleHtml = step.title
-    ? `<div class="${TOUR_CSS_CLASSES.TITLE}" id="${TOUR_ELEMENT_IDS.TITLE}">${escapeHtml(step.title)}</div>`
+    ? `<div class="${TOUR_CSS_CLASSES.TITLE}"${titleIdAttr}>${escapeHtml(step.title)}</div>`
     : '<div></div>';
 
   return `<div class="${TOUR_CSS_CLASSES.HEADER}">
     ${titleHtml}
-    ${nav.showClose ? `<button class="${TOUR_CSS_CLASSES.CLOSE}" data-tour-action="${TOUR_ACTIONS.CLOSE}" aria-label="Close">×</button>` : ''}
+    ${nav.showClose ? `<button type="button" class="${TOUR_CSS_CLASSES.CLOSE}" data-tour-action="${TOUR_ACTIONS.CLOSE}" aria-label="Close">×</button>` : ''}
   </div>`;
 }
 
@@ -73,12 +79,12 @@ export function buildNavHtml(stepInfo: CurrentTourStep, nav: Required<TourNaviga
   }
 
   const backButton = !stepInfo.isFirst
-    ? `<button class="${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_BACK}" data-tour-action="${TOUR_ACTIONS.PREV}">${nav.backLabel}</button>`
+    ? `<button type="button" class="${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_BACK}" data-tour-action="${TOUR_ACTIONS.PREV}">${nav.backLabel}</button>`
     : '';
 
   const nextAction = stepInfo.isLast ? TOUR_ACTIONS.FINISH : TOUR_ACTIONS.NEXT;
   const nextLabel = stepInfo.isLast ? nav.finishLabel : nav.nextLabel;
-  const nextButton = `<button class="${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_NEXT}" data-tour-action="${nextAction}">${nextLabel}</button>`;
+  const nextButton = `<button type="button" class="${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_NEXT}" data-tour-action="${nextAction}">${nextLabel}</button>`;
 
   return `<div class="${TOUR_CSS_CLASSES.NAV}">
     ${backButton}
@@ -215,6 +221,7 @@ export function buildFooterHtml(
  * @param nav - Navigation configuration
  * @param resolvedContent - The resolved content string
  * @param progressOptions - Progress configuration (null if not shown)
+ * @param titleId - id for the title element, for the panel's `aria-labelledby`
  * @returns Complete HTML string for the tooltip content
  */
 export function buildTourContent(
@@ -222,7 +229,8 @@ export function buildTourContent(
   stepInfo: CurrentTourStep,
   nav: Required<TourNavigation>,
   resolvedContent: string,
-  progressOptions: ResolvedProgressOptions | null = null
+  progressOptions: ResolvedProgressOptions | null = null,
+  titleId?: string
 ): string {
   const hasHeader = step.title || nav.showClose;
   const hasNavigation = nav.showControls;
@@ -235,7 +243,7 @@ export function buildTourContent(
     return resolvedContent;
   }
 
-  const headerHtml = buildHeaderHtml(step, nav);
+  const headerHtml = buildHeaderHtml(step, nav, titleId);
   const mediaHtml = buildMediaHtml(step);
   const footerHtml = buildFooterHtml(stepInfo, nav, progressOptions);
 

@@ -71,6 +71,14 @@ export function useHelperAPI(
     dispatch({ type: 'NEXT_FLOW_STEP' });
   }, [dispatch]);
 
+  // Move to a specific flow step
+  const helperGoToStep = useCallback(
+    (index: number) => {
+      dispatch({ type: 'SET_FLOW_STEP', payload: index });
+    },
+    [dispatch]
+  );
+
   // End current flow
   const helperEndFlow = useCallback(() => {
     dispatch({ type: 'END_FLOW' });
@@ -88,6 +96,7 @@ export function useHelperAPI(
       moveTo: helperMoveTo,
       startFlow: helperStartFlow,
       nextStep: helperNextStep,
+      goToStep: helperGoToStep,
       endFlow: helperEndFlow,
       currentStep: currentStepData,
       currentStepIndex: state.flow.currentIndex,
@@ -103,6 +112,7 @@ export function useHelperAPI(
       helperMoveTo,
       helperStartFlow,
       helperNextStep,
+      helperGoToStep,
       helperEndFlow,
       currentStepData,
       state.flow.currentIndex,

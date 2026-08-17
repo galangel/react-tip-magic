@@ -263,7 +263,7 @@ describe('BackdropManager', () => {
       // The attribute the stylesheet keys off was never React's to remove
       expect(targetElement.hasAttribute(TOUR_DATA_ATTRIBUTES.FOCUS)).toBe(true);
 
-      manager.reapply();
+      manager.reapplyFocusTarget();
 
       expect(targetElement.classList.contains(TOUR_CSS_CLASSES.FOCUS_TARGET)).toBe(true);
     });
@@ -276,7 +276,7 @@ describe('BackdropManager', () => {
       const setAttributeSpy = vi.spyOn(targetElement, 'setAttribute');
       const addSpy = vi.spyOn(targetElement.classList, 'add');
 
-      manager.reapply();
+      manager.reapplyFocusTarget();
 
       expect(setAttributeSpy).not.toHaveBeenCalled();
       expect(addSpy).not.toHaveBeenCalled();

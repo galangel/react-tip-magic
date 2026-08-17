@@ -8,8 +8,9 @@ import type {
   TourTargetMissingAction,
   UseTourReturn,
 } from '../../types/tour';
+import { generateTooltipId } from '../../utils/parseDataAttributes';
 import { useTipMagic } from '../useTipMagic';
-import { TOUR_ACTIONS, TOUR_DATA_ATTRIBUTES, TOUR_ELEMENT_IDS } from './constants';
+import { TOUR_ACTIONS, TOUR_DATA_ATTRIBUTES } from './constants';
 import {
   buildCurrentStep,
   buildTourContent,
@@ -25,6 +26,32 @@ import {
   resolveStepContent,
   resolveTargetElement,
 } from './utils';
+
+/**
+ * A step that can render, and the element it renders against
+ */
+interface ResolvedStep {
+  index: number;
+  element: HTMLElement;
+}
+
+/**
+ * How each entry point recovers when a step's target is not in the DOM.
+ *
+ * The distinction matters: forward motion has nowhere to fall back to, so an
+ * unresolvable run ends the tour, but going back or jumping happens while the current
+ * step is still rendering fine, so failing there should leave it untouched. An explicit
+ * jump additionally never skips - landing on a step the caller did not ask for is worse
+ * than not moving.
+ */
+const TOUR_RECOVERY: Record<
+  TourDirection,
+  { delta: 1 | -1; allowSkip: boolean; onExhausted: 'end' | 'stay' }
+> = {
+  next: { delta: 1, allowSkip: true, onExhausted: 'end' },
+  prev: { delta: -1, allowSkip: true, onExhausted: 'stay' },
+  jump: { delta: 1, allowSkip: false, onExhausted: 'stay' },
+};
 
 /**
  * Simplified hook for creating guided tours
@@ -142,6 +169,14 @@ export function useTour(options: TourOptions): UseTourReturn {
   );
   const targetWatcherRef = useRef(createTargetWatcher());
 
+  // One id per tour instance for the panel's aria-labelledby. Generated rather than
+  // hardcoded so it cannot collide with an id the host page already owns, and held for
+  // the instance rather than per step so the label does not churn between steps.
+  const titleIdRef = useRef('');
+  if (!titleIdRef.current) {
+    titleIdRef.current = `${generateTooltipId()}-title`;
+  }
+
   // Refs for navigation handlers to avoid stale closures
   const nextRef = useRef<() => void>(() => {});
   const prevRef = useRef<() => void>(() => {});
@@ -176,26 +211,37 @@ export function useTour(options: TourOptions): UseTourReturn {
   );
 
   /**
-   * Walk from an index until a step whose target is in the DOM is found
+   * Find a step that can actually render, starting at an index
+   *
+   * Returns the element alongside the index so callers do not have to query the document
+   * a second time for the target this just proved exists.
    *
    * @param fromIndex - Where to start looking
    * @param delta - Direction to walk (1 forward, -1 backward)
-   * @returns The resolvable step index, or -1 if there is none to continue with
+   * @param allowSkip - Whether `onTargetMissing` may move past an unresolvable step.
+   *   False for an explicit jump, which should land where it was asked to or nowhere.
+   * @returns The step and its element, or null if there is none to continue with
    */
   const findResolvableStep = useCallback(
-    (fromIndex: number, delta: 1 | -1): number => {
+    (fromIndex: number, delta: 1 | -1, allowSkip: boolean): ResolvedStep | null => {
       for (let index = fromIndex; index >= 0 && index < visibleSteps.length; index += delta) {
-        if (resolveTargetElement(visibleSteps[index].target)) {
-          return index;
+        const element = resolveTargetElement(visibleSteps[index].target);
+        if (element) {
+          return { index, element };
         }
 
         const stepData = buildCurrentStep(visibleSteps, index);
-        if (!stepData || notifyTargetMissing(stepData) !== 'skip') {
-          return -1;
+        if (!stepData) {
+          return null;
+        }
+
+        const action = notifyTargetMissing(stepData);
+        if (!allowSkip || action !== 'skip') {
+          return null;
         }
       }
 
-      return -1;
+      return null;
     },
     [visibleSteps, notifyTargetMissing]
   );
@@ -226,13 +272,16 @@ export function useTour(options: TourOptions): UseTourReturn {
         backdropManagerRef.current.hide();
       }
 
-      // Notice when the host app rewrites the target's class or unmounts it entirely
+      // Notice when the target is unmounted, and - only when there is a consumer class
+      // that would be lost - when the host app rewrites its className
       targetWatcherRef.current.watch(targetElement, {
-        onClassRewritten: () => {
-          backdropManagerRef.current.reapply();
-          highlightManagerRef.current.reapply();
-        },
         onDetached: () => targetLostRef.current(),
+        ...(effectiveHighlightClass && {
+          onClassRewritten: () => {
+            highlightManagerRef.current.reapply();
+            backdropManagerRef.current.reapplyFocusTarget();
+          },
+        }),
       });
 
       // Scroll into view if enabled
@@ -261,7 +310,8 @@ export function useTour(options: TourOptions): UseTourReturn {
             currentStepData,
             mergedNav,
             resolvedContent,
-            showProgress ? progressOptions : null
+            showProgress ? progressOptions : null,
+            titleIdRef.current
           )
         : resolvedContent;
 
@@ -282,14 +332,23 @@ export function useTour(options: TourOptions): UseTourReturn {
           html: true,
           interactive: true,
           role: 'dialog' as const,
-          ariaLabelledBy: step.title ? TOUR_ELEMENT_IDS.TITLE : undefined,
+          ariaLabelledBy: step.title ? titleIdRef.current : undefined,
         }),
       };
 
       // Show the tooltip
       tooltip.show(targetElement, mergedOptions);
     },
-    [visibleSteps, tooltip, tooltipOptions, autoScroll, tourFocus, tourProgress, navigation]
+    [
+      visibleSteps,
+      tooltip,
+      tooltipOptions,
+      autoScroll,
+      tourFocus,
+      tourProgress,
+      navigation,
+      effectiveHighlightClass,
+    ]
   );
 
   /**
@@ -332,24 +391,30 @@ export function useTour(options: TourOptions): UseTourReturn {
 
   /**
    * Navigate to a specific step
+   *
+   * @returns Whether the tour moved
    */
   const navigateToStep = useCallback(
-    (newIndex: number, direction: TourDirection) => {
+    (newIndex: number, direction: TourDirection): boolean => {
       if (newIndex < 0 || newIndex >= visibleSteps.length) {
-        return;
+        return false;
       }
 
       // A step whose target has gone missing must not leave the previous step's
       // highlight, backdrop and content on screen while the index moves on
-      const delta = direction === 'prev' ? -1 : 1;
-      const targetIndex = findResolvableStep(newIndex, delta);
-      const targetElement =
-        targetIndex === -1 ? null : resolveTargetElement(visibleSteps[targetIndex].target);
+      const recovery = TOUR_RECOVERY[direction];
+      const resolved = findResolvableStep(newIndex, recovery.delta, recovery.allowSkip);
 
-      if (targetIndex === -1 || !targetElement) {
-        finishTour(false);
-        return;
+      if (!resolved) {
+        // Only forward motion ends the tour. Going back or jumping while the current
+        // step is still rendering fine should leave it alone.
+        if (recovery.onExhausted === 'end') {
+          finishTour(false);
+        }
+        return false;
       }
+
+      const { index: targetIndex, element: targetElement } = resolved;
 
       // Use ref for current index to get the previous step
       const prevIdx = currentIndexRef.current;
@@ -365,6 +430,9 @@ export function useTour(options: TourOptions): UseTourReturn {
       setCurrentIndex(targetIndex);
       currentIndexRef.current = targetIndex;
 
+      // Keep the helper flow on the same step, even when steps were skipped
+      helper.goToStep(targetIndex);
+
       // Show tooltip for new step
       showStepTooltip(targetIndex, targetElement);
 
@@ -378,8 +446,10 @@ export function useTour(options: TourOptions): UseTourReturn {
       if (currentStepData && onStepChange) {
         onStepChange(currentStepData, direction);
       }
+
+      return true;
     },
-    [visibleSteps, showStepTooltip, onStepChange, findResolvableStep, finishTour]
+    [visibleSteps, showStepTooltip, onStepChange, findResolvableStep, finishTour, helper]
   );
 
   /**
@@ -394,13 +464,12 @@ export function useTour(options: TourOptions): UseTourReturn {
     // Resolve before mutating anything: a tour that cannot render must not report
     // itself as started, or consumers using onStart to mark it seen retire a tour the
     // user never saw
-    const startIndex = findResolvableStep(0, 1);
-    const targetElement =
-      startIndex === -1 ? null : resolveTargetElement(visibleSteps[startIndex].target);
-
-    if (startIndex === -1 || !targetElement) {
+    const resolved = findResolvableStep(0, 1, true);
+    if (!resolved) {
       return false;
     }
+
+    const { index: startIndex, element: targetElement } = resolved;
 
     setIsActive(true);
     isActiveRef.current = true;
@@ -414,6 +483,10 @@ export function useTour(options: TourOptions): UseTourReturn {
       message: step.text ?? (typeof step.content === 'string' ? step.content : ''),
     }));
     helper.startFlow(flowSteps);
+    // startFlow always opens at 0; a skipped first step means we are elsewhere
+    if (startIndex !== 0) {
+      helper.goToStep(startIndex);
+    }
 
     // Show first step tooltip
     showStepTooltip(startIndex, targetElement);
@@ -461,13 +534,15 @@ export function useTour(options: TourOptions): UseTourReturn {
       // End tour as complete
       finishTour(true);
     } else {
-      helper.nextStep();
       navigateToStep(idx + 1, 'next');
     }
-  }, [visibleSteps.length, helper, navigateToStep, finishTour]);
+  }, [visibleSteps.length, navigateToStep, finishTour]);
 
   /**
    * Go to previous step
+   *
+   * A no-op if the previous step cannot render - the tour stays where it is rather than
+   * ending, since the current step is still fine.
    */
   const prev = useCallback(() => {
     // Use ref for current index to always get latest value
@@ -503,22 +578,27 @@ export function useTour(options: TourOptions): UseTourReturn {
 
   /**
    * Jump to a specific step
+   *
+   * Never lands anywhere other than the requested index: an explicit jump that quietly
+   * arrives somewhere else is worse than one that does nothing and reports it.
+   *
+   * @returns Whether the tour moved to the requested step
    */
   const goTo = useCallback(
-    (index: number) => {
-      if (!isActiveRef.current) return;
+    (index: number): boolean => {
+      if (!isActiveRef.current) return false;
 
       if (index < 0 || index >= visibleSteps.length) {
         console.warn(
           `useTour: Invalid step index ${index}. Valid range: 0-${visibleSteps.length - 1}`
         );
-        return;
+        return false;
       }
 
       // Use ref for current index to always get latest value
-      if (index === currentIndexRef.current) return;
+      if (index === currentIndexRef.current) return true;
 
-      navigateToStep(index, 'jump');
+      return navigateToStep(index, 'jump');
     },
     [visibleSteps.length, navigateToStep]
   );
@@ -537,21 +617,19 @@ export function useTour(options: TourOptions): UseTourReturn {
     [isActive, currentIndex, visibleSteps.length]
   );
 
-  // Handle navigation button clicks via data-tour-action attributes
-  // Using mousedown for more reliable event handling
+  // Handle navigation button activation via data-tour-action attributes
   useEffect(() => {
     if (!isActive) return;
 
-    const handleMouseDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
+    /**
+     * Run the data-tour-action carried by the event's target, if any
+     */
+    const runAction = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
 
       // Find the closest element with data-tour-action (handles clicks on child elements)
-      const actionElement = target.closest(
-        `[${TOUR_DATA_ATTRIBUTES.ACTION}]`
-      ) as HTMLElement | null;
-      if (!actionElement) return;
-
-      const action = actionElement.getAttribute(TOUR_DATA_ATTRIBUTES.ACTION);
+      const actionElement = target?.closest(`[${TOUR_DATA_ATTRIBUTES.ACTION}]`);
+      const action = actionElement?.getAttribute(TOUR_DATA_ATTRIBUTES.ACTION);
       if (!action) return;
 
       // Prevent default and stop propagation
@@ -573,8 +651,26 @@ export function useTour(options: TourOptions): UseTourReturn {
       }
     };
 
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
+    /**
+     * Keyboard activation.
+     *
+     * Enter or Space on a focused button fires `click` and never `mousedown`, so the
+     * pointer listener alone leaves the panel's controls announced but inert. A click
+     * produced by keyboard activation reports `detail === 0`; a pointer click reports
+     * `>= 1` and has already been handled on mousedown, so this cannot double-fire.
+     */
+    const handleClick = (e: MouseEvent) => {
+      if (e.detail !== 0) return;
+      runAction(e);
+    };
+
+    // Pointer activation stays on mousedown, which reacts before the press can move focus
+    document.addEventListener('mousedown', runAction);
+    document.addEventListener('click', handleClick);
+    return () => {
+      document.removeEventListener('mousedown', runAction);
+      document.removeEventListener('click', handleClick);
+    };
   }, [isActive]);
 
   // Handle ESC key to end the tour

@@ -127,3 +127,101 @@ describe('TargetWatcher', () => {
     });
   });
 });
+
+/**
+ * Cost characteristics. The point of the ancestor-chain design is that mutations which
+ * cannot possibly detach the target produce no MutationRecords at all - record counts
+ * are spec-defined, so these hold in a real browser too.
+ */
+describe('cost of watching', () => {
+  let costWatcher: TargetWatcher;
+  let costTarget: HTMLElement;
+
+  beforeEach(() => {
+    costWatcher = createTargetWatcher();
+    document.body.innerHTML = '<div id="panel"><div id="target" class="css-abc"></div></div>';
+    costTarget = document.getElementById('target') as HTMLElement;
+  });
+
+  afterEach(() => {
+    costWatcher.destroy();
+    document.body.innerHTML = '';
+  });
+
+  /** Churn rows in a branch that is not an ancestor of the target */
+  function churnUnrelatedBranch(rows: number) {
+    const busy = document.createElement('div');
+    document.body.appendChild(busy);
+    for (let i = 0; i < rows; i += 1) {
+      const row = document.createElement('div');
+      row.appendChild(document.createElement('span'));
+      busy.appendChild(row);
+    }
+    while (busy.firstChild) busy.removeChild(busy.firstChild);
+    busy.remove();
+  }
+
+  it('delivers no callbacks for mutations in an unrelated branch', async () => {
+    const onDetached = vi.fn();
+    const onClassRewritten = vi.fn();
+    costWatcher.watch(costTarget, { onClassRewritten, onDetached });
+
+    churnUnrelatedBranch(500);
+    await flushMutations();
+
+    expect(onDetached).not.toHaveBeenCalled();
+    expect(onClassRewritten).not.toHaveBeenCalled();
+  });
+
+  it('registers no attribute observer when no class callback is supplied', () => {
+    const observed: MutationObserverInit[] = [];
+    const RealMO = globalThis.MutationObserver;
+    class SpyMO extends RealMO {
+      observe(node: Node, options?: MutationObserverInit) {
+        observed.push(options ?? {});
+        return super.observe(node, options);
+      }
+    }
+    globalThis.MutationObserver = SpyMO as unknown as typeof MutationObserver;
+
+    try {
+      const bare = createTargetWatcher();
+      bare.watch(costTarget, { onDetached: vi.fn() });
+      bare.destroy();
+    } finally {
+      globalThis.MutationObserver = RealMO;
+    }
+
+    expect(observed.filter((o) => o.attributeFilter?.includes('class'))).toHaveLength(0);
+    // ...and nothing observes a subtree, which would collect the whole document
+    expect(observed.filter((o) => o.subtree)).toHaveLength(0);
+    expect(observed.every((o) => o.childList)).toBe(true);
+  });
+
+  it('observes the ancestor chain rather than the document', () => {
+    const observedNodes: Node[] = [];
+    const RealMO = globalThis.MutationObserver;
+    class SpyMO extends RealMO {
+      observe(node: Node, options?: MutationObserverInit) {
+        observedNodes.push(node);
+        return super.observe(node, options);
+      }
+    }
+    globalThis.MutationObserver = SpyMO as unknown as typeof MutationObserver;
+
+    try {
+      const bare = createTargetWatcher();
+      bare.watch(costTarget, { onDetached: vi.fn() });
+      bare.destroy();
+    } finally {
+      globalThis.MutationObserver = RealMO;
+    }
+
+    // #panel, body, html - depth, not app size
+    expect(observedNodes).toEqual([
+      document.getElementById('panel'),
+      document.body,
+      document.documentElement,
+    ]);
+  });
+});

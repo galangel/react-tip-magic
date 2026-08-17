@@ -2,6 +2,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import { useEffect } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TipMagicProvider } from '../../../components/TipMagicProvider';
+import { useTipMagic } from '../../useTipMagic';
 import type { TipMagicOptions } from '../../../types';
 import type { TourOptions, UseTourReturn } from '../../../types/tour';
 import { useTour } from '../useTour';
@@ -323,8 +324,27 @@ describe('tour panel presentation', () => {
 
     const panel = tooltip();
     expect(panel?.getAttribute('role')).toBe('dialog');
-    expect(panel?.getAttribute('aria-labelledby')).toBe('tip-magic-tour-title');
-    expect(document.getElementById('tip-magic-tour-title')?.textContent).toBe('Welcome');
+
+    const labelId = panel?.getAttribute('aria-labelledby');
+    expect(labelId).toBeTruthy();
+    // Generated, not a fixed string a host page could already own
+    expect(labelId).not.toBe('tip-magic-tour-title');
+    expect(document.querySelectorAll(`#${labelId}`)).toHaveLength(1);
+    expect(document.getElementById(labelId!)?.textContent).toBe('Welcome');
+  });
+
+  it('should not adopt a host page element that owns a similar id', () => {
+    const getTour = mountTour(
+      { steps: [{ target: 'one', title: 'Tour title', content: 'A' }] },
+      '<h1 id="tip-magic-tour-title">Host page heading</h1><div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    const labelId = tooltip()?.getAttribute('aria-labelledby');
+    expect(document.getElementById(labelId!)?.textContent).toBe('Tour title');
   });
 
   it('should leave a panel with no interactive controls as role="tooltip"', () => {
@@ -517,6 +537,211 @@ describe('provider options', () => {
   });
 });
 
+describe('keyboard activation of the panel controls', () => {
+  const threeSteps = [
+    { target: 'one', content: 'Step one' },
+    { target: 'two', content: 'Step two' },
+    { target: 'three', content: 'Step three' },
+  ];
+  const threeTargets =
+    '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div><div data-tip-id="three">Three</div>';
+
+  /** Enter or Space on a focused button produces a click with detail 0 */
+  const activateByKeyboard = (element: HTMLElement) =>
+    element.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+
+  /** A pointer click reports a click count of at least 1 */
+  const activateByPointer = (element: HTMLElement) => {
+    element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, detail: 1 }));
+    element.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+  };
+
+  it('advances on keyboard activation of Next', () => {
+    const getTour = mountTour(
+      { steps: threeSteps, navigation: { showControls: true } },
+      threeTargets
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    act(() => {
+      activateByKeyboard(document.querySelector('.tip-magic-tour-btn-next') as HTMLElement);
+    });
+
+    expect(getTour().currentStep?.index).toBe(1);
+  });
+
+  it('goes back on keyboard activation of Back', () => {
+    const getTour = mountTour(
+      { steps: threeSteps, navigation: { showControls: true } },
+      threeTargets
+    );
+    act(() => {
+      getTour().start();
+    });
+    act(() => {
+      getTour().next();
+    });
+
+    act(() => {
+      activateByKeyboard(document.querySelector('.tip-magic-tour-btn-back') as HTMLElement);
+    });
+
+    expect(getTour().currentStep?.index).toBe(0);
+  });
+
+  it('ends the tour on keyboard activation of Close', () => {
+    const getTour = mountTour(
+      { steps: threeSteps, navigation: { showControls: true } },
+      threeTargets
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    act(() => {
+      activateByKeyboard(document.querySelector('.tip-magic-tour-close') as HTMLElement);
+    });
+
+    expect(getTour().isActive).toBe(false);
+  });
+
+  it('advances exactly one step on a pointer click, not two', () => {
+    const getTour = mountTour(
+      { steps: threeSteps, navigation: { showControls: true } },
+      threeTargets
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    // mousedown then click, as a real pointer produces
+    act(() => {
+      activateByPointer(document.querySelector('.tip-magic-tour-btn-next') as HTMLElement);
+    });
+
+    expect(getTour().currentStep?.index).toBe(1);
+  });
+
+  it('gives the generated buttons an explicit type', () => {
+    const getTour = mountTour(
+      { steps: threeSteps, navigation: { showControls: true } },
+      threeTargets
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    document
+      .querySelectorAll('.tip-magic-tour-btn, .tip-magic-tour-close')
+      .forEach((button) => expect(button.getAttribute('type')).toBe('button'));
+  });
+});
+
+describe('recovery policy differs by direction', () => {
+  it('prev() stays put rather than ending a tour that renders fine', () => {
+    const onEnd = vi.fn();
+    const getTour = mountTour(
+      {
+        steps: [
+          { target: 'gone', content: 'Step one' },
+          { target: 'two', content: 'Step two' },
+          { target: 'three', content: 'Step three' },
+        ],
+        onTargetMissing: () => 'skip' as const,
+        onEnd,
+      },
+      '<div data-tip-id="two">Two</div><div data-tip-id="three">Three</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+    expect(getTour().currentStep?.index).toBe(1);
+
+    act(() => {
+      getTour().prev();
+    });
+
+    expect(getTour().isActive).toBe(true);
+    expect(getTour().currentStep?.index).toBe(1);
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it('goTo() never lands on a step other than the one requested', () => {
+    const getTour = mountTour(
+      {
+        steps: [
+          { target: 'one', content: 'Step one' },
+          { target: 'gone', content: 'Step two' },
+          { target: 'three', content: 'Step three' },
+        ],
+        onTargetMissing: () => 'skip' as const,
+      },
+      '<div data-tip-id="one">One</div><div data-tip-id="three">Three</div>'
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    let moved: boolean | undefined;
+    act(() => {
+      moved = getTour().goTo(1);
+    });
+
+    expect(moved).toBe(false);
+    expect(getTour().currentStep?.index).toBe(0);
+    expect(getTour().isActive).toBe(true);
+  });
+
+  it('goTo() reports success for a reachable step', () => {
+    const getTour = mountTour(
+      {
+        steps: [
+          { target: 'one', content: 'Step one' },
+          { target: 'two', content: 'Step two' },
+        ],
+      },
+      '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div>'
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    let moved: boolean | undefined;
+    act(() => {
+      moved = getTour().goTo(1);
+    });
+
+    expect(moved).toBe(true);
+    expect(getTour().currentStep?.index).toBe(1);
+  });
+
+  it('next() still ends the tour when nothing ahead can render', () => {
+    const onEnd = vi.fn();
+    const getTour = mountTour(
+      {
+        steps: [
+          { target: 'one', content: 'Step one' },
+          { target: 'gone', content: 'Step two' },
+        ],
+        onEnd,
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+    act(() => {
+      getTour().start();
+    });
+    act(() => {
+      getTour().next();
+    });
+
+    expect(getTour().isActive).toBe(false);
+    expect(onEnd).toHaveBeenCalledWith(false);
+  });
+});
+
 describe('navigation controls', () => {
   it('should render only a close button by default', () => {
     const getTour = mountTour(
@@ -561,5 +786,111 @@ describe('navigation controls', () => {
     });
     expect(getTour().currentStep?.index).toBe(1);
     expect(count('.tip-magic-tour-btn-back')).toBe(1);
+  });
+});
+
+describe('helper flow state tracks the tour', () => {
+  function HelperProbe({
+    options,
+    onReady,
+  }: {
+    options: TourOptions;
+    onReady: (tour: UseTourReturn, helperIndex: number) => void;
+  }) {
+    const tour = useTour(options);
+    const { helper } = useTipMagic();
+    useEffect(() => {
+      onReady(tour, helper.currentStepIndex);
+    }, [tour, helper.currentStepIndex, onReady]);
+    return null;
+  }
+
+  function mountWithHelper(options: TourOptions, markup: string) {
+    document.body.innerHTML = markup;
+    let tour!: UseTourReturn;
+    let helperIndex = -99;
+    render(
+      <TipMagicProvider>
+        <HelperProbe
+          options={options}
+          onReady={(t, h) => {
+            tour = t;
+            helperIndex = h;
+          }}
+        />
+      </TipMagicProvider>
+    );
+    return { tour: () => tour, helperIndex: () => helperIndex };
+  }
+
+  it('keeps the helper index in step with prev()', () => {
+    const api = mountWithHelper(
+      {
+        steps: [
+          { target: 'one', content: 'A' },
+          { target: 'two', content: 'B' },
+        ],
+      },
+      '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div>'
+    );
+
+    act(() => {
+      api.tour().start();
+    });
+    act(() => {
+      api.tour().next();
+    });
+    expect(api.helperIndex()).toBe(1);
+
+    act(() => {
+      api.tour().prev();
+    });
+
+    expect(api.tour().currentStep?.index).toBe(0);
+    expect(api.helperIndex()).toBe(0);
+  });
+
+  it('keeps the helper index in step when a step is skipped', () => {
+    const api = mountWithHelper(
+      {
+        steps: [
+          { target: 'one', content: 'A' },
+          { target: 'gone', content: 'B' },
+          { target: 'three', content: 'C' },
+        ],
+        onTargetMissing: () => 'skip' as const,
+      },
+      '<div data-tip-id="one">One</div><div data-tip-id="three">Three</div>'
+    );
+
+    act(() => {
+      api.tour().start();
+    });
+    act(() => {
+      api.tour().next();
+    });
+
+    expect(api.tour().currentStep?.index).toBe(2);
+    expect(api.helperIndex()).toBe(2);
+  });
+
+  it('keeps the helper index in step when the first step is skipped', () => {
+    const api = mountWithHelper(
+      {
+        steps: [
+          { target: 'gone', content: 'A' },
+          { target: 'two', content: 'B' },
+        ],
+        onTargetMissing: () => 'skip' as const,
+      },
+      '<div data-tip-id="two">Two</div>'
+    );
+
+    act(() => {
+      api.tour().start();
+    });
+
+    expect(api.tour().currentStep?.index).toBe(1);
+    expect(api.helperIndex()).toBe(1);
   });
 });

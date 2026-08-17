@@ -106,15 +106,23 @@ export class BackdropManager {
   }
 
   /**
-   * Re-apply elevation to the tracked elements
+   * Re-apply elevation to the focus target
    *
    * Called when the host app rewrites the target's `class` attribute, which drops the
-   * library's class alongside its own.
+   * library's class alongside its own. Deliberately does not touch the always-visible
+   * set: those elements are unrelated to the target's class changes, whose frequency the
+   * host app controls.
    */
-  reapply(): void {
+  reapplyFocusTarget(): void {
     if (this.focusTargetElement) {
       elevate(this.focusTargetElement, TOUR_CSS_CLASSES.FOCUS_TARGET, TOUR_DATA_ATTRIBUTES.FOCUS);
     }
+  }
+
+  /**
+   * Re-apply elevation to every tracked always-visible element
+   */
+  reapplyAlwaysVisible(): void {
     this.alwaysVisibleElements.forEach((element) => {
       elevate(element, TOUR_CSS_CLASSES.ALWAYS_VISIBLE, TOUR_DATA_ATTRIBUTES.ELEVATED);
     });

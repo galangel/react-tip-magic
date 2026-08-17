@@ -354,17 +354,20 @@ Override CSS to customize transition timing:
 
 ### Reduced Motion
 
-The library respects `prefers-reduced-motion` by default:
+The library respects `prefers-reduced-motion` by default, for tooltip transitions and for
+the tour panel's own animations:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  .tip-magic-tooltip {
+  .tip-magic-tooltip:not([data-tip-magic-motion='always']) {
     transition: none;
   }
 }
 ```
 
-You can disable this behavior with `respectReducedMotion: false` in provider options.
+`respectReducedMotion: false` in provider options opts back out: the provider then sets
+`data-tip-magic-motion="always"` on the tooltip, which the guard above excludes, and
+animations play regardless of the user's preference.
 
 ---
 

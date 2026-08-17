@@ -115,33 +115,9 @@ export interface CurrentTourStep {
  * };
  * ```
  */
-export interface TourStep {
+export interface TourStepBase {
   /** Target element's data-tip-id value */
   target: string;
-  /**
-   * Tooltip content - can be a string or a function that receives current step info.
-   *
-   * @remarks
-   * **This value is injected as HTML.** Steps are rendered with
-   * `dangerouslySetInnerHTML` so that titles, media and navigation controls work, which
-   * means any interpolated value - a user-supplied name, an account label - must be
-   * escaped by the caller. Use {@link TourStep.text} instead when the content is plain
-   * text and the library should escape it for you.
-   *
-   * Optional only so that `text` can be supplied in its place; every step needs one or
-   * the other.
-   */
-  content?: string | ((step: CurrentTourStep) => string);
-  /**
-   * Plain-text alternative to {@link TourStep.content}, escaped by the library before
-   * it is rendered. Takes precedence over `content` if both are provided.
-   *
-   * @example
-   * ```tsx
-   * { target: 'profile', text: `Signed in as ${user.name}` }
-   * ```
-   */
-  text?: string;
   /** Optional step title (escaped by the library) */
   title?: string;
   /** Tooltip placement for this step */
@@ -176,6 +152,57 @@ export interface TourStep {
   /** Override tour-level progress options for this step */
   progress?: Partial<ProgressOptions>;
 }
+
+/**
+ * The body of a step: raw HTML via `content`, or plain text via `text`.
+ *
+ * Exactly one is required. Expressing it as a union rather than two optionals means a
+ * step with neither does not compile, and a step with both does not either - so there is
+ * no precedence rule to remember.
+ */
+export type TourStepContent =
+  | {
+      /**
+       * Tooltip content - a string or a function that receives current step info.
+       *
+       * @remarks
+       * **This value is injected as HTML.** Steps are rendered with
+       * `dangerouslySetInnerHTML` so that titles, media and navigation controls work,
+       * which means any interpolated value - a user-supplied name, an account label -
+       * must be escaped by the caller. The exported `escapeHtml` helper is there for
+       * interpolating into markup; prefer `text` when the whole body is plain text.
+       */
+      content: string | ((step: CurrentTourStep) => string);
+      text?: never;
+    }
+  | {
+      /**
+       * Plain-text body, escaped by the library before it is rendered.
+       *
+       * @example
+       * ```tsx
+       * { target: 'profile', text: `Signed in as ${user.name}` }
+       * ```
+       */
+      text: string;
+      content?: never;
+    };
+
+/**
+ * Tour step definition
+ *
+ * @example
+ * ```tsx
+ * const step: TourStep = {
+ *   target: 'sidebar',
+ *   content: 'Navigate from here',
+ *   title: 'Navigation',
+ *   placement: 'right',
+ *   onEnter: () => analytics.track('tour_step_1'),
+ * };
+ * ```
+ */
+export type TourStep = TourStepBase & TourStepContent;
 
 /**
  * Tour progress information
@@ -330,10 +357,22 @@ export interface UseTourReturn {
   end: () => void;
   /** Go to next step (if on last step, ends tour as complete) */
   next: () => void;
-  /** Go to previous step (no-op if on first step) */
+  /**
+   * Go to previous step.
+   *
+   * A no-op on the first step, and also when the previous step's target is not in the
+   * DOM - the tour stays where it is rather than ending, since the current step is
+   * still rendering.
+   */
   prev: () => void;
-  /** Jump to a specific step by index (0-based) */
-  goTo: (index: number) => void;
+  /**
+   * Jump to a specific step by index (0-based).
+   *
+   * Returns `false` without moving if the index is out of range or that step's target
+   * is not in the DOM. Unlike `next`, a jump never skips to a different step - landing
+   * somewhere the caller did not ask for is worse than not moving.
+   */
+  goTo: (index: number) => boolean;
   /** Whether the tour is currently active */
   isActive: boolean;
   /** Current step data with navigation metadata, null if tour is not active */

@@ -216,14 +216,20 @@ describe('tourSteps utilities', () => {
       expect(resolveStepContent(step, stepInfo)).toBe('&lt;b&gt;bold&lt;/b&gt;');
     });
 
-    it('should take precedence over content', () => {
-      const step: TourStep = { target: 'step1', text: 'plain', content: '<b>html</b>' };
+    // The type makes both-at-once and neither-at-all impossible to express, so these
+    // two cover the runtime fallback for JS consumers who bypass it.
+    it('should prefer text when both are somehow present', () => {
+      const step = {
+        target: 'step1',
+        text: 'plain',
+        content: '<b>html</b>',
+      } as unknown as TourStep;
 
       expect(resolveStepContent(step, stepInfo)).toBe('plain');
     });
 
     it('should return an empty string when a step has neither', () => {
-      const step: TourStep = { target: 'step1' };
+      const step = { target: 'step1' } as TourStep;
 
       expect(resolveStepContent(step, stepInfo)).toBe('');
     });
