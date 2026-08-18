@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Asks the registry whether this exact version exists, instead of diffing
       # package.json against HEAD~1. The old diff treated a version bump as a
@@ -73,7 +73,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Deliberately no registry-url. It makes setup-node write an .npmrc with
       # //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN} and export the
@@ -82,7 +82,7 @@ jobs:
       # never attempts the OIDC exchange, failing with a masked 404.
       # registry.npmjs.org is npm's default registry, so nothing is lost.
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'npm'
@@ -124,7 +124,7 @@ jobs:
         run: npm publish --provenance --access public
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: Release v${{ needs.check-version.outputs.version }}
