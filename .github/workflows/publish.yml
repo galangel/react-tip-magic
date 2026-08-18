@@ -3,7 +3,7 @@ name: Publish to npm
 on:
   push:
     branches: [main]
-  # Lets a failed publish be retried without inventing a new version number.
+  # Lets a failed publish be retried without pushing anything.
   workflow_dispatch:
 
 concurrency:
@@ -15,44 +15,50 @@ jobs:
     name: Check Version Change
     runs-on: ubuntu-latest
     outputs:
-      version_changed: ${{ steps.version.outputs.changed }}
-      new_version: ${{ steps.version.outputs.version }}
+      should_publish: ${{ steps.version.outputs.should_publish }}
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
-      - name: Check for version change
+      # Asks the registry whether this exact version exists, instead of diffing
+      # package.json against HEAD~1. The old diff treated a version bump as a
+      # one-shot trigger: when the publish that followed it failed, the bump was
+      # spent and no later push would retry it. That stranded 1.1.1, 1.2.0 and
+      # 1.2.1 unpublished. This check is idempotent, so a failed publish simply
+      # retries on the next push.
+      - name: Check whether this version is already published
         id: version
         run: |
-          # Get current version from package.json
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-          # Get previous version from parent commit
-          git checkout HEAD~1 -- package.json 2>/dev/null || true
-          PREVIOUS_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
-          git checkout HEAD -- package.json
+          URL="https://registry.npmjs.org/${NAME//\//%2f}/$VERSION"
+          CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$URL")
+          echo "GET $URL -> $CODE"
 
-          echo "Current version: $CURRENT_VERSION"
-          echo "Previous version: $PREVIOUS_VERSION"
-
-          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-
-          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
-            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "Version unchanged"
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
+          case "$CODE" in
+            200)
+              echo "$NAME@$VERSION is already published; nothing to do"
+              echo "should_publish=false" >> $GITHUB_OUTPUT
+              ;;
+            404)
+              echo "$NAME@$VERSION is not on the registry; will publish"
+              echo "should_publish=true" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "::error::Unexpected HTTP $CODE from the registry; refusing to guess whether $VERSION is published"
+              exit 1
+              ;;
+          esac
 
   publish:
     name: Publish to npm
     runs-on: ubuntu-latest
     needs: check-version
-    if: needs.check-version.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.check-version.outputs.should_publish == 'true'
 
     # Must match the "Environment name" on the npmjs.com trusted publisher.
     # GitHub only adds an `environment` claim to the OIDC token when the job
@@ -120,10 +126,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ needs.check-version.outputs.new_version }}
-          name: Release v${{ needs.check-version.outputs.new_version }}
+          tag_name: v${{ needs.check-version.outputs.version }}
+          name: Release v${{ needs.check-version.outputs.version }}
           generate_release_notes: true
           draft: false
-          prerelease: ${{ contains(needs.check-version.outputs.new_version, '-') }}
+          prerelease: ${{ contains(needs.check-version.outputs.version, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
