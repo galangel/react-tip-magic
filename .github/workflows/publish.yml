@@ -62,12 +62,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Deliberately no registry-url. It makes setup-node write an .npmrc with
+      # //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN} and export the
+      # placeholder NODE_AUTH_TOKEN=XXXXX-XXXXX-XXXXX-XXXXX when the workflow
+      # supplies no token. npm then authenticates with that placeholder and
+      # never attempts the OIDC exchange, failing with a masked 404.
+      # registry.npmjs.org is npm's default registry, so nothing is lost.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
 
       # Trusted publishing (OIDC) requires npm >= 11.5.1; Node 20 ships npm 10.x.
       # Pinned to 11.x: npm@latest is now 12.x, which requires Node >= 22.
@@ -84,6 +89,21 @@ jobs:
 
       - name: Build library
         run: npm run build
+
+      # Turns the two ways trusted publishing silently degrades into a clear
+      # failure, rather than npm's masked "404 Not Found - PUT".
+      - name: Preflight publish auth
+        run: |
+          echo "npm $(npm --version)"
+          if [ -n "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::NODE_AUTH_TOKEN is set. npm prefers it over OIDC, so trusted publishing would be skipped."
+            exit 1
+          fi
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::No OIDC token endpoint. The job needs permissions: id-token: write."
+            exit 1
+          fi
+          echo "No npm token configured and OIDC is available."
 
       # Authenticates via OIDC against the trusted publisher configured on npmjs.com
       # for this package (repo + this workflow filename). No token required.
