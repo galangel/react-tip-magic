@@ -3,6 +3,8 @@ name: Publish to npm
 on:
   push:
     branches: [main]
+  # Lets a failed publish be retried without inventing a new version number.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,10 +38,11 @@ jobs:
           echo "Current version: $CURRENT_VERSION"
           echo "Previous version: $PREVIOUS_VERSION"
 
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
           if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
             echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
             echo "changed=true" >> $GITHUB_OUTPUT
-            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           else
             echo "Version unchanged"
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -49,7 +52,7 @@ jobs:
     name: Publish to npm
     runs-on: ubuntu-latest
     needs: check-version
-    if: needs.check-version.outputs.version_changed == 'true'
+    if: needs.check-version.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch'
 
     permissions:
       contents: write
@@ -67,8 +70,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       # Trusted publishing (OIDC) requires npm >= 11.5.1; Node 20 ships npm 10.x.
+      # Pinned to 11.x: npm@latest is now 12.x, which requires Node >= 22.
       - name: Upgrade npm
-        run: npm install -g npm@latest
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
 
       - name: Install dependencies
         run: npm ci
