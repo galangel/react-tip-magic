@@ -712,7 +712,12 @@ Enable focus mode on key steps to draw attention without overwhelming users.
 - Tooltips are keyboard accessible
 - Respects `prefers-reduced-motion` for animations
 - Close button has proper ARIA labels
-- Focus is managed appropriately during the tour
+- The tour panel is a `role="dialog"` labelled by the step title, and focus moves into it
+  when a step opens so it is announced. Pick which element receives that focus with
+  [`navigation.autoFocus`](#where-focus-lands)
+- The panel is deliberately non-modal: the app behind it stays interactive and there is no
+  focus trap, so `Escape` always exits
+- Focus returns to whatever held it before the tour when the tour ends
 
 ---
 

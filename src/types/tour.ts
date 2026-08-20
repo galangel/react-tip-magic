@@ -1,4 +1,4 @@
-import type { Placement, TooltipShowOptions } from './index';
+import type { Placement, TooltipAutoFocus, TooltipShowOptions } from './index';
 
 // =============================================================================
 // Tour Types - Simplified API for guided tours
@@ -51,13 +51,11 @@ export type TourFocus = boolean | TourFocusOptions;
 /**
  * Where keyboard focus lands when a tour step opens
  *
- * - `'panel'`: the tour panel itself (the default). The dialog is announced and Escape
- *   works, but Enter does nothing until the user Tabs to a control.
- * - `'primary'`: the step's main action - Next, or Finish on the last step - so Enter
- *   advances the tour.
- * - `false`: leave focus wherever it is.
+ * - `'panel'`: the tour panel itself (the default)
+ * - `'primary'`: the step's main action - Next, or Finish on the last step
+ * - `false`: leave focus wherever it is
  */
-export type TourAutoFocus = 'panel' | 'primary' | false;
+export type TourAutoFocus = TooltipAutoFocus;
 
 /**
  * Navigation configuration for tours

@@ -1,4 +1,3 @@
-import { PRIMARY_ACTION_ATTRIBUTE } from '../../constants';
 import type { TourNavigation } from '../../types/tour';
 
 /**
@@ -63,12 +62,6 @@ export const TOUR_DATA_ATTRIBUTES = {
   ELEVATED: 'data-tip-magic-elevated',
   /** Applied to the backdrop when it should capture pointer events */
   BACKDROP_INTERACTIVE: 'data-tip-magic-backdrop-interactive',
-  /**
-   * Marks the content's primary action, so `autoFocus: 'primary'` can find it without
-   * the tooltip having to know anything about tours. Re-exported from the core
-   * constants so the tour and the tooltip cannot drift apart.
-   */
-  PRIMARY_ACTION: PRIMARY_ACTION_ATTRIBUTE,
 } as const;
 
 /**

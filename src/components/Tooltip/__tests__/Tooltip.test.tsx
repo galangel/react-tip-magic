@@ -239,89 +239,48 @@ describe('HTML content is not rebuilt on every re-render', () => {
     '<img id="media" src="clip.gif" alt="" />' +
     '</div>';
 
-  function renderWithHtml(content: string) {
-    const state = createMockState({
-      content,
-      parsedData: {
-        ...(createMockState().tooltip.parsedData as ParsedTooltipData),
-        content,
-        html: true,
-      },
-    });
-    return renderTooltip(state);
+  function htmlState(content: string): TipMagicState {
+    const base = createMockState().tooltip.parsedData as ParsedTooltipData;
+    return createMockState({ content, parsedData: { ...base, content, html: true } });
+  }
+
+  function renderHtml(content: string) {
+    const { rerender } = renderTooltip(htmlState(content));
+    return (next: string) =>
+      rerender(
+        <TipMagicContext.Provider value={{ state: htmlState(next), dispatch: () => {} }}>
+          <Tooltip />
+        </TipMagicContext.Provider>
+      );
   }
 
   it('keeps the same nodes when a re-render does not change the content', () => {
-    const { rerender, container } = renderWithHtml(HTML);
-    void container;
-
-    const button = document.querySelector('[data-tip-magic-primary]') as HTMLElement;
+    const rerenderWith = renderHtml(HTML);
+    const button = document.querySelector('[data-tip-magic-primary]');
     const media = document.getElementById('media');
     expect(button).not.toBeNull();
 
-    // Re-render with an identical content string, as a position or visibility update does
-    const state = createMockState({
-      content: HTML,
-      parsedData: {
-        ...(createMockState().tooltip.parsedData as ParsedTooltipData),
-        content: HTML,
-        html: true,
-      },
-    });
-    rerender(
-      <TipMagicContext.Provider value={{ state, dispatch: () => {} }}>
-        <Tooltip />
-      </TipMagicContext.Provider>
-    );
+    rerenderWith(HTML);
 
-    // React re-applies dangerouslySetInnerHTML on every render unless memoised, which
-    // would recreate these and restart the media
     expect(document.querySelector('[data-tip-magic-primary]')).toBe(button);
     expect(document.getElementById('media')).toBe(media);
   });
 
   it('keeps focus that is inside the content', () => {
-    const { rerender } = renderWithHtml(HTML);
-
+    const rerenderWith = renderHtml(HTML);
     const button = document.querySelector('[data-tip-magic-primary]') as HTMLElement;
     button.focus();
-    expect(document.activeElement).toBe(button);
 
-    const state = createMockState({
-      content: HTML,
-      parsedData: {
-        ...(createMockState().tooltip.parsedData as ParsedTooltipData),
-        content: HTML,
-        html: true,
-      },
-    });
-    rerender(
-      <TipMagicContext.Provider value={{ state, dispatch: () => {} }}>
-        <Tooltip />
-      </TipMagicContext.Provider>
-    );
+    rerenderWith(HTML);
 
     expect(document.activeElement).toBe(button);
   });
 
   it('still rebuilds when the content actually changes', () => {
-    const { rerender } = renderWithHtml(HTML);
-    expect(document.querySelector('#media')).not.toBeNull();
+    const rerenderWith = renderHtml(HTML);
+    expect(document.getElementById('media')).not.toBeNull();
 
-    const nextHtml = '<div class="tip-magic-tour-content"><p id="plain">Step two</p></div>';
-    const state = createMockState({
-      content: nextHtml,
-      parsedData: {
-        ...(createMockState().tooltip.parsedData as ParsedTooltipData),
-        content: nextHtml,
-        html: true,
-      },
-    });
-    rerender(
-      <TipMagicContext.Provider value={{ state, dispatch: () => {} }}>
-        <Tooltip />
-      </TipMagicContext.Provider>
-    );
+    rerenderWith('<div class="tip-magic-tour-content"><p id="plain">Step two</p></div>');
 
     expect(document.getElementById('plain')?.textContent).toBe('Step two');
     expect(document.getElementById('media')).toBeNull();

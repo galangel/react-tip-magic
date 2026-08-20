@@ -8,9 +8,10 @@ import {
   type Placement,
 } from '@floating-ui/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ANIMATION, CSS_CLASSES, PRIMARY_ACTION_ATTRIBUTE } from '../../constants';
+import { ANIMATION, CSS_CLASSES } from '../../constants';
 import { useTipMagicContext } from '../../context/TipMagicContext';
 import type { TooltipTransitionBehavior } from '../../types';
+import { resolveAutoFocusTarget } from '../../utils/autoFocusTarget';
 import { areGroupsCompatible, shouldAnimatePosition } from '../../utils/groupCompatibility';
 import {
   buildTooltipClassNames,
@@ -19,17 +20,13 @@ import {
 } from '../../utils/tooltipStyles';
 
 /**
- * Content rendered from an HTML string, memoised on that string.
+ * Content rendered from an HTML string.
  *
- * React re-applies `dangerouslySetInnerHTML` on every re-render, even when the string is
- * byte-identical, which rebuilds the entire subtree. That has three costs: focus inside
- * the content is dropped to `<body>`, an `<img>` or autoplaying `<video>` is recreated
- * and restarts, and a tour panel's markup is re-parsed for nothing on every position or
- * visibility update. Memoising means the subtree is only rebuilt when the content really
- * changes.
+ * Memoised on `html` so the subtree survives re-renders - see CLAUDE.md,
+ * "dangerouslySetInnerHTML is re-applied on every render".
  */
 const HtmlContent = memo(function HtmlContent({ html }: { html: string }) {
-  return <span className="tip-magic-text" dangerouslySetInnerHTML={{ __html: html }} />;
+  return <span className={CSS_CLASSES.TOOLTIP_TEXT} dangerouslySetInnerHTML={{ __html: html }} />;
 });
 
 /**
@@ -132,32 +129,20 @@ export function Tooltip() {
     };
   }, [isDialogOpen]);
 
-  // Move focus into the panel on open and on every content change (a tour step change),
-  // so the new controls are reachable
   const autoFocus = tooltip.parsedData?.autoFocus ?? 'panel';
   useEffect(() => {
-    if (!isDialogOpen || !isPositioned || autoFocus === false) return;
+    if (!isDialogOpen || !isPositioned) return;
 
     const panel = refs.floating.current;
     if (!panel) return;
 
-    if (autoFocus === 'primary') {
-      // The content marks its own primary action, so this stays tour-agnostic
-      const primary = panel.querySelector<HTMLElement>(`[${PRIMARY_ACTION_ATTRIBUTE}]`);
-      if (primary) {
-        // Guard on identity, not containment: focus is usually already on the panel,
-        // and panel.contains(panel) is true, so a containment check would never let
-        // focus reach the button
-        if (document.activeElement !== primary) {
-          primary.focus({ preventScroll: true });
-        }
-        return;
-      }
-      // No primary action rendered - fall through to the panel rather than leaving
-      // focus adrift outside the dialog
-    }
+    const target = resolveAutoFocusTarget(panel, autoFocus, document.activeElement);
+    if (!target) return;
 
-    if (!panel.contains(document.activeElement)) {
+    target.focus({ preventScroll: true });
+
+    const focusLanded = panel.contains(document.activeElement);
+    if (!focusLanded) {
       panel.focus({ preventScroll: true });
     }
   }, [isDialogOpen, isPositioned, tooltip.content, refs, autoFocus]);
@@ -244,7 +229,7 @@ export function Tooltip() {
         {isHtmlContent ? (
           <HtmlContent html={mainContent} />
         ) : (
-          <span className="tip-magic-text">{mainContent}</span>
+          <span className={CSS_CLASSES.TOOLTIP_TEXT}>{mainContent}</span>
         )}
         {shortcut && config.enableShortcutStyle && (
           <kbd className={CSS_CLASSES.TOOLTIP_SHORTCUT}>{shortcut}</kbd>

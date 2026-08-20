@@ -4,7 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { TipMagicProvider } from '../../../components/TipMagicProvider';
 import { useTipMagic } from '../../useTipMagic';
 import type { TipMagicOptions } from '../../../types';
-import type { TourOptions, UseTourReturn } from '../../../types/tour';
+import type { TourNavigation, TourOptions, TourStep, UseTourReturn } from '../../../types/tour';
 import { useTour } from '../useTour';
 
 /**
@@ -906,8 +906,11 @@ describe('navigation.autoFocus', () => {
   const primary = () => document.querySelector('[data-tip-magic-primary]') as HTMLElement | null;
   const closeBtn = () => document.querySelector('[data-tour-action="close"]') as HTMLElement | null;
 
+  const mountWith = (navigation: TourNavigation, steps: TourStep[] = twoSteps) =>
+    mountTour({ steps, navigation }, twoTargets);
+
   it('defaults to the panel, unchanged, on the first and later steps', async () => {
-    const getTour = mountTour({ steps: twoSteps, navigation: { showControls: true } }, twoTargets);
+    const getTour = mountWith({ showControls: true });
 
     await act(async () => {
       getTour().start();
@@ -922,10 +925,7 @@ describe('navigation.autoFocus', () => {
   });
 
   it("focuses Next on the first step with autoFocus: 'primary'", async () => {
-    const getTour = mountTour(
-      { steps: twoSteps, navigation: { showControls: true, autoFocus: 'primary' } },
-      twoTargets
-    );
+    const getTour = mountWith({ showControls: true, autoFocus: 'primary' });
 
     await act(async () => {
       getTour().start();
@@ -936,10 +936,7 @@ describe('navigation.autoFocus', () => {
   });
 
   it('focuses Finish on the last step', async () => {
-    const getTour = mountTour(
-      { steps: twoSteps, navigation: { showControls: true, autoFocus: 'primary' } },
-      twoTargets
-    );
+    const getTour = mountWith({ showControls: true, autoFocus: 'primary' });
 
     await act(async () => {
       getTour().start();
@@ -953,12 +950,7 @@ describe('navigation.autoFocus', () => {
   });
 
   it('reaches the button even when focus is already on the panel', async () => {
-    // Regression: the original guard skipped when panel.contains(activeElement), and
-    // contains() includes the panel itself, so focus never reached an inner button
-    const getTour = mountTour(
-      { steps: twoSteps, navigation: { showControls: true, autoFocus: 'primary' } },
-      twoTargets
-    );
+    const getTour = mountWith({ showControls: true, autoFocus: 'primary' });
 
     await act(async () => {
       getTour().start();
@@ -977,10 +969,7 @@ describe('navigation.autoFocus', () => {
   });
 
   it('falls back to the panel - never the close button - when no primary action renders', async () => {
-    const getTour = mountTour(
-      { steps: twoSteps, navigation: { autoFocus: 'primary' } },
-      twoTargets
-    );
+    const getTour = mountWith({ autoFocus: 'primary' });
 
     await act(async () => {
       getTour().start();
@@ -993,10 +982,7 @@ describe('navigation.autoFocus', () => {
   });
 
   it('leaves focus untouched with autoFocus: false', async () => {
-    const getTour = mountTour(
-      { steps: twoSteps, navigation: { showControls: true, autoFocus: false } },
-      twoTargets
-    );
+    const getTour = mountWith({ showControls: true, autoFocus: false });
     const trigger = document.getElementById('trigger') as HTMLElement;
     trigger.focus();
 
@@ -1010,10 +996,7 @@ describe('navigation.autoFocus', () => {
 
   it('restores the pre-tour focus on end, in every mode', async () => {
     for (const autoFocus of ['panel', 'primary', false] as const) {
-      const getTour = mountTour(
-        { steps: twoSteps, navigation: { showControls: true, autoFocus } },
-        twoTargets
-      );
+      const getTour = mountWith({ showControls: true, autoFocus });
       const trigger = document.getElementById('trigger') as HTMLElement;
       trigger.focus();
 
@@ -1030,16 +1013,10 @@ describe('navigation.autoFocus', () => {
   });
 
   it('lets a step override the tour-level setting', async () => {
-    const getTour = mountTour(
-      {
-        steps: [
-          { target: 'one', content: 'Step one' },
-          { target: 'two', content: 'Step two', navigation: { autoFocus: 'panel' } },
-        ],
-        navigation: { showControls: true, autoFocus: 'primary' },
-      },
-      twoTargets
-    );
+    const getTour = mountWith({ showControls: true, autoFocus: 'primary' }, [
+      { target: 'one', content: 'Step one' },
+      { target: 'two', content: 'Step two', navigation: { autoFocus: 'panel' } },
+    ]);
 
     await act(async () => {
       getTour().start();
@@ -1053,13 +1030,9 @@ describe('navigation.autoFocus', () => {
   });
 
   it('is inert for a step that is not a dialog', async () => {
-    const getTour = mountTour(
-      {
-        steps: [{ target: 'one', content: 'plain' }],
-        navigation: { showClose: false, autoFocus: 'primary' },
-      },
-      twoTargets
-    );
+    const getTour = mountWith({ showClose: false, autoFocus: 'primary' }, [
+      { target: 'one', content: 'plain' },
+    ]);
 
     await act(async () => {
       getTour().start();
