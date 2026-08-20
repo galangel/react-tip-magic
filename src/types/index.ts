@@ -70,6 +70,16 @@ export type TextBreak = 'normal' | 'break-all' | 'keep-all';
 export type TooltipRole = 'tooltip' | 'dialog';
 
 /**
+ * Where focus lands when a `role="dialog"` tooltip becomes visible
+ *
+ * - `'panel'`: the tooltip element itself (the default)
+ * - `'primary'`: the element the content marked with `data-tip-magic-primary`, falling
+ *   back to the tooltip element when the content rendered none
+ * - `false`: leave focus where it is
+ */
+export type TooltipAutoFocus = 'panel' | 'primary' | false;
+
+/**
  * Configuration options for TipMagicProvider
  */
 export interface TipMagicOptions {
@@ -165,6 +175,14 @@ export interface TooltipShowOptions {
   role?: TooltipRole;
   /** id of the element that labels the tooltip - pair with `role: 'dialog'` */
   ariaLabelledBy?: string;
+  /**
+   * Where focus goes when the tooltip becomes visible, for `role: 'dialog'` surfaces.
+   *
+   * `'primary'` focuses the element the content marked with `data-tip-magic-primary`,
+   * falling back to the tooltip itself when there is none. Ignored unless
+   * `role` is `'dialog'`.
+   */
+  autoFocus?: TooltipAutoFocus;
 }
 
 /**
@@ -345,6 +363,8 @@ export interface ParsedTooltipData {
   role?: TooltipRole;
   /** id of the element that labels the tooltip - used with role="dialog" */
   ariaLabelledBy?: string;
+  /** Where focus goes when a role="dialog" tooltip becomes visible */
+  autoFocus?: TooltipAutoFocus;
 }
 
 /**
@@ -403,6 +423,7 @@ export type {
   ProgressOptions,
   ProgressRenderProps,
   ProgressType,
+  TourAutoFocus,
   TourDirection,
   TourFocus,
   TourFocusOptions,

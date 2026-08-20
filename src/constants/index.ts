@@ -68,6 +68,14 @@ export const CSS_CLASSES = {
 } as const;
 
 /**
+ * Attribute a tooltip's content uses to mark its primary action.
+ *
+ * `autoFocus: 'primary'` focuses the element carrying it, which keeps the tooltip
+ * component from having to know which surfaces render buttons and what they mean.
+ */
+export const PRIMARY_ACTION_ATTRIBUTE = 'data-tip-magic-primary';
+
+/**
  * Default selector for tooltip targets
  */
 export const DEFAULT_SELECTOR = '[data-tip]';

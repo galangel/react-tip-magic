@@ -1,6 +1,6 @@
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../../types/tour';
 import { escapeHtml } from '../../../utils/escapeHtml';
-import { TOUR_ACTIONS, TOUR_CSS_CLASSES } from '../constants';
+import { TOUR_ACTIONS, TOUR_CSS_CLASSES, TOUR_DATA_ATTRIBUTES } from '../constants';
 import type { ResolvedProgressOptions } from './tourNavigation';
 
 /**
@@ -84,7 +84,10 @@ export function buildNavHtml(stepInfo: CurrentTourStep, nav: Required<TourNaviga
 
   const nextAction = stepInfo.isLast ? TOUR_ACTIONS.FINISH : TOUR_ACTIONS.NEXT;
   const nextLabel = stepInfo.isLast ? nav.finishLabel : nav.nextLabel;
-  const nextButton = `<button type="button" class="${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_NEXT}" data-tour-action="${nextAction}">${nextLabel}</button>`;
+  // Marked as the primary action so `autoFocus: 'primary'` can find it without the
+  // tooltip needing to know what a tour is. Never the close button - Enter on that
+  // would end the tour.
+  const nextButton = `<button type="button" class="${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_NEXT}" data-tour-action="${nextAction}" ${TOUR_DATA_ATTRIBUTES.PRIMARY_ACTION}>${nextLabel}</button>`;
 
   return `<div class="${TOUR_CSS_CLASSES.NAV}">
     ${backButton}

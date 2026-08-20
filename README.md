@@ -180,6 +180,20 @@ if (tour.start()) {
 
 Recovery depends on the direction of travel: `next()` skips or ends the tour, while `prev()` and `goTo()` leave it where it is — the step on screen is still fine. `goTo()` never skips, so it lands on the step you asked for or returns `false`.
 
+### Where focus lands
+
+A tour panel is a dialog, so focus moves into it when a step opens. `autoFocus` picks which element inside it:
+
+```tsx
+const tour = useTour({
+  steps,
+  // 'panel' (default) | 'primary' — Next/Finish, so Enter advances | false — leave focus alone
+  navigation: { showControls: true, autoFocus: 'primary' },
+});
+```
+
+`'primary'` falls back to the panel when a step renders no Next/Finish button — never to the close button. Overridable per step via `step.navigation.autoFocus`.
+
 Tours also support progress indicators, keyboard support, and backdrop highlighting (`focus: true`, or `focus: { dismissOnClick: true }` to let a click on the backdrop end the tour)—all configurable to fit your needs.
 
 ---

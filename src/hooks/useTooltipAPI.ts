@@ -73,6 +73,7 @@ export function useTooltipAPI(
         ...(options.shortcut !== undefined && { shortcut: options.shortcut }),
         ...(options.role !== undefined && { role: options.role }),
         ...(options.ariaLabelledBy !== undefined && { ariaLabelledBy: options.ariaLabelledBy }),
+        ...(options.autoFocus !== undefined && { autoFocus: options.autoFocus }),
       };
 
       if (state.tooltip.visible) {

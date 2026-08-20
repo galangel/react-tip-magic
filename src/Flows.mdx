@@ -380,10 +380,78 @@ navigation: {
   nextLabel: 'Next',       // Custom label for Next button
   backLabel: 'Back',       // Custom label for Back button
   finishLabel: 'Finish',   // Label for last step's button
+  autoFocus: 'panel',      // Where focus lands: 'panel' | 'primary' | false
 }
 ```
 
 When `showControls` is enabled, navigation buttons are rendered inside the tooltip automatically.
+
+### Where focus lands
+
+A tour panel is a `role="dialog"`, so focus moves into it when a step opens — otherwise a
+screen reader is never told it appeared, and Escape would not be reachable.
+`autoFocus` controls which element inside it receives that focus.
+
+<table>
+  <thead>
+    <tr>
+      <th>Value</th>
+      <th>Focus lands on</th>
+      <th>Pressing Enter</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>'panel'</code> (default)
+      </td>
+      <td>The tour panel itself</td>
+      <td>Nothing, until the user Tabs to a control</td>
+    </tr>
+    <tr>
+      <td>
+        <code>'primary'</code>
+      </td>
+      <td>Next, or Finish on the last step</td>
+      <td>Advances the tour</td>
+    </tr>
+    <tr>
+      <td>
+        <code>false</code>
+      </td>
+      <td>Nothing — focus is left where it was</td>
+      <td>Whatever the page already did</td>
+    </tr>
+  </tbody>
+</table>
+
+```tsx
+// A read-and-advance tour: Enter goes to the next step
+const tour = useTour({
+  steps,
+  navigation: { showControls: true, autoFocus: 'primary' },
+});
+```
+
+`'primary'` falls back to the panel when a step renders no primary action — with
+`showControls` off, for example. It never falls back to the close button, since Enter on
+that would end the tour.
+
+`false` is an escape hatch for consumers moving focus themselves. It gives up the dialog
+announcement and leaves focus behind the panel, so prefer `'panel'` unless you have a
+reason.
+
+Like the rest of `navigation`, it can be overridden per step:
+
+```tsx
+steps: [
+  { target: 'intro', content: 'Read this first', navigation: { autoFocus: 'panel' } },
+  { target: 'action', content: 'Now press Enter', navigation: { autoFocus: 'primary' } },
+];
+```
+
+Steps that render as a plain tooltip rather than a dialog — no navigation controls, close
+button, media or progress — never move focus, whatever `autoFocus` is set to.
 
 ---
 
