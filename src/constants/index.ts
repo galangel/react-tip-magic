@@ -58,6 +58,7 @@ export const DATA_ATTRIBUTES = {
 export const CSS_CLASSES = {
   TOOLTIP: 'tip-magic-tooltip',
   TOOLTIP_CONTENT: 'tip-magic-content',
+  TOOLTIP_TEXT: 'tip-magic-text',
   TOOLTIP_ARROW: 'tip-magic-arrow',
   TOOLTIP_SHORTCUT: 'tip-magic-shortcut',
   TOOLTIP_VISIBLE: 'tip-magic-visible',
@@ -66,6 +67,11 @@ export const CSS_CLASSES = {
   HELPER: 'tip-magic-helper',
   HIGHLIGHT: 'tip-magic-highlight',
 } as const;
+
+/**
+ * Marks the primary action inside a tooltip's content, for `autoFocus: 'primary'`
+ */
+export const PRIMARY_ACTION_ATTRIBUTE = 'data-tip-magic-primary';
 
 /**
  * Default selector for tooltip targets

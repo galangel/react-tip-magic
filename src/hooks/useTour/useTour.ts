@@ -333,6 +333,7 @@ export function useTour(options: TourOptions): UseTourReturn {
           interactive: true,
           role: 'dialog' as const,
           ariaLabelledBy: step.title ? titleIdRef.current : undefined,
+          autoFocus: mergedNav.autoFocus,
         }),
       };
 

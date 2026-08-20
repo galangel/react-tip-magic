@@ -1,4 +1,4 @@
-import type { Placement, TooltipShowOptions } from './index';
+import type { Placement, TooltipAutoFocus, TooltipShowOptions } from './index';
 
 // =============================================================================
 // Tour Types - Simplified API for guided tours
@@ -49,6 +49,15 @@ export interface TourFocusOptions {
 export type TourFocus = boolean | TourFocusOptions;
 
 /**
+ * Where keyboard focus lands when a tour step opens
+ *
+ * - `'panel'`: the tour panel itself (the default)
+ * - `'primary'`: the step's main action - Next, or Finish on the last step
+ * - `false`: leave focus wherever it is
+ */
+export type TourAutoFocus = TooltipAutoFocus;
+
+/**
  * Navigation configuration for tours
  *
  * Controls the built-in navigation UI (buttons inside the tooltip).
@@ -76,6 +85,26 @@ export interface TourNavigation {
   finishLabel?: string;
   /** Whether to show the close button (default: true when showControls is true) */
   showClose?: boolean;
+  /**
+   * Where keyboard focus lands when the step opens (default: `'panel'`).
+   *
+   * `'primary'` puts focus on the step's main action so Enter advances the tour, and
+   * falls back to the panel when the step renders no primary action - with
+   * `showControls` off, for instance. It never falls back to the close button.
+   *
+   * `false` is an escape hatch: focus stays behind the panel, so a screen reader is not
+   * told the dialog opened. Prefer `'panel'` unless you are moving focus yourself.
+   *
+   * Only applies to steps that render as a dialog. A step with no navigation features,
+   * media or progress is a plain tooltip and never moves focus, whatever this is set to.
+   *
+   * @example
+   * ```tsx
+   * // Read-and-advance tour: Enter goes to the next step
+   * navigation: { showControls: true, autoFocus: 'primary' }
+   * ```
+   */
+  autoFocus?: TourAutoFocus;
 }
 
 /**

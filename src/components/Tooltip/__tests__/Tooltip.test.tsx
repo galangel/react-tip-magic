@@ -231,3 +231,58 @@ describe('Tooltip', () => {
     });
   });
 });
+
+describe('HTML content is not rebuilt on every re-render', () => {
+  const HTML =
+    '<div class="tip-magic-tour-content">' +
+    '<button type="button" data-tip-magic-primary>Next</button>' +
+    '<img id="media" src="clip.gif" alt="" />' +
+    '</div>';
+
+  function htmlState(content: string): TipMagicState {
+    const base = createMockState().tooltip.parsedData as ParsedTooltipData;
+    return createMockState({ content, parsedData: { ...base, content, html: true } });
+  }
+
+  function renderHtml(content: string) {
+    const { rerender } = renderTooltip(htmlState(content));
+    return (next: string) =>
+      rerender(
+        <TipMagicContext.Provider value={{ state: htmlState(next), dispatch: () => {} }}>
+          <Tooltip />
+        </TipMagicContext.Provider>
+      );
+  }
+
+  it('keeps the same nodes when a re-render does not change the content', () => {
+    const rerenderWith = renderHtml(HTML);
+    const button = document.querySelector('[data-tip-magic-primary]');
+    const media = document.getElementById('media');
+    expect(button).not.toBeNull();
+
+    rerenderWith(HTML);
+
+    expect(document.querySelector('[data-tip-magic-primary]')).toBe(button);
+    expect(document.getElementById('media')).toBe(media);
+  });
+
+  it('keeps focus that is inside the content', () => {
+    const rerenderWith = renderHtml(HTML);
+    const button = document.querySelector('[data-tip-magic-primary]') as HTMLElement;
+    button.focus();
+
+    rerenderWith(HTML);
+
+    expect(document.activeElement).toBe(button);
+  });
+
+  it('still rebuilds when the content actually changes', () => {
+    const rerenderWith = renderHtml(HTML);
+    expect(document.getElementById('media')).not.toBeNull();
+
+    rerenderWith('<div class="tip-magic-tour-content"><p id="plain">Step two</p></div>');
+
+    expect(document.getElementById('plain')?.textContent).toBe('Step two');
+    expect(document.getElementById('media')).toBeNull();
+  });
+});

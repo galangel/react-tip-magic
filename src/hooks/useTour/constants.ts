@@ -9,6 +9,7 @@ export const DEFAULT_NAVIGATION: Required<TourNavigation> = {
   backLabel: 'Back',
   finishLabel: 'Finish',
   showClose: true,
+  autoFocus: 'panel',
 };
 
 /**

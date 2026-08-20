@@ -4,7 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { TipMagicProvider } from '../../../components/TipMagicProvider';
 import { useTipMagic } from '../../useTipMagic';
 import type { TipMagicOptions } from '../../../types';
-import type { TourOptions, UseTourReturn } from '../../../types/tour';
+import type { TourNavigation, TourOptions, TourStep, UseTourReturn } from '../../../types/tour';
 import { useTour } from '../useTour';
 
 /**
@@ -892,5 +892,153 @@ describe('helper flow state tracks the tour', () => {
 
     expect(api.tour().currentStep?.index).toBe(1);
     expect(api.helperIndex()).toBe(1);
+  });
+});
+
+describe('navigation.autoFocus', () => {
+  const twoSteps = [
+    { target: 'one', content: 'Step one' },
+    { target: 'two', content: 'Step two' },
+  ];
+  const twoTargets =
+    '<button id="trigger">Start</button><div data-tip-id="one">One</div><div data-tip-id="two">Two</div>';
+
+  const primary = () => document.querySelector('[data-tip-magic-primary]') as HTMLElement | null;
+  const closeBtn = () => document.querySelector('[data-tour-action="close"]') as HTMLElement | null;
+
+  const mountWith = (navigation: TourNavigation, steps: TourStep[] = twoSteps) =>
+    mountTour({ steps, navigation }, twoTargets);
+
+  it('defaults to the panel, unchanged, on the first and later steps', async () => {
+    const getTour = mountWith({ showControls: true });
+
+    await act(async () => {
+      getTour().start();
+    });
+    expect(document.activeElement).toBe(tooltip());
+    expect(document.activeElement).not.toBe(primary());
+
+    await act(async () => {
+      getTour().next();
+    });
+    expect(document.activeElement).toBe(tooltip());
+  });
+
+  it("focuses Next on the first step with autoFocus: 'primary'", async () => {
+    const getTour = mountWith({ showControls: true, autoFocus: 'primary' });
+
+    await act(async () => {
+      getTour().start();
+    });
+
+    expect(document.activeElement).toBe(primary());
+    expect(primary()?.getAttribute('data-tour-action')).toBe('next');
+  });
+
+  it('focuses Finish on the last step', async () => {
+    const getTour = mountWith({ showControls: true, autoFocus: 'primary' });
+
+    await act(async () => {
+      getTour().start();
+    });
+    await act(async () => {
+      getTour().next();
+    });
+
+    expect(document.activeElement).toBe(primary());
+    expect(primary()?.getAttribute('data-tour-action')).toBe('finish');
+  });
+
+  it('reaches the button even when focus is already on the panel', async () => {
+    const getTour = mountWith({ showControls: true, autoFocus: 'primary' });
+
+    await act(async () => {
+      getTour().start();
+    });
+
+    await act(async () => {
+      tooltip()?.focus();
+    });
+    expect(document.activeElement).toBe(tooltip());
+
+    await act(async () => {
+      getTour().next();
+    });
+
+    expect(document.activeElement).toBe(primary());
+  });
+
+  it('falls back to the panel - never the close button - when no primary action renders', async () => {
+    const getTour = mountWith({ autoFocus: 'primary' });
+
+    await act(async () => {
+      getTour().start();
+    });
+
+    expect(primary()).toBeNull();
+    expect(closeBtn()).not.toBeNull(); // showClose still defaults to true
+    expect(document.activeElement).toBe(tooltip());
+    expect(document.activeElement).not.toBe(closeBtn());
+  });
+
+  it('leaves focus untouched with autoFocus: false', async () => {
+    const getTour = mountWith({ showControls: true, autoFocus: false });
+    const trigger = document.getElementById('trigger') as HTMLElement;
+    trigger.focus();
+
+    await act(async () => {
+      getTour().start();
+    });
+
+    expect(document.activeElement).toBe(trigger);
+    expect(document.activeElement).not.toBe(tooltip());
+  });
+
+  it('restores the pre-tour focus on end, in every mode', async () => {
+    for (const autoFocus of ['panel', 'primary', false] as const) {
+      const getTour = mountWith({ showControls: true, autoFocus });
+      const trigger = document.getElementById('trigger') as HTMLElement;
+      trigger.focus();
+
+      await act(async () => {
+        getTour().start();
+      });
+      await act(async () => {
+        getTour().end();
+      });
+
+      expect(document.activeElement, `mode: ${String(autoFocus)}`).toBe(trigger);
+      cleanup();
+    }
+  });
+
+  it('lets a step override the tour-level setting', async () => {
+    const getTour = mountWith({ showControls: true, autoFocus: 'primary' }, [
+      { target: 'one', content: 'Step one' },
+      { target: 'two', content: 'Step two', navigation: { autoFocus: 'panel' } },
+    ]);
+
+    await act(async () => {
+      getTour().start();
+    });
+    expect(document.activeElement).toBe(primary());
+
+    await act(async () => {
+      getTour().next();
+    });
+    expect(document.activeElement).toBe(tooltip());
+  });
+
+  it('is inert for a step that is not a dialog', async () => {
+    const getTour = mountWith({ showClose: false, autoFocus: 'primary' }, [
+      { target: 'one', content: 'plain' },
+    ]);
+
+    await act(async () => {
+      getTour().start();
+    });
+
+    expect(tooltip()?.getAttribute('role')).toBe('tooltip');
+    expect(document.activeElement).toBe(document.body);
   });
 });

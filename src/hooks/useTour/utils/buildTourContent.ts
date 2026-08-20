@@ -1,4 +1,5 @@
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../../types/tour';
+import { PRIMARY_ACTION_ATTRIBUTE } from '../../../constants';
 import { escapeHtml } from '../../../utils/escapeHtml';
 import { TOUR_ACTIONS, TOUR_CSS_CLASSES } from '../constants';
 import type { ResolvedProgressOptions } from './tourNavigation';
@@ -84,7 +85,7 @@ export function buildNavHtml(stepInfo: CurrentTourStep, nav: Required<TourNaviga
 
   const nextAction = stepInfo.isLast ? TOUR_ACTIONS.FINISH : TOUR_ACTIONS.NEXT;
   const nextLabel = stepInfo.isLast ? nav.finishLabel : nav.nextLabel;
-  const nextButton = `<button type="button" class="${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_NEXT}" data-tour-action="${nextAction}">${nextLabel}</button>`;
+  const nextButton = `<button type="button" class="${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_NEXT}" data-tour-action="${nextAction}" ${PRIMARY_ACTION_ATTRIBUTE}>${nextLabel}</button>`;
 
   return `<div class="${TOUR_CSS_CLASSES.NAV}">
     ${backButton}

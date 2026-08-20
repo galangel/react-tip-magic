@@ -7,16 +7,27 @@ import {
   useFloating,
   type Placement,
 } from '@floating-ui/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ANIMATION, CSS_CLASSES } from '../../constants';
 import { useTipMagicContext } from '../../context/TipMagicContext';
 import type { TooltipTransitionBehavior } from '../../types';
+import { resolveAutoFocusTarget } from '../../utils/autoFocusTarget';
 import { areGroupsCompatible, shouldAnimatePosition } from '../../utils/groupCompatibility';
 import {
   buildTooltipClassNames,
   getArrowStaticSide,
   getArrowStyles,
 } from '../../utils/tooltipStyles';
+
+/**
+ * Content rendered from an HTML string.
+ *
+ * Memoised on `html` so the subtree survives re-renders - see CLAUDE.md,
+ * "dangerouslySetInnerHTML is re-applied on every render".
+ */
+const HtmlContent = memo(function HtmlContent({ html }: { html: string }) {
+  return <span className={CSS_CLASSES.TOOLTIP_TEXT} dangerouslySetInnerHTML={{ __html: html }} />;
+});
 
 /**
  * Main Tooltip component - renders a single tooltip instance
@@ -118,16 +129,23 @@ export function Tooltip() {
     };
   }, [isDialogOpen]);
 
-  // Move focus into the panel on open and on every content change (a tour step change),
-  // so the new controls are reachable
+  const autoFocus = tooltip.parsedData?.autoFocus ?? 'panel';
   useEffect(() => {
     if (!isDialogOpen || !isPositioned) return;
 
     const panel = refs.floating.current;
-    if (panel && !panel.contains(document.activeElement)) {
+    if (!panel) return;
+
+    const target = resolveAutoFocusTarget(panel, autoFocus, document.activeElement);
+    if (!target) return;
+
+    target.focus({ preventScroll: true });
+
+    const focusLanded = panel.contains(document.activeElement);
+    if (!focusLanded) {
       panel.focus({ preventScroll: true });
     }
-  }, [isDialogOpen, isPositioned, tooltip.content, refs]);
+  }, [isDialogOpen, isPositioned, tooltip.content, refs, autoFocus]);
 
   // Handle transition end - only clear transitioning state when transform finishes
   // (or opacity if not animating position)
@@ -209,9 +227,9 @@ export function Tooltip() {
     >
       <div className={CSS_CLASSES.TOOLTIP_CONTENT}>
         {isHtmlContent ? (
-          <span className="tip-magic-text" dangerouslySetInnerHTML={{ __html: mainContent }} />
+          <HtmlContent html={mainContent} />
         ) : (
-          <span className="tip-magic-text">{mainContent}</span>
+          <span className={CSS_CLASSES.TOOLTIP_TEXT}>{mainContent}</span>
         )}
         {shortcut && config.enableShortcutStyle && (
           <kbd className={CSS_CLASSES.TOOLTIP_SHORTCUT}>{shortcut}</kbd>
