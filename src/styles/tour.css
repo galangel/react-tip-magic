@@ -345,8 +345,10 @@
   inset: 0;
   z-index: var(--tip-magic-tour-backdrop-z-index);
   background: var(--tip-magic-tour-backdrop-bg);
-  backdrop-filter: blur(var(--tip-magic-tour-backdrop-blur));
+  /* Prefix first: a minifier that folds the two into one property keeps the LAST, and a bundle
+     carrying only the alias no longer blurs in Chrome, which dropped it. */
   -webkit-backdrop-filter: blur(var(--tip-magic-tour-backdrop-blur));
+  backdrop-filter: blur(var(--tip-magic-tour-backdrop-blur));
   pointer-events: none; /* Allow clicks through to target */
 }
 
