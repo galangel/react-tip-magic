@@ -31,6 +31,16 @@ const EMBED_ALLOW =
 /** Leaves custom progress markup laid out as direct children of the footer */
 const CUSTOM_PROGRESS_STYLE: CSSProperties = { display: 'contents' };
 
+/**
+ * Write the `muted` attribute React leaves out - it only sets the property, and iOS
+ * Safari's autoplay policy reads the attribute
+ */
+const markMuted = (video: HTMLVideoElement | null) => {
+  if (!video) return;
+  video.defaultMuted = true;
+  video.setAttribute('muted', '');
+};
+
 const actionAttribute = (action: TourAction) => ({ [TOUR_DATA_ATTRIBUTES.ACTION]: action });
 
 /**
@@ -66,7 +76,14 @@ function TourMedia({ image, video }: Pick<TourStep, 'image' | 'video'>) {
     return (
       <div className={TOUR_CSS_CLASSES.VIDEO}>
         {/* Keyed on src: React does not reload a <video> whose <source> changes */}
-        <video key={src} autoPlay={autoplay} loop={loop} muted={muted} playsInline>
+        <video
+          key={src}
+          ref={muted ? markMuted : undefined}
+          autoPlay={autoplay}
+          loop={loop}
+          muted={muted}
+          playsInline
+        >
           <source src={src} type="video/mp4" />
         </video>
       </div>

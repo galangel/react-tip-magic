@@ -108,6 +108,9 @@ describe('TourPanel', () => {
       expect(video.autoplay).toBe(true);
       expect(video.loop).toBe(true);
       expect(video.muted).toBe(true);
+      // iOS Safari's autoplay policy reads the attribute, which React never writes
+      expect(video.hasAttribute('muted')).toBe(true);
+      expect(video.defaultMuted).toBe(true);
       expect(video.hasAttribute('playsinline')).toBe(true);
       expect(video.querySelector('source')?.getAttribute('src')).toBe('clip.mp4');
       expect(query(container, '.tip-magic-tour-video-embed')).toBeNull();
@@ -122,6 +125,7 @@ describe('TourPanel', () => {
       expect(video.autoplay).toBe(false);
       expect(video.loop).toBe(false);
       expect(video.muted).toBe(false);
+      expect(video.hasAttribute('muted')).toBe(false);
     });
 
     it('renders an embed in an iframe with a semicolon-separated allow list', () => {
