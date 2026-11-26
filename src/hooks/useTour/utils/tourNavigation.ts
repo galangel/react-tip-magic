@@ -108,8 +108,8 @@ export function getMergedProgress(
 }
 
 /**
- * Check if a step has any navigation-related features enabled
- * (navigation controls, close button, media, or progress)
+ * Check if a step has anything that needs the tour panel rather than a plain tooltip
+ * (a title, navigation controls, close button, media, or progress)
  *
  * @param nav - Merged navigation config
  * @param step - Current step
@@ -121,5 +121,12 @@ export function hasNavigationFeatures(
   step: TourStep,
   showProgress: boolean = false
 ): boolean {
-  return nav.showControls || nav.showClose || !!step.image || !!step.video || showProgress;
+  return (
+    !!step.title ||
+    nav.showControls ||
+    nav.showClose ||
+    !!step.image ||
+    !!step.video ||
+    showProgress
+  );
 }

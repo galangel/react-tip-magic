@@ -96,8 +96,9 @@ export interface TourNavigation {
    * `false` is an escape hatch: focus stays behind the panel, so a screen reader is not
    * told the dialog opened. Prefer `'panel'` unless you are moving focus yourself.
    *
-   * Only applies to steps that render as a dialog. A step with no navigation features,
-   * media or progress is a plain tooltip and never moves focus, whatever this is set to.
+   * Only applies to steps that render as a dialog. A step with no title, navigation
+   * features, media or progress is a plain tooltip and never moves focus, whatever this
+   * is set to.
    *
    * @example
    * ```tsx

@@ -176,6 +176,13 @@ describe('tourNavigation utilities', () => {
       expect(hasNavigationFeatures(nav, step)).toBe(true);
     });
 
+    it('should return true when step has a title', () => {
+      const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
+      const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
+
+      expect(hasNavigationFeatures(nav, step)).toBe(true);
+    });
+
     it('should return true when showProgress is true', () => {
       const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
       const step: TourStep = { target: 'step1', content: 'Content' };

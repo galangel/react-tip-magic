@@ -364,6 +364,24 @@ describe('tour panel presentation', () => {
     expect(tooltip()?.getAttribute('role')).toBe('tooltip');
   });
 
+  it('should render the panel for a step whose only feature is its title', () => {
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', title: 'Hello', text: 'A' }],
+        navigation: { showClose: false },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    expect(document.querySelector('.tip-magic-tour-title')?.textContent).toBe('Hello');
+    expect(document.querySelector('.tip-magic-tour-message')?.textContent).toBe('A');
+    expect(tooltip()?.getAttribute('role')).toBe('dialog');
+  });
+
   it('should move focus into the panel once it is positioned', async () => {
     const getTour = mountTour(
       { steps: [{ target: 'one', title: 'Welcome', content: 'A' }] },
