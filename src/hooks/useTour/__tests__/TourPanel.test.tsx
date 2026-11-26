@@ -64,6 +64,12 @@ describe('TourPanel', () => {
       expect(close?.getAttribute('aria-label')).toBe('Close');
     });
 
+    it('labels the close button with closeLabel', () => {
+      const container = renderPanel({ navigation: withNav({ closeLabel: 'Dismiss' }) });
+
+      expect(query(container, '.tip-magic-tour-close')?.getAttribute('aria-label')).toBe('Dismiss');
+    });
+
     it('omits the id when none is supplied', () => {
       const container = renderPanel({ step: { ...STEP, title: 'Welcome' } });
 
@@ -165,6 +171,22 @@ describe('TourPanel', () => {
       expect(iframe?.hasAttribute('allowfullscreen')).toBe(true);
     });
 
+    it('gives an embed an accessible name, defaulting to "Tour video"', () => {
+      const container = renderPanel({
+        step: { ...STEP, video: { src: 'https://example.com/v', type: 'embed' } },
+      });
+      expect(query(container, 'iframe')?.getAttribute('title')).toBe('Tour video');
+
+      cleanup();
+      const titled = renderPanel({
+        step: {
+          ...STEP,
+          video: { src: 'https://example.com/v', type: 'embed', title: 'Setting up alerts' },
+        },
+      });
+      expect(query(titled, 'iframe')?.getAttribute('title')).toBe('Setting up alerts');
+    });
+
     it('prefers a video over an image', () => {
       const container = renderPanel({
         step: { ...STEP, image: 'pic.gif', video: { src: 'clip.mp4' } },
@@ -196,6 +218,18 @@ describe('TourPanel', () => {
       const message = query(container, '.tip-magic-tour-body > .tip-magic-tour-message');
       expect(message?.textContent).toBe('Tom & <b>Jerry</b>');
       expect(message?.querySelector('b')).toBeNull();
+    });
+
+    it('puts the supplied id on the message, for the panel to be labelled by', () => {
+      const text = renderPanel({ messageId: 'tour-message-1' });
+      expect(query(text, '.tip-magic-tour-message')?.id).toBe('tour-message-1');
+
+      cleanup();
+      const html = renderPanel({
+        messageId: 'tour-message-1',
+        body: { kind: 'html', value: '<b>bold</b>' },
+      });
+      expect(query(html, '.tip-magic-tour-message')?.id).toBe('tour-message-1');
     });
 
     it('injects html content as HTML', () => {

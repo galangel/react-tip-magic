@@ -21,12 +21,16 @@ export interface TourPanelProps {
   progress: ResolvedProgressOptions;
   /** id for the title, which the panel's `aria-labelledby` points at */
   titleId?: string;
+  /** id for the message, which labels the panel when the step has no title */
+  messageId?: string;
 }
 
 type TourAction = (typeof TOUR_ACTIONS)[keyof typeof TOUR_ACTIONS];
 
 const EMBED_ALLOW =
   'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+
+const DEFAULT_EMBED_TITLE = 'Tour video';
 
 /** Leaves custom progress markup laid out as direct children of the footer */
 const CUSTOM_PROGRESS_STYLE: CSSProperties = { display: 'contents' };
@@ -53,24 +57,35 @@ const actionAttribute = (action: TourAction) => ({ [TOUR_DATA_ATTRIBUTES.ACTION]
  */
 const RawHtml = memo(function RawHtml({
   html,
+  id,
   className,
   style,
 }: {
   html: string;
+  id?: string;
   className?: string;
   style?: CSSProperties;
 }) {
-  return <div className={className} style={style} dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <div id={id} className={className} style={style} dangerouslySetInnerHTML={{ __html: html }} />
+  );
 });
 
 function TourMedia({ image, video }: Pick<TourStep, 'image' | 'video'>) {
   if (video) {
-    const { src, type = 'native', autoplay = true, loop = true, muted = true } = video;
+    const {
+      src,
+      type = 'native',
+      autoplay = true,
+      loop = true,
+      muted = true,
+      title = DEFAULT_EMBED_TITLE,
+    } = video;
 
     if (type === 'embed') {
       return (
         <div className={`${TOUR_CSS_CLASSES.VIDEO} ${TOUR_CSS_CLASSES.VIDEO_EMBED}`}>
-          <iframe src={src} frameBorder="0" allow={EMBED_ALLOW} allowFullScreen />
+          <iframe src={src} title={title} frameBorder="0" allow={EMBED_ALLOW} allowFullScreen />
         </div>
       );
     }
@@ -180,12 +195,16 @@ function TourNav({
   );
 }
 
-function TourMessage({ body }: { body: ResolvedStepBody }) {
+function TourMessage({ body, id }: { body: ResolvedStepBody; id?: string }) {
   if (body.kind === 'html') {
-    return <RawHtml html={body.value} className={TOUR_CSS_CLASSES.MESSAGE} />;
+    return <RawHtml html={body.value} id={id} className={TOUR_CSS_CLASSES.MESSAGE} />;
   }
 
-  return <div className={TOUR_CSS_CLASSES.MESSAGE}>{body.value}</div>;
+  return (
+    <div id={id} className={TOUR_CSS_CLASSES.MESSAGE}>
+      {body.value}
+    </div>
+  );
 }
 
 /**
@@ -195,7 +214,15 @@ function TourMessage({ body }: { body: ResolvedStepBody }) {
  * Its buttons carry `data-tour-action` rather than click handlers - `useTour` handles
  * them by delegation on the document.
  */
-export function TourPanel({ step, stepInfo, navigation, body, progress, titleId }: TourPanelProps) {
+export function TourPanel({
+  step,
+  stepInfo,
+  navigation,
+  body,
+  progress,
+  titleId,
+  messageId,
+}: TourPanelProps) {
   const hasHeader = !!step.title || navigation.showClose;
   const showControls = navigation.showControls;
   const showProgress = progress.show;
@@ -216,7 +243,7 @@ export function TourPanel({ step, stepInfo, navigation, body, progress, titleId 
               type="button"
               className={TOUR_CSS_CLASSES.CLOSE}
               {...actionAttribute(TOUR_ACTIONS.CLOSE)}
-              aria-label="Close"
+              aria-label={navigation.closeLabel}
             >
               ×
             </button>
@@ -225,7 +252,7 @@ export function TourPanel({ step, stepInfo, navigation, body, progress, titleId 
       )}
       <TourMedia image={step.image} video={step.video} />
       <div className={TOUR_CSS_CLASSES.BODY}>
-        <TourMessage body={body} />
+        <TourMessage body={body} id={messageId} />
       </div>
       {showProgress ? (
         <div className={TOUR_CSS_CLASSES.FOOTER}>

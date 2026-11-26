@@ -1716,7 +1716,8 @@ describe('a running tour whose steps change shape', () => {
     act(() => {
       api.tour().start();
     });
-    expect(tooltip()?.hasAttribute('aria-labelledby')).toBe(false);
+    const messageId = tooltip()?.getAttribute('aria-labelledby');
+    expect(document.getElementById(messageId!)?.textContent).toBe('Step A');
 
     api.replaceSteps([{ ...A, title: 'Hello' }]);
 
@@ -1882,5 +1883,39 @@ describe('steps that share a target', () => {
       expect.objectContaining({ index: 1, target: 'one' }),
       'next'
     );
+  });
+});
+
+describe('accessible names', () => {
+  it('names a dialog with no title by its message', () => {
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', body: <p>Release notes</p> }],
+        navigation: { showClose: false },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    const labelId = tooltip()?.getAttribute('aria-labelledby');
+    expect(labelId).toBeTruthy();
+    expect(document.getElementById(labelId!)?.textContent).toBe('Release notes');
+  });
+
+  it('names a titled dialog by its title', () => {
+    const getTour = mountTour(
+      { steps: [{ target: 'one', title: 'News', body: <p>Release notes</p> }] },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    const labelId = tooltip()?.getAttribute('aria-labelledby');
+    expect(document.getElementById(labelId!)?.textContent).toBe('News');
   });
 });

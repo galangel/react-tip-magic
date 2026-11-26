@@ -86,6 +86,8 @@ export interface TourNavigation {
   finishLabel?: string;
   /** Whether to show the close button (default: true when showControls is true) */
   showClose?: boolean;
+  /** Accessible name of the close button, which shows only "×" (default: 'Close') */
+  closeLabel?: string;
   /**
    * Where keyboard focus lands when the step opens (default: `'panel'`).
    *
@@ -182,6 +184,8 @@ export interface TourStepBase {
     loop?: boolean;
     /** Whether to mute (native video only, default: true) */
     muted?: boolean;
+    /** Accessible name of an embed's iframe (embed only, default: 'Tour video') */
+    title?: string;
   };
   /** Override tour-level navigation config for this step */
   navigation?: Partial<TourNavigation>;

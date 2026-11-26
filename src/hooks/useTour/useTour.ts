@@ -226,13 +226,15 @@ export function useTour(options: TourOptions): UseTourReturn {
   // The steps handed to the helper flow, which identify it as this tour's
   const flowStepsRef = useRef<FlowStep[] | null>(null);
 
-  // One id per tour instance for the panel's aria-labelledby. Generated rather than
-  // hardcoded so it cannot collide with an id the host page already owns, and held for
-  // the instance rather than per step so the label does not churn between steps.
-  const titleIdRef = useRef('');
-  if (!titleIdRef.current) {
-    titleIdRef.current = `${generateTooltipId()}-title`;
+  // One id base per tour instance for the title and message, which the panel's
+  // aria-labelledby points at. Generated rather than hardcoded so it cannot collide with
+  // an id the host page already owns, and held for the instance so it does not churn.
+  const idRef = useRef('');
+  if (!idRef.current) {
+    idRef.current = generateTooltipId();
   }
+  const titleId = `${idRef.current}-title`;
+  const messageId = `${idRef.current}-message`;
 
   // Whether the hook is mounted, cleared during the unmount commit
   const mountedRef = useRef(false);
@@ -328,13 +330,14 @@ export function useTour(options: TourOptions): UseTourReturn {
             navigation: mergedNav,
             body,
             progress: progressOptions,
-            titleId: titleIdRef.current,
+            titleId,
+            messageId,
           }
         : null;
 
       return { step, body, panel };
     },
-    [visibleSteps, navigation, tourProgress]
+    [visibleSteps, navigation, tourProgress, titleId, messageId]
   );
 
   /**
@@ -362,11 +365,12 @@ export function useTour(options: TourOptions): UseTourReturn {
       ...(panel && {
         interactive: true,
         role: 'dialog' as const,
-        ariaLabelledBy: step.title ? titleIdRef.current : undefined,
+        // The dialog takes focus, so it needs a name: the title, or else the message
+        ariaLabelledBy: step.title ? titleId : messageId,
         autoFocus: panel.navigation.autoFocus,
       }),
     }),
-    [tooltipOptions]
+    [tooltipOptions, titleId, messageId]
   );
 
   /**

@@ -438,6 +438,7 @@ Configure built-in navigation controls:
 navigation: {
   showControls: true,      // Show Next/Back buttons in tooltip
   showClose: true,         // Show close (×) button
+  closeLabel: 'Close',     // Accessible name of the close button
   nextLabel: 'Next',       // Custom label for Next button
   backLabel: 'Back',       // Custom label for Back button
   finishLabel: 'Finish',   // Label for last step's button
@@ -632,7 +633,8 @@ Add images, GIFs, or videos to tour steps:
   content: 'Watch how it works:',
   video: {
     src: 'https://www.youtube.com/embed/VIDEO_ID',
-    type: 'embed'
+    type: 'embed',
+    title: 'Setting up alerts' // The iframe's accessible name (default: 'Tour video')
   }
 }
 
@@ -776,10 +778,11 @@ Enable focus mode on key steps to draw attention without overwhelming users.
 
 - Tooltips are keyboard accessible
 - Respects `prefers-reduced-motion` for animations
-- Close button has proper ARIA labels
-- The tour panel is a `role="dialog"` labelled by the step title, and focus moves into it
-  when a step opens so it is announced. Pick which element receives that focus with
-  [`navigation.autoFocus`](#where-focus-lands)
+- The close button is named by `navigation.closeLabel` (default `'Close'`), and an embedded
+  video by `video.title` (default `'Tour video'`)
+- The tour panel is a `role="dialog"` labelled by the step title - or, for a step without
+  one, by its message - and focus moves into it when a step opens so it is announced. Pick
+  which element receives that focus with [`navigation.autoFocus`](#where-focus-lands)
 - The panel is deliberately non-modal: the app behind it stays interactive and there is no
   focus trap, so `Escape` always exits
 - Focus returns to whatever held it before the tour when the tour ends
