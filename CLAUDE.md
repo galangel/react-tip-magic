@@ -105,6 +105,10 @@ re-render every `useTipMagic` consumer - the component that called `useTour` amo
 whose inline `steps` would then update again, forever - and would re-run the tooltip's
 `autoFocus` effect, which keys on its content.
 
+Each shown step gets a store of its own. A store update re-renders synchronously while the
+tooltip's dispatch may not (a navigation inside `startTransition`), so with one shared
+store the outgoing panel rendered the next step's `body` before it was replaced.
+
 **A `body` renders in the provider's tree, not the caller's.** The element is created in
 the component that called `useTour` but rendered by `Tooltip`, under `TipMagicProvider`,
 so it sees only the context providers above the provider.

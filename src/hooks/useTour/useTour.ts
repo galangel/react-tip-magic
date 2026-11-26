@@ -28,6 +28,7 @@ import {
   resolveStepBody,
   resolveTargetElement,
   type ResolvedStepBody,
+  type TourPanelStore,
 } from './utils';
 
 /**
@@ -46,6 +47,15 @@ interface StepView {
   body: ResolvedStepBody;
   /** The panel's props, or null when the step is a plain tooltip */
   panel: TourPanelProps | null;
+}
+
+/**
+ * The step on screen
+ */
+interface ShownStep {
+  index: number;
+  /** The store its panel reads from, or null when it is a plain tooltip */
+  store: TourPanelStore | null;
 }
 
 /**
@@ -181,9 +191,8 @@ export function useTour(options: TourOptions): UseTourReturn {
     createHighlightManager(highlightClass ?? config.tourHighlightClass)
   );
   const targetWatcherRef = useRef(createTargetWatcher());
-  const panelStoreRef = useRef(createTourPanelStore());
-  // The step whose panel is on screen, -1 when it is a plain tooltip or nothing
-  const shownPanelIndexRef = useRef(-1);
+  // The step on screen, null when there is none
+  const shownRef = useRef<ShownStep | null>(null);
 
   // One id per tour instance for the panel's aria-labelledby. Generated rather than
   // hardcoded so it cannot collide with an id the host page already owns, and held for
@@ -338,15 +347,15 @@ export function useTour(options: TourOptions): UseTourReturn {
         });
       }
 
-      // Keyed by step so every step mounts a fresh panel - see CLAUDE.md, "Each tour
-      // step mounts a new panel"
-      if (panel) {
-        panelStoreRef.current.set(panel);
+      // A store of its own, and keyed by step, so every step mounts a fresh panel that
+      // never renders another step's props - see CLAUDE.md, "Each tour step mounts a new
+      // panel"
+      const store = panel ? createTourPanelStore() : null;
+      if (store && panel) {
+        store.set(panel);
       }
-      shownPanelIndexRef.current = panel ? stepIndex : -1;
-      const content = panel
-        ? createElement(LiveTourPanel, { key: stepIndex, store: panelStoreRef.current })
-        : body.value;
+      shownRef.current = { index: stepIndex, store };
+      const content = store ? createElement(LiveTourPanel, { key: stepIndex, store }) : body.value;
 
       // Merge tooltip options: tour panel defaults < tour options < step overrides <
       // the values the tour panel cannot function without
@@ -392,7 +401,7 @@ export function useTour(options: TourOptions): UseTourReturn {
    * Take the tour off screen and reset its state, without calling any consumer callback
    */
   const teardown = useCallback(() => {
-    shownPanelIndexRef.current = -1;
+    shownRef.current = null;
     cleanup();
     helper.endFlow();
     setIsActive(false);
@@ -657,12 +666,12 @@ export function useTour(options: TourOptions): UseTourReturn {
   // say - in place: the tooltip is not shown again, so focus, scroll and the step
   // callbacks are left alone
   useEffect(() => {
-    const index = currentIndexRef.current;
-    if (!isActiveRef.current || shownPanelIndexRef.current !== index) return;
+    const shown = shownRef.current;
+    if (!isActiveRef.current || !shown?.store) return;
 
-    const panel = describeStep(index)?.panel;
+    const panel = describeStep(shown.index)?.panel;
     if (panel) {
-      panelStoreRef.current.set(panel);
+      shown.store.set(panel);
     }
   }, [describeStep]);
 

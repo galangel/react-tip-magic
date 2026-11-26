@@ -1,5 +1,5 @@
 import { act, cleanup, render } from '@testing-library/react';
-import { StrictMode, useEffect, useRef, useState, type ReactNode } from 'react';
+import { startTransition, StrictMode, useEffect, useRef, useState, type ReactNode } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TipMagicProvider } from '../../../components/TipMagicProvider';
 import { useTipMagic } from '../../useTipMagic';
@@ -1445,5 +1445,48 @@ describe('StrictMode', () => {
     expect(count('.tip-magic-tooltip')).toBe(0);
     expect(count('.tip-magic-tour-backdrop')).toBe(0);
     expect(count('[data-tip-magic-focus]')).toBe(0);
+  });
+});
+
+describe('panel instances', () => {
+  it("never renders the next step's body inside the previous step's panel", async () => {
+    const renders: string[] = [];
+    let nextInstance = 0;
+
+    /** Records which mounted instance rendered which label */
+    function Probe({ label }: { label: string }) {
+      const instance = useRef(-1);
+      if (instance.current < 0) {
+        instance.current = nextInstance++;
+      }
+      renders.push(`${instance.current}:${label}`);
+      return <span className="probe">{label}</span>;
+    }
+
+    const getTour = mountTour(
+      {
+        steps: [
+          { target: 'one', body: <Probe label="one" /> },
+          { target: 'two', body: <Probe label="two" /> },
+        ],
+      },
+      '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    // Navigate in a transition: the store's re-render is sync, the tooltip's dispatch is
+    // not, so they land in different renders
+    await act(async () => {
+      startTransition(() => {
+        getTour().next();
+      });
+    });
+
+    expect(document.querySelector('.probe')?.textContent).toBe('two');
+    const firstInstance = renders.find((entry) => entry.endsWith(':one'))?.split(':')[0];
+    expect(renders).not.toContain(`${firstInstance}:two`);
   });
 });
