@@ -1490,3 +1490,107 @@ describe('panel instances', () => {
     expect(renders).not.toContain(`${firstInstance}:two`);
   });
 });
+
+describe('a running tour whose steps change shape', () => {
+  const A: TourStep = { target: 'one', text: 'Step A' };
+  const B: TourStep = { target: 'two', text: 'Step B' };
+  const C: TourStep = { target: 'three', text: 'Step C' };
+  const markup =
+    '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div><div data-tip-id="three">Three</div>';
+
+  /** Mount a tour whose steps can be replaced while it runs */
+  function mountWithSteps(steps: TourStep[], options: Omit<TourOptions, 'steps'> = {}) {
+    document.body.innerHTML = markup;
+    let tour!: UseTourReturn;
+    const onReady = (value: UseTourReturn) => (tour = value);
+    const ui = (current: TourStep[]) => (
+      <TipMagicProvider>
+        <Harness options={{ ...options, steps: current }} onReady={onReady} />
+      </TipMagicProvider>
+    );
+    const { rerender } = render(ui(steps));
+    return {
+      tour: () => tour,
+      replaceSteps: (next: TourStep[]) => act(() => rerender(ui(next))),
+    };
+  }
+
+  const message = () => document.querySelector('.tip-magic-tour-message')?.textContent;
+
+  it('keeps showing the same step when an earlier one is filtered out', () => {
+    const onStepChange = vi.fn();
+    const api = mountWithSteps([A, B, C], { onStepChange });
+    act(() => {
+      api.tour().start();
+    });
+    act(() => {
+      api.tour().next();
+    });
+    expect(message()).toBe('Step B');
+
+    api.replaceSteps([B, C]);
+
+    expect(message()).toBe('Step B');
+    expect(api.tour().currentStep).toMatchObject({ index: 0, target: 'two' });
+    expect(onStepChange).toHaveBeenCalledTimes(2);
+
+    act(() => {
+      api.tour().next();
+    });
+    expect(message()).toBe('Step C');
+  });
+
+  it('moves on to the step now at its place, as a navigation, when the shown step is removed', () => {
+    const onStepChange = vi.fn();
+    const onExit = vi.fn();
+    const api = mountWithSteps([A, { ...B, onExit }, C], { onStepChange });
+    act(() => {
+      api.tour().start();
+    });
+    act(() => {
+      api.tour().next();
+    });
+
+    api.replaceSteps([A, C]);
+
+    expect(message()).toBe('Step C');
+    expect(api.tour().currentStep).toMatchObject({ index: 1, target: 'three' });
+    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(onStepChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ target: 'three' }),
+      'next'
+    );
+  });
+
+  it('ends the tour when the steps shrink below the shown step', () => {
+    const onEnd = vi.fn();
+    const api = mountWithSteps([A, B, C], { onEnd, focus: true });
+    act(() => {
+      api.tour().start();
+    });
+    act(() => {
+      api.tour().goTo(2);
+    });
+
+    api.replaceSteps([A, B]);
+
+    expect(api.tour().isActive).toBe(false);
+    expect(onEnd).toHaveBeenCalledWith(false);
+    expect(count('.tip-magic-tooltip')).toBe(0);
+    expect(count('.tip-magic-tour-backdrop')).toBe(0);
+  });
+
+  it('labels the dialog by a title that appears while the step is shown', () => {
+    const api = mountWithSteps([A]);
+    act(() => {
+      api.tour().start();
+    });
+    expect(tooltip()?.hasAttribute('aria-labelledby')).toBe(false);
+
+    api.replaceSteps([{ ...A, title: 'Hello' }]);
+
+    const labelId = tooltip()?.getAttribute('aria-labelledby');
+    expect(labelId).toBeTruthy();
+    expect(document.getElementById(labelId!)?.textContent).toBe('Hello');
+  });
+});

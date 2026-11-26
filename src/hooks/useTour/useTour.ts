@@ -1,4 +1,12 @@
-import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { TooltipShowOptions } from '../../types';
 import type {
   CurrentTourStep,
@@ -54,8 +62,15 @@ interface StepView {
  */
 interface ShownStep {
   index: number;
+  step: TourStep;
+  element: HTMLElement;
   /** The store its panel reads from, or null when it is a plain tooltip */
   store: TourPanelStore | null;
+  /** What the tooltip was given as content */
+  content: ReactNode;
+  /** The panel-derived tooltip options it was shown with */
+  ariaLabelledBy?: string;
+  autoFocus?: TooltipShowOptions['autoFocus'];
 }
 
 /**
@@ -193,6 +208,8 @@ export function useTour(options: TourOptions): UseTourReturn {
   const targetWatcherRef = useRef(createTargetWatcher());
   // The step on screen, null when there is none
   const shownRef = useRef<ShownStep | null>(null);
+  // Counts presented steps, to key each panel uniquely
+  const presentCountRef = useRef(0);
 
   // One id per tour instance for the panel's aria-labelledby. Generated rather than
   // hardcoded so it cannot collide with an id the host page already owns, and held for
@@ -208,6 +225,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   const endRef = useRef<() => void>(() => {});
   const targetLostRef = useRef<() => void>(() => {});
   const teardownRef = useRef<() => void>(() => {});
+  const followStepsRef = useRef<() => void>(() => {});
 
   // Compute visible steps (filter out steps with condition returning false)
   const visibleSteps = useMemo(() => filterVisibleSteps(steps), [steps]);
@@ -302,6 +320,67 @@ export function useTour(options: TourOptions): UseTourReturn {
   );
 
   /**
+   * Tooltip options for a step: tour panel defaults < tour options < step overrides <
+   * the values the step cannot function without
+   */
+  const buildTooltipOptions = useCallback(
+    ({ step, body, panel }: StepView, content: ReactNode): TooltipShowOptions => ({
+      // The panel holds prose, a header row and a nav row - it has to be able to wrap.
+      // Overridable, unlike the forced values below.
+      ...(panel && { wordWrap: true }),
+      ...tooltipOptions,
+      ...step.tooltipOptions,
+      content,
+      placement: step.placement ?? tooltipOptions?.placement,
+      // A step with no panel hands its body to the tooltip as-is: `content` is HTML and
+      // `text` never is, whatever the consumer's options say
+      ...(body.kind === 'html' && { html: true }),
+      ...(body.kind === 'text' && { html: false }),
+      // Make the panel interactive and present it as a dialog - role="tooltip" is a
+      // description, so screen readers would not expose the buttons inside it
+      ...(panel && {
+        interactive: true,
+        role: 'dialog' as const,
+        ariaLabelledBy: step.title ? titleIdRef.current : undefined,
+        autoFocus: panel.navigation.autoFocus,
+      }),
+    }),
+    [tooltipOptions]
+  );
+
+  /**
+   * Put a step's content in the tooltip, and record it as the step on screen
+   */
+  const present = useCallback(
+    (view: StepView, stepIndex: number, element: HTMLElement) => {
+      // A store of its own, and a key of its own, so every step mounts a fresh panel that
+      // never renders another step's props - see CLAUDE.md, "Each tour step mounts a new
+      // panel"
+      const store = view.panel ? createTourPanelStore() : null;
+      if (store && view.panel) {
+        store.set(view.panel);
+      }
+      presentCountRef.current += 1;
+      const content = store
+        ? createElement(LiveTourPanel, { key: presentCountRef.current, store })
+        : view.body.value;
+
+      const options = buildTooltipOptions(view, content);
+      shownRef.current = {
+        index: stepIndex,
+        step: view.step,
+        element,
+        store,
+        content,
+        ariaLabelledBy: options.ariaLabelledBy,
+        autoFocus: options.autoFocus,
+      };
+      tooltip.show(element, options);
+    },
+    [buildTooltipOptions, tooltip]
+  );
+
+  /**
    * Show tooltip for a step
    *
    * The target element is resolved by the caller, so this is only ever reached for a
@@ -311,7 +390,7 @@ export function useTour(options: TourOptions): UseTourReturn {
     (stepIndex: number, targetElement: HTMLElement) => {
       const view = describeStep(stepIndex);
       if (!view) return;
-      const { step, body, panel } = view;
+      const { step } = view;
 
       // Highlight element
       highlightManagerRef.current.highlight(targetElement);
@@ -347,44 +426,9 @@ export function useTour(options: TourOptions): UseTourReturn {
         });
       }
 
-      // A store of its own, and keyed by step, so every step mounts a fresh panel that
-      // never renders another step's props - see CLAUDE.md, "Each tour step mounts a new
-      // panel"
-      const store = panel ? createTourPanelStore() : null;
-      if (store && panel) {
-        store.set(panel);
-      }
-      shownRef.current = { index: stepIndex, store };
-      const content = store ? createElement(LiveTourPanel, { key: stepIndex, store }) : body.value;
-
-      // Merge tooltip options: tour panel defaults < tour options < step overrides <
-      // the values the tour panel cannot function without
-      const mergedOptions: TooltipShowOptions = {
-        // The panel holds prose, a header row and a nav row - it has to be able to wrap.
-        // Overridable, unlike the forced values below.
-        ...(panel && { wordWrap: true }),
-        ...tooltipOptions,
-        ...step.tooltipOptions,
-        content,
-        placement: step.placement ?? tooltipOptions?.placement,
-        // A step with no panel hands its body to the tooltip as-is: `content` is HTML and
-        // `text` never is, whatever the consumer's options say
-        ...(body.kind === 'html' && { html: true }),
-        ...(body.kind === 'text' && { html: false }),
-        // Make the panel interactive and present it as a dialog - role="tooltip" is a
-        // description, so screen readers would not expose the buttons inside it
-        ...(panel && {
-          interactive: true,
-          role: 'dialog' as const,
-          ariaLabelledBy: step.title ? titleIdRef.current : undefined,
-          autoFocus: panel.navigation.autoFocus,
-        }),
-      };
-
-      // Show the tooltip
-      tooltip.show(targetElement, mergedOptions);
+      present(view, stepIndex, targetElement);
     },
-    [describeStep, tooltip, tooltipOptions, autoScroll, tourFocus, effectiveHighlightClass]
+    [describeStep, present, autoScroll, tourFocus, effectiveHighlightClass]
   );
 
   /**
@@ -415,14 +459,8 @@ export function useTour(options: TourOptions): UseTourReturn {
    */
   const finishTour = useCallback(
     (completed: boolean) => {
-      // Use ref for current index to always get latest value
-      const idx = currentIndexRef.current;
-
-      // Call onExit for current step
-      const currentStep = visibleSteps[idx];
-      if (currentStep?.onExit) {
-        currentStep.onExit();
-      }
+      // The step on screen, which `steps` may no longer hold
+      shownRef.current?.step.onExit?.();
 
       teardown();
 
@@ -430,7 +468,7 @@ export function useTour(options: TourOptions): UseTourReturn {
         onEnd(completed);
       }
     },
-    [visibleSteps, teardown, onEnd]
+    [teardown, onEnd]
   );
 
   /**
@@ -460,15 +498,12 @@ export function useTour(options: TourOptions): UseTourReturn {
 
       const { index: targetIndex, element: targetElement } = resolved;
 
-      // Use ref for current index to get the previous step
-      const prevIdx = currentIndexRef.current;
-      const previousStep = visibleSteps[prevIdx];
+      // The step on screen, which `steps` may no longer hold
+      const previousStep = shownRef.current?.step;
       const nextStep = visibleSteps[targetIndex];
 
       // Call onExit for previous step
-      if (previousStep?.onExit) {
-        previousStep.onExit();
-      }
+      previousStep?.onExit?.();
 
       // Update state
       setCurrentIndex(targetIndex);
@@ -662,17 +697,68 @@ export function useTour(options: TourOptions): UseTourReturn {
     [isActive, currentIndex, visibleSteps.length]
   );
 
+  /**
+   * Bring the step on screen in line with new `steps` or options
+   *
+   * Follows the step by its target, so a step filtered out ahead of it does not swap in
+   * another step's content. A shown step that is gone is replaced by whatever now holds
+   * its place, as a navigation; past the end, the tour ends.
+   */
+  const followSteps = () => {
+    const shown = shownRef.current;
+    if (!isActiveRef.current || !shown) return;
+
+    let index = shown.index;
+    if (visibleSteps[index]?.target !== shown.step.target) {
+      const moved = visibleSteps.findIndex((step) => step.target === shown.step.target);
+      if (moved < 0) {
+        if (index < visibleSteps.length) {
+          navigateToStep(index, 'next');
+        } else {
+          finishTour(false);
+        }
+        return;
+      }
+
+      index = moved;
+      setCurrentIndex(index);
+      currentIndexRef.current = index;
+      helper.goToStep(index);
+    }
+
+    const view = describeStep(index);
+    if (!view) return;
+
+    // Gaining or losing the panel changes what the tooltip holds, so show it again
+    if (!view.panel !== !shown.store) {
+      present(view, index, shown.element);
+      return;
+    }
+
+    shownRef.current = { ...shown, index, step: view.step };
+    if (!shown.store || !view.panel) return;
+
+    shown.store.set(view.panel);
+
+    // Re-show only when a panel-derived option changed: showing re-renders every
+    // useTipMagic consumer, this one included
+    const options = buildTooltipOptions(view, shown.content);
+    if (options.ariaLabelledBy !== shown.ariaLabelledBy || options.autoFocus !== shown.autoFocus) {
+      shownRef.current = {
+        ...shownRef.current,
+        ariaLabelledBy: options.ariaLabelledBy,
+        autoFocus: options.autoFocus,
+      };
+      tooltip.show(shown.element, options);
+    }
+  };
+  followStepsRef.current = followSteps;
+
   // A running step follows changes to `steps` - a body whose data arrived after start(),
   // say - in place: the tooltip is not shown again, so focus, scroll and the step
   // callbacks are left alone
   useEffect(() => {
-    const shown = shownRef.current;
-    if (!isActiveRef.current || !shown?.store) return;
-
-    const panel = describeStep(shown.index)?.panel;
-    if (panel) {
-      shown.store.set(panel);
-    }
+    followStepsRef.current();
   }, [describeStep]);
 
   // Handle navigation button activation via data-tour-action attributes
