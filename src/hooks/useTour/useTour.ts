@@ -738,19 +738,28 @@ export function useTour(options: TourOptions): UseTourReturn {
   }, [isActive]);
 
   // Cleanup on unmount
+  const mountedRef = useRef(false);
   useEffect(() => {
+    mountedRef.current = true;
     const backdropManager = backdropManagerRef.current;
     const highlightManager = highlightManagerRef.current;
     const targetWatcher = targetWatcherRef.current;
     return () => {
-      // A running tour must not outlive its component as a panel with dead buttons. No
-      // onEnd: the consumer that would hear it is unmounting too.
-      if (isActiveRef.current) {
-        teardownRef.current();
-      }
-      targetWatcher.destroy();
-      backdropManager.destroy();
-      highlightManager.destroy();
+      mountedRef.current = false;
+      // Deferred, and skipped if the hook has mounted again: StrictMode's simulated
+      // unmount remounts within the same task, and must not end a running tour
+      queueMicrotask(() => {
+        if (mountedRef.current) return;
+
+        // A running tour must not outlive its component as a panel with dead buttons.
+        // No onEnd: the consumer that would hear it has unmounted too.
+        if (isActiveRef.current) {
+          teardownRef.current();
+        }
+        targetWatcher.destroy();
+        backdropManager.destroy();
+        highlightManager.destroy();
+      });
     };
   }, []);
 

@@ -107,11 +107,12 @@ whose inline `steps` would then update again, forever - and would re-run the too
 the component that called `useTour` but rendered by `Tooltip`, under `TipMagicProvider`,
 so it sees only the context providers above the provider.
 
-**Unmounting the component that called `useTour` ends a running tour silently.** The
-unmount cleanup tears it down - panel, backdrop, highlight, helper flow - without
-`onExit` or `onEnd`. Under `StrictMode` that includes the simulated unmount, so a tour
-started from a mount effect behind a "start once" ref guard closes in development and
-stays closed; one whose effect simply calls `start()` again reopens.
+**Unmounting the component that called `useTour` ends a running tour silently, a
+microtask later.** The unmount cleanup tears it down - panel, backdrop, highlight, helper
+flow - without `onExit` or `onEnd`. It is deferred and skipped if the hook has mounted
+again, because `StrictMode`'s simulated unmount remounts within the same task: tearing
+down there closed a tour started from a guarded mount effect, for good. A test has to
+`await act(async () => ...)` the unmount to see the teardown.
 
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.

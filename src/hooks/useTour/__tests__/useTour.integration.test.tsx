@@ -1,5 +1,5 @@
 import { act, cleanup, render } from '@testing-library/react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { StrictMode, useEffect, useRef, useState, type ReactNode } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TipMagicProvider } from '../../../components/TipMagicProvider';
 import { useTipMagic } from '../../useTipMagic';
@@ -1344,11 +1344,14 @@ describe('unmounting the component that runs the tour', () => {
     return {
       tour: () => tour,
       flowActive: () => flowActive,
-      unmountTour: () => act(() => unmountTour()),
+      unmountTour: () =>
+        act(async () => {
+          unmountTour();
+        }),
     };
   }
 
-  it('takes the panel, backdrop and helper flow down without calling onEnd', () => {
+  it('takes the panel, backdrop and helper flow down without calling onEnd', async () => {
     const onEnd = vi.fn();
     const onExit = vi.fn();
     const api = mountUnmountable(
@@ -1362,7 +1365,7 @@ describe('unmounting the component that runs the tour', () => {
     expect(count('.tip-magic-tooltip')).toBe(1);
     expect(api.flowActive()).toBe(true);
 
-    api.unmountTour();
+    await api.unmountTour();
 
     expect(count('.tip-magic-tooltip')).toBe(0);
     expect(count('.tip-magic-tour-backdrop')).toBe(0);
@@ -1372,7 +1375,7 @@ describe('unmounting the component that runs the tour', () => {
     expect(onExit).not.toHaveBeenCalled();
   });
 
-  it('leaves a tooltip it does not own alone when the tour is not running', () => {
+  it('leaves a tooltip it does not own alone when the tour is not running', async () => {
     let showOther!: () => void;
     function Shower() {
       const { tooltip: api } = useTipMagic();
@@ -1389,8 +1392,58 @@ describe('unmounting the component that runs the tour', () => {
     act(() => {
       showOther();
     });
-    api.unmountTour();
+    await api.unmountTour();
 
     expect(tooltip()?.textContent).toContain('Not the tour');
+  });
+});
+
+describe('StrictMode', () => {
+  const STEPS: TourStep[] = [{ target: 'one', title: 'News', text: 'A' }];
+
+  /** Starts the tour once on mount, the way a "show this announcement" guard does */
+  function GuardedAutoStart() {
+    const tour = useTour({ steps: STEPS, focus: true });
+    const startRef = useRef(tour.start);
+    startRef.current = tour.start;
+    const startedRef = useRef(false);
+    useEffect(() => {
+      if (startedRef.current) return;
+      startedRef.current = true;
+      startRef.current();
+    }, []);
+    return null;
+  }
+
+  it('keeps a guarded auto-start tour open through the simulated unmount, and still ends it on a real one', async () => {
+    let unmountTour!: () => void;
+    function Toggle() {
+      const [mounted, setMounted] = useState(true);
+      unmountTour = () => setMounted(false);
+      return mounted ? <GuardedAutoStart /> : null;
+    }
+
+    document.body.innerHTML = '<div data-tip-id="one">One</div>';
+    await act(async () => {
+      render(
+        <StrictMode>
+          <TipMagicProvider>
+            <Toggle />
+          </TipMagicProvider>
+        </StrictMode>
+      );
+    });
+
+    expect(count('.tip-magic-tooltip')).toBe(1);
+    expect(count('.tip-magic-tour-backdrop')).toBe(1);
+    expect(count('[data-tip-magic-focus]')).toBe(1);
+
+    await act(async () => {
+      unmountTour();
+    });
+
+    expect(count('.tip-magic-tooltip')).toBe(0);
+    expect(count('.tip-magic-tour-backdrop')).toBe(0);
+    expect(count('[data-tip-magic-focus]')).toBe(0);
   });
 });
