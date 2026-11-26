@@ -65,6 +65,8 @@ export const TOUR_DATA_ATTRIBUTES = {
   BACKDROP_INTERACTIVE: 'data-tip-magic-backdrop-interactive',
   /** On a centered panel whose image or video sets its width */
   MEDIA_FIT: 'data-tip-magic-media-fit',
+  /** On such a panel that shows nothing but its media - no title, text or footer */
+  MEDIA_ONLY: 'data-tip-magic-media-only',
   /** On such a panel until its media's size is known; the stylesheet hides it meanwhile */
   MEDIA_LOADING: 'data-tip-magic-media-loading',
 } as const;

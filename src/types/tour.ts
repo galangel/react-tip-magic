@@ -135,6 +135,27 @@ export interface CurrentTourStep {
 }
 
 /**
+ * A video shown above a step's content
+ */
+export interface TourVideo {
+  /** Video source URL (mp4, webm) or embed URL (YouTube, Vimeo) */
+  src: string;
+  /** Type of video: 'native' for mp4/webm, 'embed' for iframe embeds */
+  type?: 'native' | 'embed';
+  /** Whether to autoplay (native video only, default: true) */
+  autoplay?: boolean;
+  /** Whether to loop (native video only, default: true) */
+  loop?: boolean;
+  /** Whether to mute (native video only, default: true) */
+  muted?: boolean;
+  /**
+   * Accessible name of the video (default: 'Tour video'). Also names the step's panel
+   * when it has no title and no text.
+   */
+  title?: string;
+}
+
+/**
  * Tour step definition
  *
  * @example
@@ -177,20 +198,7 @@ export interface TourStepBase {
   /** Image URL to display above content (Pokemon card style) - supports GIFs */
   image?: string;
   /** Video to display above content */
-  video?: {
-    /** Video source URL (mp4, webm) or embed URL (YouTube, Vimeo) */
-    src: string;
-    /** Type of video: 'native' for mp4/webm, 'embed' for iframe embeds */
-    type?: 'native' | 'embed';
-    /** Whether to autoplay (native video only, default: true) */
-    autoplay?: boolean;
-    /** Whether to loop (native video only, default: true) */
-    loop?: boolean;
-    /** Whether to mute (native video only, default: true) */
-    muted?: boolean;
-    /** Accessible name of an embed's iframe (embed only, default: 'Tour video') */
-    title?: string;
-  };
+  video?: TourVideo;
   /** Override tour-level navigation config for this step */
   navigation?: Partial<TourNavigation>;
   /** Override tour-level focus setting for this step */
@@ -201,11 +209,11 @@ export interface TourStepBase {
 
 /**
  * The body of a step: plain text via `text`, React content via `body`, or raw HTML via
- * `content`.
+ * `content` - or none of them, for a step that is only its `image` or `video`.
  *
- * Exactly one is required. Expressing it as a union rather than optionals means a step
- * with none does not compile, and a step with two does not either - so there is no
- * precedence rule to remember.
+ * At most one is allowed, and a step without one must have media. Expressing it as a
+ * union rather than optionals means a step with nothing to show does not compile, and a
+ * step with two bodies does not either - so there is no precedence rule to remember.
  */
 export type TourStepContent =
   | {
@@ -256,7 +264,8 @@ export type TourStepContent =
       content: string | ((step: CurrentTourStep) => string);
       text?: never;
       body?: never;
-    };
+    }
+  | ({ text?: never; body?: never; content?: never } & ({ image: string } | { video: TourVideo }));
 
 /**
  * Tour step definition

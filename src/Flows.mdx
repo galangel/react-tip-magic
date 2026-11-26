@@ -281,8 +281,9 @@ Each step in the `steps` array can have the following properties:
   </tbody>
 </table>
 
-\* Exactly one of `text`, `body` or `content` is required. The types enforce it: a step
-with none, or with two, will not compile.
+\* At most one of `text`, `body` or `content`, and a step without one must have an `image`
+or a `video` - a step that is only media. The types enforce it: a step with nothing to
+show, or with two bodies, will not compile.
 
 ### A step without a target opens centered
 
@@ -320,6 +321,13 @@ narrower than 280px (`--tip-magic-tour-min-width`) - a smaller image is centered
 natural size, not stretched. The panel stays hidden until the media's size is known, so it
 does not open narrow and then widen. Without media, or with an embedded video, which has no
 size of its own, the width comes from `maxWidth` as for any tooltip.
+
+A step can also be only its media: `{ video: { src, title } }`, with no title or text.
+Its panel is named by `video.title` (default `'Tour video'`), and with nothing else in
+the panel the media may take nearly all of the 80% height. With
+`navigation: { showControls: false, showClose: false }` and
+`focus: { dismissOnClick: true }` it has no buttons at all: a click outside it or Escape
+closes it.
 
 Everything else works as for an anchored step: the same panel, media, `text` / `body` /
 `content`, navigation, progress, `autoFocus` and Escape. With no target there is nothing to

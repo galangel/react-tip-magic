@@ -51,6 +51,7 @@ export type {
   TourStepBase,
   TourStepContent,
   TourTargetMissingAction,
+  TourVideo,
   UseTipMagicReturn,
   UseTourReturn,
   // TipAdvisor types

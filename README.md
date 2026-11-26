@@ -146,7 +146,7 @@ const tour = useTour({ steps });
 
 ### Step content: `text`, `body` or `content`
 
-Each step takes exactly one of them — a step with none, or with two, won't compile.
+Each step takes at most one of them, and a step with none must have an `image` or `video` — a step with nothing to show, or with two bodies, won't compile.
 
 ```tsx
 // Plain text, rendered as text
@@ -176,6 +176,8 @@ const announcement = useTour({
 ```
 
 A centered panel is at most 80% of the viewport's height (`--tip-magic-tour-centered-max-height`), and its `image` (or native `video`) sets its width: the media's natural width, capped at 70% of the viewport (`--tip-magic-tour-centered-max-width`, and an explicit `tooltipOptions.maxWidth`), never cropped and scaled down uniformly when it would crowd out the text. The panel is never narrower than 280px (`--tip-magic-tour-min-width`); a smaller image is centered at its natural size.
+
+A step can be only its media — `{ video: { src, title } }` — in which case the panel is named by `video.title`. Pass `navigation.autoFocus: 'primary'` to put focus on a "Got it" button so Enter dismisses the announcement.
 
 Centered and anchored steps mix in one tour. With no target there is nothing to highlight, scroll to or watch, and `onTargetMissing` never fires for it.
 
@@ -228,6 +230,7 @@ The tour panel is now rendered by React instead of injected as an HTML string. T
 - `CurrentTourStep.content` (in `currentStep`, `onStepChange`, `onTargetMissing`) is `''` for a `body` step: React content has no HTML form.
 - A panel without a `title` is labelled by its message, so `aria-labelledby` is now always set on a tour dialog.
 - `start()` also returns `false` when the first step has nothing to show (an empty body and no panel features).
+- A step may be only its `image` or `video`, with no `text`, `body` or `content`; the video's type is exported as `TourVideo`, and `video.title` now names native videos too.
 - `TourStep.target` is optional: a step without one opens centered. `CurrentTourStep.target` is `undefined` for such a step, so code that reads it as a `string` must handle that.
 
 Type changes, for code that uses the exported context (`useTipMagicContext`, `TipMagicState`, `TipMagicAction`):

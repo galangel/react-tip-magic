@@ -432,6 +432,24 @@ describe('tourSteps utilities', () => {
     });
   });
 
+  describe('a step that is only media', () => {
+    it('should type-check with an image or a video and nothing else', () => {
+      const image: TourStep = { image: 'pic.png' };
+      const video: TourStep = { video: { src: 'clip.mp4', title: 'Product tour' } };
+      // @ts-expect-error - a step with no body and no media has nothing to show
+      const nothing: TourStep = { target: 'one' };
+
+      expect(
+        resolveStepBody(image, { index: 0, content: '', isFirst: true, isLast: true, total: 1 })
+      ).toEqual({
+        kind: 'html',
+        value: '',
+      });
+      expect(video.video?.src).toBe('clip.mp4');
+      expect(nothing.target).toBe('one');
+    });
+  });
+
   describe('fitsPanelToMedia', () => {
     it('should be true for a centered step with an image or a native video', () => {
       expect(fitsPanelToMedia({ text: 'A', image: 'pic.png' })).toBe(true);

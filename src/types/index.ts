@@ -456,6 +456,7 @@ export type {
   TourStepBase,
   TourStepContent,
   TourTargetMissingAction,
+  TourVideo,
   UseTourReturn,
 } from './tour';
 

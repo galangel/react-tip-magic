@@ -2237,3 +2237,106 @@ describe('a centered step sized by its image', () => {
     expect(content().hasAttribute('data-tip-magic-media-fit')).toBe(false);
   });
 });
+
+describe('a centered step that is only a video', () => {
+  const VIDEO_STEP: TourStep = { video: { src: 'clip.mp4', title: 'Product tour' } };
+
+  it('renders the video in a panel named after it', async () => {
+    const getTour = mountTour({ steps: [VIDEO_STEP] }, '<div id="app"></div>');
+
+    let started: boolean | undefined;
+    await act(async () => {
+      started = getTour().start();
+    });
+
+    expect(started).toBe(true);
+    expect(tooltip()?.hasAttribute('data-tip-magic-centered')).toBe(true);
+    expect(tooltip()?.querySelector('video')).not.toBeNull();
+    expect(count('.tip-magic-tour-btn')).toBe(0);
+    expect(count('.tip-magic-tour-close')).toBe(1);
+
+    const labelId = tooltip()?.getAttribute('aria-labelledby');
+    expect(document.getElementById(labelId!)?.getAttribute('aria-label')).toBe('Product tour');
+  });
+
+  it('falls back to a default name for an untitled video', async () => {
+    const getTour = mountTour({ steps: [{ video: { src: 'clip.mp4' } }] }, '<div id="app"></div>');
+    await act(async () => {
+      getTour().start();
+    });
+
+    const labelId = tooltip()?.getAttribute('aria-labelledby');
+    expect(document.getElementById(labelId!)?.getAttribute('aria-label')).toBe('Tour video');
+  });
+
+  it('closes with ×', async () => {
+    const onEnd = vi.fn();
+    const getTour = mountTour({ steps: [VIDEO_STEP], onEnd }, '<div id="app"></div>');
+    await act(async () => {
+      getTour().start();
+    });
+
+    act(() => {
+      (document.querySelector('.tip-magic-tour-close') as HTMLElement).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, detail: 0 })
+      );
+    });
+
+    expect(onEnd).toHaveBeenCalledWith(false);
+    expect(count('.tip-magic-tooltip')).toBe(0);
+  });
+
+  it('with no buttons at all, is still a named panel that a click outside closes', async () => {
+    const onEnd = vi.fn();
+    const getTour = mountTour(
+      {
+        steps: [{ ...VIDEO_STEP, focus: { dismissOnClick: true } }],
+        navigation: { showControls: false, showClose: false },
+        onEnd,
+      },
+      '<div id="app"></div>'
+    );
+    await act(async () => {
+      getTour().start();
+    });
+
+    const panel = tooltip() as HTMLElement;
+    expect(panel.querySelector('.tip-magic-tour-content video')).not.toBeNull();
+    expect(panel.querySelectorAll('button')).toHaveLength(0);
+    expect(panel.getAttribute('role')).toBe('dialog');
+    expect(
+      document.getElementById(panel.getAttribute('aria-labelledby')!)?.getAttribute('aria-label')
+    ).toBe('Product tour');
+    expect(document.activeElement).toBe(panel);
+
+    // A click on the video is inside the panel, not on the backdrop
+    act(() => {
+      const video = panel.querySelector('video') as HTMLElement;
+      video.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, detail: 1 }));
+      video.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    });
+    expect(getTour().isActive).toBe(true);
+    expect(onEnd).not.toHaveBeenCalled();
+
+    act(() => {
+      (document.querySelector('.tip-magic-tour-backdrop') as HTMLElement).click();
+    });
+    expect(onEnd).toHaveBeenCalledWith(false);
+    expect(count('.tip-magic-tooltip')).toBe(0);
+  });
+
+  it('closes with Escape', async () => {
+    const onEnd = vi.fn();
+    const getTour = mountTour({ steps: [VIDEO_STEP], onEnd }, '<div id="app"></div>');
+    await act(async () => {
+      getTour().start();
+    });
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(onEnd).toHaveBeenCalledWith(false);
+    expect(count('.tip-magic-tooltip')).toBe(0);
+  });
+});

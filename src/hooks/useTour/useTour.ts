@@ -240,6 +240,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   }
   const titleId = `${idRef.current}-title`;
   const messageId = `${idRef.current}-message`;
+  const mediaId = `${idRef.current}-media`;
 
   // Whether the hook is mounted, cleared during the unmount commit
   const mountedRef = useRef(false);
@@ -344,6 +345,7 @@ export function useTour(options: TourOptions): UseTourReturn {
             progress: progressOptions,
             titleId,
             messageId,
+            mediaId,
             fitMedia: fitsPanelToMedia(step),
             mediaMaxWidth: typeof maxWidth === 'number' ? maxWidth : undefined,
           }
@@ -351,7 +353,7 @@ export function useTour(options: TourOptions): UseTourReturn {
 
       return { step, body, panel };
     },
-    [visibleSteps, navigation, tourProgress, tooltipOptions, titleId, messageId]
+    [visibleSteps, navigation, tourProgress, tooltipOptions, titleId, messageId, mediaId]
   );
 
   /**
@@ -385,12 +387,17 @@ export function useTour(options: TourOptions): UseTourReturn {
       ...(panel && {
         interactive: true,
         role: 'dialog' as const,
-        // The dialog takes focus, so it needs a name: the title, or else the message
-        ariaLabelledBy: step.title ? titleId : messageId,
+        // The dialog takes focus, so it needs a name: the title, or else the message, or
+        // for a step that is only a video, the video's title
+        ariaLabelledBy: step.title
+          ? titleId
+          : body.kind === 'node' || body.value !== '' || !step.video
+            ? messageId
+            : mediaId,
         autoFocus: panel.navigation.autoFocus,
       }),
     }),
-    [tooltipOptions, titleId, messageId]
+    [tooltipOptions, titleId, messageId, mediaId]
   );
 
   /**

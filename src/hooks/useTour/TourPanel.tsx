@@ -23,6 +23,8 @@ export interface TourPanelProps {
   titleId?: string;
   /** id for the message, which labels the panel when the step has no title */
   messageId?: string;
+  /** id for a video, which labels the panel when the step has neither title nor text */
+  mediaId?: string;
   /** Whether the panel takes its width from its image or native video (a centered step) */
   fitMedia?: boolean;
   /** An explicit cap on the panel's width, in pixels, when it takes it from its media */
@@ -79,11 +81,13 @@ const RawHtml = memo(function RawHtml({
 });
 
 interface TourMediaProps extends Pick<TourStep, 'image' | 'video'> {
+  /** id for a video, so the panel can be labelled by it */
+  id?: string;
   /** Called once the media's size is known - loaded, or failed to */
   onSized?: (src: string) => void;
 }
 
-function TourMedia({ image, video, onSized }: TourMediaProps) {
+function TourMedia({ image, video, id, onSized }: TourMediaProps) {
   if (video) {
     const {
       src,
@@ -97,7 +101,15 @@ function TourMedia({ image, video, onSized }: TourMediaProps) {
     if (type === 'embed') {
       return (
         <div className={`${TOUR_CSS_CLASSES.VIDEO} ${TOUR_CSS_CLASSES.VIDEO_EMBED}`}>
-          <iframe src={src} title={title} frameBorder="0" allow={EMBED_ALLOW} allowFullScreen />
+          <iframe
+            id={id}
+            src={src}
+            title={title}
+            aria-label={title}
+            frameBorder="0"
+            allow={EMBED_ALLOW}
+            allowFullScreen
+          />
         </div>
       );
     }
@@ -107,6 +119,8 @@ function TourMedia({ image, video, onSized }: TourMediaProps) {
         {/* Keyed on src: React does not reload a <video> whose <source> changes */}
         <video
           key={src}
+          id={id}
+          aria-label={title}
           ref={muted ? markMuted : markUnmuted}
           autoPlay={autoplay}
           loop={loop}
@@ -236,6 +250,7 @@ export function TourPanel({
   progress,
   titleId,
   messageId,
+  mediaId,
   fitMedia = false,
   mediaMaxWidth,
 }: TourPanelProps) {
@@ -246,6 +261,9 @@ export function TourPanel({
   const mediaSrc = step.video?.src ?? step.image;
   const [sizedSrc, setSizedSrc] = useState<string | undefined>();
   const mediaLoading = fitMedia && mediaSrc !== sizedSrc;
+  const hasMessage = body.kind === 'node' || body.value !== '';
+  const mediaOnly =
+    fitMedia && !step.title && !hasMessage && !navigation.showControls && !progress.show;
   const showControls = navigation.showControls;
   const showProgress = progress.show;
 
@@ -255,6 +273,7 @@ export function TourPanel({
       {...(fitMedia && {
         [TOUR_DATA_ATTRIBUTES.MEDIA_FIT]: '',
         ...(mediaLoading && { [TOUR_DATA_ATTRIBUTES.MEDIA_LOADING]: '' }),
+        ...(mediaOnly && { [TOUR_DATA_ATTRIBUTES.MEDIA_ONLY]: '' }),
       })}
       style={
         fitMedia && mediaMaxWidth !== undefined
@@ -286,6 +305,7 @@ export function TourPanel({
       <TourMedia
         image={step.image}
         video={step.video}
+        id={mediaId}
         onSized={fitMedia ? setSizedSrc : undefined}
       />
       <div className={TOUR_CSS_CLASSES.BODY}>

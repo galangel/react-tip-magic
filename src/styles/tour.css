@@ -54,6 +54,8 @@
   --tip-magic-tour-centered-max-width: 70vw;
   /* Height kept for the title, a few body lines and the footer below such media */
   --tip-magic-tour-media-reserved-height: 200px;
+  /* ...and for at most a close button, when the panel is nothing but its media */
+  --tip-magic-tour-media-only-reserved-height: 64px;
 
   /* Navigation container */
   --tip-magic-tour-nav-margin: 12px 0 0 0;
@@ -208,6 +210,11 @@
       var(--tip-magic-tour-media-reserved-height)
   );
   object-fit: contain;
+}
+
+/* With at most a close button besides it, the media may take the panel's height */
+.tip-magic-tour-content[data-tip-magic-media-only] {
+  --tip-magic-tour-media-reserved-height: var(--tip-magic-tour-media-only-reserved-height);
 }
 
 /* Hidden until the media's size is known, so it does not open narrow and then jump */

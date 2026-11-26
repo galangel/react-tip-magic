@@ -506,6 +506,19 @@ describe('a panel sized by its media', () => {
     );
   });
 
+  it('marks a panel that is nothing but its media', () => {
+    const mediaOnly = renderPanel({
+      step: { video: { src: 'clip.mp4' } },
+      body: { kind: 'html', value: '' },
+      fitMedia: true,
+    });
+    expect(content(mediaOnly).hasAttribute('data-tip-magic-media-only')).toBe(true);
+
+    cleanup();
+    const withText = renderPanel({ step: { ...STEP, image: 'pic.png' }, fitMedia: true });
+    expect(content(withText).hasAttribute('data-tip-magic-media-only')).toBe(false);
+  });
+
   it('leaves a panel that is not sized by its media unmarked', () => {
     const container = renderPanel({ step: { ...STEP, image: 'pic.png' } });
 
