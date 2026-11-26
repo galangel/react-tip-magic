@@ -144,21 +144,25 @@ const tour = useTour({ steps });
 }
 ```
 
-### Step content is HTML
+### Step content: `text`, `body` or `content`
 
-Step `content` is injected as HTML so that titles, media and controls work. Use `text` instead when the value is plain text the library should escape for you:
+Each step takes exactly one of them — a step with none, or with two, won't compile.
 
 ```tsx
+// Plain text, rendered as text
 { target: 'profile', text: `Signed in as ${user.name}` }
-```
 
-Exactly one of `content` or `text` is required — a step with neither, or with both, won't compile. For markup with an interpolated value, keep `content` and escape the value with the exported `escapeHtml`:
+// Any React node (or a function of the current step returning one)
+{ target: 'whats-new', title: "What's new", body: <Markdown source={releaseNotes} /> }
 
-```tsx
+// Raw HTML, injected as-is - escape interpolations
 import { escapeHtml } from '@galangel/react-tip-magic';
-
 { target: 'profile', content: `Signed in as <b>${escapeHtml(user.name)}</b>` }
 ```
+
+The panel itself is rendered by React, so titles, button labels and `text` are escaped for you. Only `content` is injected as HTML: escape any interpolated value with the exported `escapeHtml`.
+
+A `body` renders inside `TipMagicProvider`, not inside the component that called `useTour`, so it sees only the context providers above `TipMagicProvider`. A long body scrolls once it reaches `--tip-magic-tour-body-max-height` (`60vh` by default), and the panel keeps itself within the viewport.
 
 ### When a target isn't there
 

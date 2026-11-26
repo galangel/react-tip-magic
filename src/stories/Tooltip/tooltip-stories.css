@@ -828,3 +828,39 @@
   font-size: 13px;
   opacity: 0.7;
 }
+
+/* ==========================================================================
+   TOUR REACT BODY STORY
+   ========================================================================== */
+
+.tour-react-body-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+  min-width: 420px;
+}
+
+.tour-react-body-target {
+  padding: 12px 16px;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+}
+
+.tour-react-body-notes h4 {
+  margin: 12px 0 4px;
+}
+
+.tour-react-body-notes p,
+.tour-react-body-notes ul {
+  margin: 0 0 8px;
+}
+
+.tour-react-body-notes ul {
+  padding-left: 18px;
+}
+
+.tour-react-body-notes button {
+  font: inherit;
+  cursor: pointer;
+}

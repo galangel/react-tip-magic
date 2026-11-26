@@ -547,6 +547,10 @@ function MyComponent() {
         Custom Content
       </button>
 
+      <button onClick={() => tooltip.show('#my-target', { content: <em>React content</em> })}>
+        React Content
+      </button>
+
       <button onClick={() => tooltip.hide()}>Hide</button>
     </>
   );
@@ -567,7 +571,10 @@ function MyComponent() {
       <td>
         <code>show(target, options?)</code>
       </td>
-      <td>Show tooltip for target element (selector or Element)</td>
+      <td>
+        Show tooltip for target element (selector or Element). <code>options.content</code> is a
+        string or any React node; <code>html</code> applies to strings only.
+      </td>
     </tr>
     <tr>
       <td>
@@ -591,7 +598,9 @@ function MyComponent() {
       <td>
         <code>content</code>
       </td>
-      <td>Current tooltip content</td>
+      <td>
+        Current tooltip content - <code>null</code> when hidden, or when it is a React node
+      </td>
     </tr>
     <tr>
       <td>

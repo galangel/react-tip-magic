@@ -163,8 +163,9 @@ Each step in the `steps` array can have the following properties:
       <td>string | function</td>
       <td>Yes*</td>
       <td>
-        Step content, injected as <strong>HTML</strong> (can be dynamic). Escape any interpolated
-        value - the exported <code>escapeHtml</code> helper is there for it.
+        Step body, injected as <strong>HTML</strong> (can be dynamic). Escape any interpolated value
+        with the exported <code>escapeHtml</code> helper, or prefer <code>text</code> and{' '}
+        <code>body</code>.
       </td>
     </tr>
     <tr>
@@ -173,8 +174,17 @@ Each step in the `steps` array can have the following properties:
       </td>
       <td>string</td>
       <td>Yes*</td>
+      <td>Plain-text body, rendered as text - never parsed as HTML.</td>
+    </tr>
+    <tr>
       <td>
-        Plain-text body, escaped by the library. Use instead of <code>content</code>.
+        <code>body</code>
+      </td>
+      <td>ReactNode | function</td>
+      <td>Yes*</td>
+      <td>
+        React body - a node, or a function of the current step returning one. Its event handlers
+        work as anywhere else in your app.
       </td>
     </tr>
     <tr>
@@ -260,17 +270,45 @@ Each step in the `steps` array can have the following properties:
   </tbody>
 </table>
 
-\* Exactly one of `content` or `text` is required. The types enforce it: a step with
-neither, or with both, will not compile.
+\* Exactly one of `text`, `body` or `content` is required. The types enforce it: a step
+with none, or with two, will not compile.
+
+### React content
+
+`body` takes any React node, so a step can render your own components - markdown, a
+link, a button with its own `onClick`:
+
+```tsx
+const tour = useTour({
+  steps: [
+    {
+      target: 'whats-new',
+      title: "What's new",
+      body: <Markdown source={releaseNotes} />,
+    },
+  ],
+});
+```
+
+The panel is React too, so its title, button labels and `text` are escaped by React; only
+`content` is injected as HTML.
+
+`body` renders inside `TipMagicProvider`, not inside the component that called `useTour`,
+so it sees only the context providers that wrap `TipMagicProvider`. Put providers the body
+needs (a theme, a router) above it.
+
+A long body scrolls: `.tip-magic-tour-body` stops growing at
+`--tip-magic-tour-body-max-height` (`60vh` by default), and the panel shrinks the body
+further when there is less room beside the target.
 
 ### Dynamic Content
 
-Step content can be a function that receives step info:
+`body` and `content` can be functions that receive step info:
 
 ```tsx
 {
   target: 'sidebar',
-  content: (step) => `Step ${step.index + 1} of ${step.total}: Welcome!`
+  body: (step) => <p>Step {step.index + 1} of {step.total}: Welcome!</p>
 }
 ```
 
@@ -450,8 +488,8 @@ steps: [
 ];
 ```
 
-Steps that render as a plain tooltip rather than a dialog — no navigation controls, close
-button, media or progress — never move focus, whatever `autoFocus` is set to.
+Steps that render as a plain tooltip rather than a dialog — no title, navigation controls,
+close button, media or progress — never move focus, whatever `autoFocus` is set to.
 
 ---
 
@@ -622,6 +660,9 @@ const tour = useTour({
   ],
 });
 ```
+
+If the component that called `useTour` unmounts while the tour is running, the panel,
+backdrop and highlight are taken down without calling `onExit` or `onEnd`.
 
 ---
 
