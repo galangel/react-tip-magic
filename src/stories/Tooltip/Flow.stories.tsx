@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TipMagicProvider } from '../../components/TipMagicProvider';
-import { useTour } from '../../hooks/useTour';
+import { TOUR_CSS_CLASSES, useTour } from '../../hooks/useTour';
 import '../../styles/index.css';
-import type { TourStep } from '../../types/tour';
+import type { TourAutoFocus, TourStep } from '../../types/tour';
 import { MockDashboard } from './MockDashboard';
 import './tooltip-stories.css';
 
@@ -1646,6 +1646,209 @@ export const CompleteTour: Story = {
   render: () => (
     <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
       <CompleteTourDemo />
+    </TipMagicProvider>
+  ),
+};
+
+// =============================================================================
+// Where Focus Lands
+// =============================================================================
+
+const AUTO_FOCUS_MODES: TourAutoFocus[] = ['panel', 'primary', false];
+
+/** Describe what holds focus well enough to tell the three modes apart */
+function describeFocus(element: Element | null): string {
+  if (!element || element === document.body) return 'nothing (document.body)';
+  if (element.classList.contains('tip-magic-tooltip')) return 'the tour panel';
+  const action = element.getAttribute('data-tour-action');
+  if (action) return `the "${element.textContent?.trim()}" button`;
+  return `<${element.tagName.toLowerCase()}>`;
+}
+
+/** Shows what currently holds focus */
+function useFocusedElement(): string {
+  const [focused, setFocused] = useState('nothing (document.body)');
+
+  useEffect(() => {
+    const update = () => setFocused(describeFocus(document.activeElement));
+    document.addEventListener('focusin', update);
+    document.addEventListener('focusout', update);
+    return () => {
+      document.removeEventListener('focusin', update);
+      document.removeEventListener('focusout', update);
+    };
+  }, []);
+
+  return focused;
+}
+
+/**
+ * Where Focus Lands
+ *
+ * `navigation.autoFocus` decides where keyboard focus lands when a step opens:
+ * - `'panel'` (default) - the tour panel itself. The dialog is announced and Escape works,
+ *   but Enter does nothing until you Tab to a control.
+ * - `'primary'` - the step's main action (Next, or Finish on the last step), so Enter
+ *   advances the tour.
+ * - `false` - focus is left alone. Nothing is announced; use it only if you move focus
+ *   yourself.
+ *
+ * Pick a mode, start the tour, then press Enter without touching the mouse.
+ */
+const AutoFocusDemo = () => {
+  const [autoFocus, setAutoFocus] = useState<TourAutoFocus>('panel');
+  const focused = useFocusedElement();
+
+  const tour = useTour({
+    steps: [
+      { target: 'focus-sidebar', title: 'Navigation', content: 'Access all sections here.' },
+      { target: 'focus-search', title: 'Search', content: 'Find anything quickly.' },
+      { target: 'focus-profile', title: 'Profile', content: 'Manage your account.' },
+    ],
+    navigation: { showControls: true, autoFocus },
+    progress: { show: true },
+    tooltipOptions: {
+      placement: 'bottom',
+      maxWidth: 320,
+      transitionBehavior: 'move',
+    },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <div className="tour-controls">
+        <div className="tour-control-buttons">
+          {AUTO_FOCUS_MODES.map((mode) => (
+            <button
+              key={String(mode)}
+              className={`tour-control-btn ${mode === autoFocus ? 'tour-control-btn-primary' : 'tour-control-btn-secondary'}`}
+              onClick={() => setAutoFocus(mode)}
+              disabled={tour.isActive}
+            >
+              autoFocus: {mode === false ? 'false' : `'${mode}'`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        className={`tour-start-btn ${tour.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={tour.start}
+        disabled={tour.isActive}
+      >
+        {tour.isActive ? 'Tour in Progress...' : 'Start Tour, then press Enter'}
+      </button>
+
+      <span className="tour-step-indicator">Focus is on: {focused}</span>
+
+      <MockDashboard
+        contentTitle="Where Focus Lands"
+        contentDescription="With 'primary', Enter moves through the tour; with 'panel', Tab first."
+        elementIds={{
+          sidebar: 'focus-sidebar',
+          search: 'focus-search',
+          profile: 'focus-profile',
+        }}
+      />
+    </div>
+  );
+};
+
+export const AutoFocus: Story = {
+  render: () => (
+    <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
+      <AutoFocusDemo />
+    </TipMagicProvider>
+  ),
+};
+
+// =============================================================================
+// React Body
+// =============================================================================
+
+const RELEASE_NOTES = [
+  { heading: 'Faster search', detail: 'Results stream in as they are found.' },
+  { heading: 'Saved views', detail: 'Pin a filtered view to the sidebar, and share it.' },
+  { heading: 'Alerts', detail: 'Snooze an alert for an hour, a day or a week.' },
+  { heading: 'Keyboard shortcuts', detail: 'Press ? anywhere to list them.' },
+  { heading: 'Accessibility', detail: 'Every chart has a table view.' },
+  { heading: 'Exports', detail: 'Download any table as CSV.' },
+  { heading: 'Teams', detail: 'Invite a whole team with one link.' },
+  { heading: 'Audit log', detail: 'See who changed what, and when.' },
+];
+
+/** A React component with its own state, rendered as a step's body */
+function ReleaseNotes() {
+  const [votes, setVotes] = useState(0);
+
+  return (
+    <>
+      <p>
+        Here is everything that changed this month. <strong>Scroll</strong> for the rest.
+      </p>
+      {RELEASE_NOTES.map(({ heading, detail }) => (
+        <p key={heading}>
+          <strong>{heading}</strong>
+          <br />
+          {detail}
+        </p>
+      ))}
+      <button
+        type="button"
+        className={`${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_BACK}`}
+        onClick={() => setVotes((count) => count + 1)}
+      >
+        Helpful? ({votes})
+      </button>
+    </>
+  );
+}
+
+/**
+ * React Body
+ *
+ * A step's `body` takes any React node - here a component with its own state and an
+ * ordinary `onClick`, the way an app renders markdown or release notes.
+ *
+ * - The body scrolls once it reaches `--tip-magic-tour-body-max-height` (`60vh` by
+ *   default), while the title and the buttons stay put
+ * - The panel also shrinks the body when there is less room beside the target - resize
+ *   the window to see it
+ * - Title, labels and `text` are escaped by React; only `content` is injected as HTML
+ */
+const ReactBodyDemo = () => {
+  const tour = useTour({
+    steps: [{ target: 'reactbody-stats', title: "What's new", body: <ReleaseNotes /> }],
+    navigation: { showControls: true, finishLabel: 'Got it' },
+    tooltipOptions: {
+      placement: 'bottom',
+      maxWidth: 340,
+    },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <button
+        className={`tour-start-btn ${tour.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={tour.start}
+        disabled={tour.isActive}
+      >
+        {tour.isActive ? 'Tour in Progress...' : "Show What's New"}
+      </button>
+
+      <MockDashboard
+        contentTitle="React Body"
+        contentDescription="The step's body is a React component with its own state."
+        elementIds={{ stats: 'reactbody-stats' }}
+      />
+    </div>
+  );
+};
+
+export const ReactBody: Story = {
+  render: () => (
+    <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
+      <ReactBodyDemo />
     </TipMagicProvider>
   ),
 };
