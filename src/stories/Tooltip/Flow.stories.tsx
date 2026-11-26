@@ -1766,6 +1766,9 @@ export const AutoFocus: Story = {
 // React Body
 // =============================================================================
 
+const DASHBOARD_IMAGE =
+  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop';
+
 const RELEASE_NOTES = [
   { heading: 'Faster search', detail: 'Results stream in as they are found.' },
   { heading: 'Saved views', detail: 'Pin a filtered view to the sidebar, and share it.' },
@@ -1818,7 +1821,14 @@ function ReleaseNotes() {
  */
 const ReactBodyDemo = () => {
   const tour = useTour({
-    steps: [{ target: 'reactbody-stats', title: "What's new", body: <ReleaseNotes /> }],
+    steps: [
+      {
+        target: 'reactbody-stats',
+        title: "What's new",
+        image: DASHBOARD_IMAGE,
+        body: <ReleaseNotes />,
+      },
+    ],
     navigation: { showControls: true, finishLabel: 'Got it' },
     tooltipOptions: {
       placement: 'bottom',
@@ -1833,7 +1843,7 @@ const ReactBodyDemo = () => {
         onClick={tour.start}
         disabled={tour.isActive}
       >
-        {tour.isActive ? 'Tour in Progress...' : "Show What's New"}
+        {tour.isActive ? 'Showing announcement…' : 'Show announcement'}
       </button>
 
       <MockDashboard
