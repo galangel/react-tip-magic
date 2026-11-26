@@ -6,10 +6,11 @@ import {
   shift,
   size,
   useFloating,
+  type Middleware,
   type Placement,
 } from '@floating-ui/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ANIMATION, CSS_CLASSES } from '../../constants';
+import { ANIMATION, CENTERED_ATTRIBUTE, CSS_CLASSES } from '../../constants';
 import { useTipMagicContext } from '../../context/TipMagicContext';
 import type { TooltipTransitionBehavior } from '../../types';
 import { resolveAutoFocusTarget } from '../../utils/autoFocusTarget';
@@ -18,10 +19,27 @@ import {
   buildTooltipClassNames,
   getArrowStaticSide,
   getArrowStyles,
+  getCenteredPosition,
 } from '../../utils/tooltipStyles';
 
 /** Set from Floating UI's size() middleware, read by the tour panel's stylesheet */
 const AVAILABLE_HEIGHT_PROPERTY = '--tip-magic-available-height';
+
+/**
+ * Floating UI middleware that puts the tooltip in the middle of the viewport, for
+ * `centered` - with the `fixed` strategy, so it stays there as the page scrolls
+ */
+const centerInViewport: Middleware = {
+  name: 'centerInViewport',
+  fn: ({ rects }) =>
+    getCenteredPosition(
+      {
+        width: document.documentElement.clientWidth,
+        height: document.documentElement.clientHeight,
+      },
+      rects.floating
+    ),
+};
 
 /**
  * Content rendered from an HTML string.
@@ -52,34 +70,41 @@ export function Tooltip() {
   const transitionBehavior: TooltipTransitionBehavior =
     tooltip.parsedData?.transitionBehavior ?? config.transitionBehavior;
 
+  // A centered tooltip ignores its target's position, and has no arrow
+  const centered = tooltip.parsedData?.centered ?? false;
+
   // Memoize middleware array to prevent unnecessary recalculations
   const middleware = useMemo(
-    () => [
-      offset(config.offset),
-      flip({
-        fallbackAxisSideDirection: 'start',
-        padding: 8,
-      }),
-      shift({ padding: 8 }),
-      // Exposed as a variable rather than applied as max-height: only the tour panel
-      // knows which part of itself can shrink, and a plain tooltip should not clip
-      size({
-        padding: 8,
-        apply({ availableHeight, elements }) {
-          elements.floating.style.setProperty(
-            AVAILABLE_HEIGHT_PROPERTY,
-            `${Math.max(0, availableHeight)}px`
-          );
-        },
-      }),
-      arrow({ element: arrowRef }),
-    ],
-    [config.offset]
+    () =>
+      centered
+        ? [centerInViewport]
+        : [
+            offset(config.offset),
+            flip({
+              fallbackAxisSideDirection: 'start',
+              padding: 8,
+            }),
+            shift({ padding: 8 }),
+            // Exposed as a variable rather than applied as max-height: only the tour panel
+            // knows which part of itself can shrink, and a plain tooltip should not clip
+            size({
+              padding: 8,
+              apply({ availableHeight, elements }) {
+                elements.floating.style.setProperty(
+                  AVAILABLE_HEIGHT_PROPERTY,
+                  `${Math.max(0, availableHeight)}px`
+                );
+              },
+            }),
+            arrow({ element: arrowRef }),
+          ],
+    [config.offset, centered]
   );
 
   // Floating UI setup
   const { refs, floatingStyles, context, middlewareData, isPositioned } = useFloating({
     placement,
+    strategy: centered ? 'fixed' : 'absolute',
     open: tooltip.visible,
     middleware,
     whileElementsMounted: autoUpdate,
@@ -104,13 +129,24 @@ export function Tooltip() {
   // Check group compatibility for move transitions
   const groupsCompatible = areGroupsCompatible(tooltip.parsedData?.group, tooltip.previousGroup);
 
-  // Determine if we should animate position (move behavior)
-  const animatePosition = shouldAnimatePosition(
-    hasBeenPositioned,
-    tooltip.isTransitioning,
-    transitionBehavior,
-    groupsCompatible
-  );
+  // Determine if we should animate position (move behavior). Never for a move between
+  // centered and anchored: they use different positioning strategies, so the transform
+  // would animate between two coordinate systems. Compared with where the tooltip last
+  // settled, since the new position only arrives a render or two into the move.
+  const settledCenteredRef = useRef(centered);
+  useEffect(() => {
+    if (!tooltip.isTransitioning) {
+      settledCenteredRef.current = centered;
+    }
+  }, [tooltip.isTransitioning, centered]);
+  const animatePosition =
+    settledCenteredRef.current === centered &&
+    shouldAnimatePosition(
+      hasBeenPositioned,
+      tooltip.isTransitioning,
+      transitionBehavior,
+      groupsCompatible
+    );
 
   // Control visibility: show only after positioned, hide immediately when not visible
   useEffect(() => {
@@ -196,7 +232,7 @@ export function Tooltip() {
   const ellipsis = tooltip.parsedData?.ellipsis ?? false;
   const maxLines = tooltip.parsedData?.maxLines ?? 1;
   const textBreak = tooltip.parsedData?.textBreak ?? 'normal';
-  const showArrow = tooltip.parsedData?.showArrow ?? true;
+  const showArrow = (tooltip.parsedData?.showArrow ?? true) && !centered;
 
   // Build class names using utility
   const classNames = buildTooltipClassNames({
@@ -234,7 +270,8 @@ export function Tooltip() {
         } as React.CSSProperties
       }
       onTransitionEnd={handleTransitionEnd}
-      data-placement={context.placement}
+      data-placement={centered ? undefined : context.placement}
+      {...{ [CENTERED_ATTRIBUTE]: centered ? '' : undefined }}
       data-transition-behavior={transitionBehavior}
       data-interactive={isInteractive ? '' : undefined}
       // Opts the stylesheet's prefers-reduced-motion guards back out

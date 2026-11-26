@@ -47,14 +47,17 @@ export interface ResolvedTourFocus {
 }
 
 /**
- * Resolve focus/backdrop options for a step: tour-level < step-level
+ * Resolve focus/backdrop options for a step: default < tour-level < step-level
+ *
+ * The default is off for a step with a target and on for a centered one.
  *
  * @param tourFocus - Tour-level focus setting
  * @param step - Current step (may have step-level override)
  * @returns Resolved focus configuration
  */
-export function resolveFocus(tourFocus: TourFocus, step: TourStep): ResolvedTourFocus {
-  const value = step.focus !== undefined ? step.focus : tourFocus;
+export function resolveFocus(tourFocus: TourFocus | undefined, step: TourStep): ResolvedTourFocus {
+  // A centered step has nothing to point at, so it dims the page unless told otherwise
+  const value = step.focus ?? tourFocus ?? step.target === undefined;
 
   if (typeof value === 'boolean') {
     return { enabled: value, block: false, dismissOnClick: false };

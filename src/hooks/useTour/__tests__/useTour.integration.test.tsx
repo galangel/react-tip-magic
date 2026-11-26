@@ -2014,3 +2014,175 @@ describe('a first step with nothing to show', () => {
     expect(count('.tip-magic-tooltip')).toBe(0);
   });
 });
+
+describe('a step without a target', () => {
+  const isCentered = () => tooltip()?.hasAttribute('data-tip-magic-centered') ?? false;
+  const hasArrow = () => !!tooltip()?.querySelector('.tip-magic-arrow');
+
+  it('opens centered, with no arrow, and a backdrop that elevates nothing', async () => {
+    const onTargetMissing = vi.fn();
+    const getTour = mountTour(
+      { steps: [{ title: 'Welcome', text: 'Hello' }], onTargetMissing },
+      '<div id="app"></div>'
+    );
+
+    let started: boolean | undefined;
+    await act(async () => {
+      started = getTour().start();
+    });
+
+    expect(started).toBe(true);
+    expect(isCentered()).toBe(true);
+    expect(tooltip()?.style.position).toBe('fixed');
+    expect(hasArrow()).toBe(false);
+    expect(tooltip()?.getAttribute('role')).toBe('dialog');
+    expect(count('.tip-magic-tour-backdrop')).toBe(1);
+    expect(count('[data-tip-magic-focus]')).toBe(0);
+    expect(onTargetMissing).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it('lets the tour or the step turn the backdrop off', () => {
+    const tourLevel = mountTour(
+      { steps: [{ text: 'Hello' }], focus: false },
+      '<div id="app"></div>'
+    );
+    act(() => {
+      tourLevel().start();
+    });
+    expect(count('.tip-magic-tour-backdrop')).toBe(0);
+    cleanup();
+
+    const stepLevel = mountTour(
+      { steps: [{ text: 'Hello', focus: false }] },
+      '<div id="app"></div>'
+    );
+    act(() => {
+      stepLevel().start();
+    });
+    expect(count('.tip-magic-tour-backdrop')).toBe(0);
+  });
+
+  it('ends on a backdrop click with dismissOnClick', () => {
+    const onEnd = vi.fn();
+    const getTour = mountTour(
+      { steps: [{ text: 'Hello', focus: { dismissOnClick: true } }], onEnd },
+      '<div id="app"></div>'
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    act(() => {
+      (document.querySelector('.tip-magic-tour-backdrop') as HTMLElement).click();
+    });
+
+    expect(onEnd).toHaveBeenCalledWith(false);
+  });
+
+  it('moves between centered and anchored steps in a mixed tour', async () => {
+    const getTour = mountTour(
+      {
+        steps: [
+          { id: 'intro', title: 'Welcome', text: 'A quick tour' },
+          { target: 'one', title: 'One', text: 'The first thing' },
+          { id: 'outro', title: 'Done', text: 'That is all' },
+        ],
+        navigation: { showControls: true },
+        highlightClass: 'my-hl',
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+    const target = document.querySelector('[data-tip-id="one"]') as HTMLElement;
+
+    await act(async () => {
+      getTour().start();
+    });
+    expect(isCentered()).toBe(true);
+    expect(hasArrow()).toBe(false);
+    expect(count('.tip-magic-tour-backdrop')).toBe(1);
+
+    await act(async () => {
+      getTour().next();
+    });
+    expect(isCentered()).toBe(false);
+    expect(tooltip()?.style.position).toBe('absolute');
+    expect(hasArrow()).toBe(true);
+    expect(target.classList.contains('my-hl')).toBe(true);
+    // The tour sets no focus, so an anchored step has no backdrop
+    expect(count('.tip-magic-tour-backdrop')).toBe(0);
+
+    await act(async () => {
+      getTour().next();
+    });
+    expect(isCentered()).toBe(true);
+    expect(hasArrow()).toBe(false);
+    expect(target.classList.contains('my-hl')).toBe(false);
+    expect(document.querySelector('.tip-magic-tour-title')?.textContent).toBe('Done');
+  });
+
+  it('runs a one-step announcement with a React body to the end', async () => {
+    const onClick = vi.fn();
+    const onEnd = vi.fn();
+    const getTour = mountTour(
+      {
+        steps: [
+          {
+            title: "What's new",
+            body: (
+              <div>
+                <p>Release notes</p>
+                <button type="button" className="details" onClick={onClick}>
+                  Details
+                </button>
+              </div>
+            ),
+          },
+        ],
+        navigation: { showControls: true, finishLabel: 'Got it', autoFocus: 'primary' },
+        onEnd,
+      },
+      '<div id="app"></div>'
+    );
+
+    await act(async () => {
+      getTour().start();
+    });
+
+    expect(isCentered()).toBe(true);
+    expect(document.querySelector('.tip-magic-tour-body .details')).not.toBeNull();
+    expect(document.activeElement?.textContent).toBe('Got it');
+
+    act(() => {
+      (document.querySelector('.details') as HTMLElement).click();
+    });
+    expect(onClick).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      (document.querySelector('[data-tour-action="finish"]') as HTMLElement).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, detail: 0 })
+      );
+    });
+    expect(onEnd).toHaveBeenCalledWith(true);
+    expect(count('.tip-magic-tooltip')).toBe(0);
+    expect(count('.tip-magic-tour-backdrop')).toBe(0);
+  });
+
+  it('ends on Escape', async () => {
+    const onEnd = vi.fn();
+    const getTour = mountTour(
+      { steps: [{ title: 'Welcome', body: <p>Hi</p> }], onEnd },
+      '<div id="app"></div>'
+    );
+    await act(async () => {
+      getTour().start();
+    });
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(onEnd).toHaveBeenCalledWith(false);
+    expect(count('.tip-magic-tooltip')).toBe(0);
+  });
+});

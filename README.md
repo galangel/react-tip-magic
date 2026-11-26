@@ -164,6 +164,19 @@ The panel itself is rendered by React, so titles, button labels and `text` are e
 
 A `body` renders inside `TipMagicProvider`, not inside the component that called `useTour`, so it sees only the context providers above `TipMagicProvider`. Re-render with new `steps` while the tour runs — data that arrived after `start()` — and the panel on screen updates in place. The step on screen is found again by its `id`, or by its `target` when no other step shares it — so give steps an `id` (or unique targets) if `steps` can change while the tour runs. If it is removed, or cannot be told apart, the tour moves on to the step now at its place, or ends. A long body scrolls once it reaches `--tip-magic-tour-body-max-height` (`60vh` by default), and the panel keeps itself within the viewport.
 
+### Announcements: a step without a target
+
+A step without a `target` opens centered in the viewport, with no arrow and the focus backdrop on (`focus: false` turns it off). It is the same panel as any other step, so a one-step announcement is just:
+
+```tsx
+const announcement = useTour({
+  steps: [{ title: "What's new", body: <Markdown source={releaseNotes} /> }],
+  navigation: { showControls: true, finishLabel: 'Got it' },
+});
+```
+
+Centered and anchored steps mix in one tour. With no target there is nothing to highlight, scroll to or watch, and `onTargetMissing` never fires for it.
+
 ### When a target isn't there
 
 `start()` returns `false` and changes nothing—no `onStart`, no `onStepChange`—if no step's target is in the DOM, so a tour that can't render never reports itself as shown. Supply `onTargetMissing` to handle it yourself (and to keep the library off `console.warn`):
@@ -213,12 +226,13 @@ The tour panel is now rendered by React instead of injected as an HTML string. T
 - `CurrentTourStep.content` (in `currentStep`, `onStepChange`, `onTargetMissing`) is `''` for a `body` step: React content has no HTML form.
 - A panel without a `title` is labelled by its message, so `aria-labelledby` is now always set on a tour dialog.
 - `start()` also returns `false` when the first step has nothing to show (an empty body and no panel features).
+- `TourStep.target` is optional: a step without one opens centered. `CurrentTourStep.target` is `undefined` for such a step, so code that reads it as a `string` must handle that.
 
 Type changes, for code that uses the exported context (`useTipMagicContext`, `TipMagicState`, `TipMagicAction`):
 
 - `TooltipState.content` and the `SHOW_TOOLTIP` / `MOVE_TOOLTIP` payloads' `content` widened from `string` to `ReactNode`. Writing a string still works; code that reads one and annotates it as `string` must widen or narrow with `typeof`.
 - `UPDATE_TOOLTIP_CONTENT` and `tooltip.updateContent` still take a `string`. Called while a tour runs, they replace the tour panel with that string.
-- `HIDE_TOOLTIP` and `END_FLOW` accept an optional `payload` (`onlyIfOwner`, `onlyIfSteps`), and `TooltipShowOptions` gains `owner`; both are additive.
+- `HIDE_TOOLTIP` and `END_FLOW` accept an optional `payload` (`onlyIfOwner`, `onlyIfSteps`), and `TooltipShowOptions` gains `owner` and `centered`; all additive.
 
 ---
 

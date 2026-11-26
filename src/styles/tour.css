@@ -100,6 +100,13 @@
   flex-shrink: 0;
 }
 
+/* A centered panel (a step without a target) has the viewport to itself, less the margin
+   size() keeps for an anchored one */
+.tip-magic-tooltip[data-tip-magic-centered] .tip-magic-tour-content {
+  max-height: calc(100vh - 16px - 2 * var(--tip-magic-padding-y));
+  max-height: calc(100dvh - 16px - 2 * var(--tip-magic-padding-y));
+}
+
 /* =============================================================================
    Header Row (Title + Close Button)
    ============================================================================= */

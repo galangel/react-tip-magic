@@ -117,8 +117,8 @@ export interface TourNavigation {
 export interface CurrentTourStep {
   /** 0-based index of the current step */
   index: number;
-  /** Target element's data-tip-id value */
-  target: string;
+  /** Target element's data-tip-id value; undefined for a centered step */
+  target?: string;
   /** Optional step title */
   title?: string;
   /**
@@ -156,8 +156,12 @@ export interface TourStepBase {
    * other step shares that target.
    */
   id?: string;
-  /** Target element's data-tip-id value */
-  target: string;
+  /**
+   * Target element's data-tip-id value. Leave it out for a step that is not about any
+   * element - an announcement: it opens centered in the viewport, with no arrow, and the
+   * focus backdrop on unless `focus` says otherwise. `onTargetMissing` never fires for it.
+   */
+  target?: string;
   /** Optional step title (escaped by the library) */
   title?: string;
   /** Tooltip placement for this step */

@@ -365,17 +365,28 @@ describe('tourSteps utilities', () => {
         { ...one, id: 'y' },
       ];
 
-      expect(findStep(steps, { ...one, id: 'y' })).toBe(1);
-      expect(findStep(steps, { ...one, id: 'z' })).toBe(-1);
+      expect(findStep(steps, { ...one, id: 'y' }, 0)).toBe(1);
+      expect(findStep(steps, { ...one, id: 'z' }, 0)).toBe(-1);
     });
 
     it('should find a step by a target no other step shares', () => {
-      expect(findStep([two, one], one)).toBe(1);
-      expect(findStep([two], one)).toBe(-1);
+      expect(findStep([two, one], one, 0)).toBe(1);
+      expect(findStep([two], one, 0)).toBe(-1);
     });
 
     it('should refuse to choose between steps on the same target', () => {
-      expect(findStep([one, { ...one, text: 'C' }], one)).toBeNull();
+      expect(findStep([one, { ...one, text: 'C' }], one, 0)).toBeNull();
+    });
+
+    it('should find a centered step without an id only at its own position', () => {
+      const centered: TourStep = { text: 'Welcome' };
+
+      expect(findStep([centered, one], centered, 0)).toBe(0);
+      expect(findStep([one, centered], centered, 0)).toBeNull();
+      expect(findStep([{ ...centered, id: 'intro' }], centered, 0)).toBeNull();
+      expect(findStep([one, { ...centered, id: 'intro' }], { ...centered, id: 'intro' }, 0)).toBe(
+        1
+      );
     });
   });
 

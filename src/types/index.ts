@@ -187,6 +187,11 @@ export interface TooltipShowOptions {
    */
   autoFocus?: TooltipAutoFocus;
   /**
+   * Center the tooltip in the viewport instead of placing it beside its target: fixed to
+   * the viewport, with no arrow. Tours set it for a step without a `target`.
+   */
+  centered?: boolean;
+  /**
    * Who is showing the tooltip - any object unique to the caller. Kept until the tooltip
    * is next shown or hidden, so a caller can release the tooltip only while it is still
    * its own (`HIDE_TOOLTIP` with `onlyIfOwner`). `useTour` sets it.
@@ -374,6 +379,8 @@ export interface ParsedTooltipData {
   ariaLabelledBy?: string;
   /** Where focus goes when a role="dialog" tooltip becomes visible */
   autoFocus?: TooltipAutoFocus;
+  /** Center the tooltip in the viewport instead of beside its target */
+  centered?: boolean;
 }
 
 /**

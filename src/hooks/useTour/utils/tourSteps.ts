@@ -154,15 +154,23 @@ export function haveSameStepOrder(previous: TourStep[], next: TourStep[]): boole
  * Find a step in a new list of steps
  *
  * By `id` when it has one; otherwise by `target`, but only when no other step shares it -
- * two steps on one element cannot be told apart, and guessing would show the wrong one.
+ * two steps on one element cannot be told apart, and guessing would show the wrong one. A
+ * centered step without an `id` has nothing to go by but its position: it is found only
+ * if a centered step without an `id` still holds it.
  *
  * @param steps - The steps now
  * @param step - The step to find
+ * @param index - Where the step was
  * @returns Its index; -1 when it is gone; null when it cannot be told apart
  */
-export function findStep(steps: TourStep[], step: TourStep): number | null {
+export function findStep(steps: TourStep[], step: TourStep, index: number): number | null {
   if (step.id !== undefined) {
     return steps.findIndex((candidate) => candidate.id === step.id);
+  }
+
+  if (step.target === undefined) {
+    const atIndex = steps[index];
+    return atIndex && atIndex.target === undefined && atIndex.id === undefined ? index : null;
   }
 
   const matches = steps.flatMap((candidate, index) =>
@@ -183,7 +191,7 @@ export function findStep(steps: TourStep[], step: TourStep): number | null {
 export function buildFlowSteps(steps: TourStep[]): FlowStep[] {
   return steps.map((step, index) => ({
     id: `tour-step-${index}`,
-    targetId: step.target,
+    targetId: step.target ?? '',
     message: step.text ?? (typeof step.content === 'string' ? step.content : ''),
   }));
 }

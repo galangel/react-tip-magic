@@ -217,6 +217,19 @@ describe('tourNavigation utilities', () => {
   describe('resolveFocus', () => {
     const step: TourStep = { target: 'step1', content: 'Content' };
 
+    it('should default off for a step with a target, and on for a centered one', () => {
+      expect(resolveFocus(undefined, step).enabled).toBe(false);
+      expect(resolveFocus(undefined, { content: 'Centered' }).enabled).toBe(true);
+    });
+
+    it("should let the tour or the step turn a centered step's backdrop off", () => {
+      expect(resolveFocus(false, { content: 'Centered' }).enabled).toBe(false);
+      expect(resolveFocus(undefined, { content: 'Centered', focus: false }).enabled).toBe(false);
+      expect(
+        resolveFocus(undefined, { content: 'Centered', focus: { dismissOnClick: true } })
+      ).toEqual({ enabled: true, block: false, dismissOnClick: true });
+    });
+
     it('should resolve a disabled backdrop', () => {
       expect(resolveFocus(false, step)).toEqual({
         enabled: false,

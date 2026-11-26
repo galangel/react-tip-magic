@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { buildTooltipClassNames, getArrowStaticSide, getArrowStyles } from '../tooltipStyles';
+import {
+  buildTooltipClassNames,
+  getArrowStaticSide,
+  getArrowStyles,
+  getCenteredPosition,
+} from '../tooltipStyles';
 
 describe('buildTooltipClassNames', () => {
   const defaultOptions = {
@@ -194,5 +199,21 @@ describe('getArrowStyles', () => {
     const result = getArrowStyles(0, 0, 'bottom');
     expect(result.left).toBe('0px');
     expect(result.top).toBe('0px');
+  });
+});
+
+describe('getCenteredPosition', () => {
+  it('should put the floating element in the middle of the viewport', () => {
+    expect(getCenteredPosition({ width: 1000, height: 800 }, { width: 300, height: 200 })).toEqual({
+      x: 350,
+      y: 300,
+    });
+  });
+
+  it('should overhang evenly on both sides when the element is larger than the viewport', () => {
+    expect(getCenteredPosition({ width: 300, height: 200 }, { width: 400, height: 300 })).toEqual({
+      x: -50,
+      y: -50,
+    });
   });
 });

@@ -134,6 +134,14 @@ its own tour - from a layout effect, before the teardown. Ownership is a token m
 show (`TooltipShowOptions.owner`), never the content: two plain-text steps with the same
 string would compare equal.
 
+**A centered step is shown against `document.body`.** `tooltip.show` needs an element, so
+a step without a target passes `document.body` with `centered: true`; the target only
+identifies the tooltip there, it never positions it. `Tooltip` then swaps its middleware
+for `centerInViewport` and Floating UI's strategy for `fixed`, and never animates a move
+between centered and anchored - the two strategies are different coordinate systems, so
+the transform would slide from the wrong place. `size()` does not run for it; the
+stylesheet caps a centered panel at the viewport instead.
+
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.
 

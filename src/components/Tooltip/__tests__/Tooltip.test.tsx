@@ -315,3 +315,25 @@ describe('available height', () => {
     expect(element.style.maxHeight).toBe('');
   });
 });
+
+describe('centered', () => {
+  it('positions a centered tooltip fixed, with no arrow and no placement', async () => {
+    const base = createMockState().tooltip.parsedData as ParsedTooltipData;
+    renderTooltip(createMockState({ parsedData: { ...base, centered: true } }));
+    const element = document.querySelector('.tip-magic-tooltip') as HTMLElement;
+
+    await waitFor(() => expect(element.style.position).toBe('fixed'));
+    expect(element.hasAttribute('data-tip-magic-centered')).toBe(true);
+    expect(element.hasAttribute('data-placement')).toBe(false);
+    expect(element.querySelector('.tip-magic-arrow')).toBeNull();
+  });
+
+  it('leaves an anchored tooltip absolute, with its arrow', async () => {
+    renderTooltip(createMockState());
+    const element = document.querySelector('.tip-magic-tooltip') as HTMLElement;
+
+    await waitFor(() => expect(element.style.position).toBe('absolute'));
+    expect(element.hasAttribute('data-tip-magic-centered')).toBe(false);
+    expect(element.querySelector('.tip-magic-arrow')).not.toBeNull();
+  });
+});

@@ -43,10 +43,10 @@ export class BackdropManager {
   /**
    * Show the backdrop overlay and elevate the target element
    *
-   * @param targetElement - The element to elevate above the backdrop
+   * @param targetElement - The element to elevate above the backdrop, or null for none
    * @param options - Pointer interaction options
    */
-  show(targetElement: HTMLElement, options: BackdropShowOptions = {}): void {
+  show(targetElement: HTMLElement | null, options: BackdropShowOptions = {}): void {
     // Clean up previous focus target first
     this.cleanupFocusTarget();
 
@@ -68,9 +68,11 @@ export class BackdropManager {
     }
     this.clickHandler = options.onClick ?? null;
 
-    // Elevate target above backdrop
-    elevate(targetElement, TOUR_CSS_CLASSES.FOCUS_TARGET, TOUR_DATA_ATTRIBUTES.FOCUS);
-    this.focusTargetElement = targetElement;
+    // Elevate target above backdrop - a centered step has none
+    if (targetElement) {
+      elevate(targetElement, TOUR_CSS_CLASSES.FOCUS_TARGET, TOUR_DATA_ATTRIBUTES.FOCUS);
+      this.focusTargetElement = targetElement;
+    }
 
     // Find and elevate all elements with data-tip-always-visible
     this.elevateAlwaysVisibleElements();

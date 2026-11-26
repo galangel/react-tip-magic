@@ -55,7 +55,8 @@ const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : us
  */
 interface ResolvedStep {
   index: number;
-  element: HTMLElement;
+  /** null for a step without a target, which is centered in the viewport */
+  element: HTMLElement | null;
 }
 
 /**
@@ -76,7 +77,8 @@ interface ShownStep {
   step: TourStep;
   /** The visible steps it was found in */
   steps: TourStep[];
-  element: HTMLElement;
+  /** Its target, or null when it is centered */
+  element: HTMLElement | null;
   /** The store its panel reads from, or null when it is a plain tooltip */
   store: TourPanelStore | null;
   /** What the tooltip was given as content */
@@ -198,7 +200,7 @@ export function useTour(options: TourOptions): UseTourReturn {
     autoScroll = true,
     highlightClass,
     navigation,
-    focus: tourFocus = false,
+    focus: tourFocus,
     progress: tourProgress,
   } = options;
 
@@ -291,7 +293,13 @@ export function useTour(options: TourOptions): UseTourReturn {
   const findResolvableStep = useCallback(
     (fromIndex: number, delta: 1 | -1, allowSkip: boolean): ResolvedStep | null => {
       for (let index = fromIndex; index >= 0 && index < visibleSteps.length; index += delta) {
-        const element = resolveTargetElement(visibleSteps[index].target);
+        const { target } = visibleSteps[index];
+        // A step without a target needs nothing from the page: it is centered
+        if (target === undefined) {
+          return { index, element: null };
+        }
+
+        const element = resolveTargetElement(target);
         if (element) {
           return { index, element };
         }
@@ -356,6 +364,8 @@ export function useTour(options: TourOptions): UseTourReturn {
       content,
       owner,
       placement: step.placement ?? tooltipOptions?.placement,
+      // A step without a target has nothing to sit beside
+      ...(step.target === undefined && { centered: true }),
       // A step with no panel hands its body to the tooltip as-is: `content` is HTML unless
       // the consumer explicitly said otherwise, and `text` never is
       ...(body.kind === 'html' && {
@@ -379,7 +389,7 @@ export function useTour(options: TourOptions): UseTourReturn {
    * Put a step's content in the tooltip, and record it as the step on screen
    */
   const present = useCallback(
-    (view: StepView, stepIndex: number, element: HTMLElement) => {
+    (view: StepView, stepIndex: number, element: HTMLElement | null) => {
       // A store of its own, and a key of its own, so every step mounts a fresh panel that
       // never renders another step's props - see CLAUDE.md, "Each tour step mounts a new
       // panel"
@@ -404,7 +414,7 @@ export function useTour(options: TourOptions): UseTourReturn {
         owner,
         options,
       };
-      tooltip.show(element, options);
+      tooltip.show(element ?? document.body, options);
     },
     [visibleSteps, buildTooltipOptions, tooltip]
   );
@@ -413,16 +423,21 @@ export function useTour(options: TourOptions): UseTourReturn {
    * Show tooltip for a step
    *
    * The target element is resolved by the caller, so this is only ever reached for a
-   * step that can actually render.
+   * step that can actually render. It is null for a step without a target, which is
+   * centered: nothing to highlight, watch or scroll to.
    */
   const showStepTooltip = useCallback(
-    (stepIndex: number, targetElement: HTMLElement) => {
+    (stepIndex: number, targetElement: HTMLElement | null) => {
       const view = describeStep(stepIndex);
       if (!view) return;
       const { step } = view;
 
       // Highlight element
-      highlightManagerRef.current.highlight(targetElement);
+      if (targetElement) {
+        highlightManagerRef.current.highlight(targetElement);
+      } else {
+        highlightManagerRef.current.clear();
+      }
 
       // Handle focus/backdrop
       const focusOptions = resolveFocus(tourFocus, step);
@@ -433,6 +448,12 @@ export function useTour(options: TourOptions): UseTourReturn {
         });
       } else {
         backdropManagerRef.current.hide();
+      }
+
+      if (!targetElement) {
+        targetWatcherRef.current.unwatch();
+        present(view, stepIndex, null);
+        return;
       }
 
       // Notice when the target is unmounted, and - only when there is a consumer class
@@ -787,7 +808,7 @@ export function useTour(options: TourOptions): UseTourReturn {
 
     let index = shown.index;
     if (!haveSameStepOrder(shown.steps, visibleSteps)) {
-      const found = findStep(visibleSteps, shown.step);
+      const found = findStep(visibleSteps, shown.step, index);
       if (found === null || found < 0) {
         // Gone, or not to be told apart from another step on its target: show whatever
         // now holds its place, as a navigation would
@@ -830,7 +851,7 @@ export function useTour(options: TourOptions): UseTourReturn {
     const options = buildTooltipOptions(view, content, shown.owner);
     if (content !== shown.content || !haveSameTooltipOptions(options, shown.options)) {
       shownRef.current = { ...shownRef.current, content, options };
-      tooltip.show(shown.element, options);
+      tooltip.show(shown.element ?? document.body, options);
     }
   };
   followStepsRef.current = followSteps;

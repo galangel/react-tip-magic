@@ -74,6 +74,11 @@ export const CSS_CLASSES = {
 export const PRIMARY_ACTION_ATTRIBUTE = 'data-tip-magic-primary';
 
 /**
+ * Set on the tooltip while it is centered in the viewport (`TooltipShowOptions.centered`)
+ */
+export const CENTERED_ATTRIBUTE = 'data-tip-magic-centered';
+
+/**
  * Default selector for tooltip targets
  */
 export const DEFAULT_SELECTOR = '[data-tip]';

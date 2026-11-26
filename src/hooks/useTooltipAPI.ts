@@ -74,6 +74,7 @@ export function useTooltipAPI(
         ...(options.role !== undefined && { role: options.role }),
         ...(options.ariaLabelledBy !== undefined && { ariaLabelledBy: options.ariaLabelledBy }),
         ...(options.autoFocus !== undefined && { autoFocus: options.autoFocus }),
+        ...(options.centered !== undefined && { centered: options.centered }),
       };
 
       if (state.tooltip.visible) {
