@@ -545,6 +545,47 @@ describe('content escaping', () => {
     expect(tooltip()?.querySelector('.raw')?.textContent).toBe('bold');
   });
 
+  it('should leave `content` as text when the tour asks for html: false', () => {
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', content: '<b class="raw">bold</b>' }],
+        navigation: { showClose: false },
+        tooltipOptions: { html: false },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    expect(count('.raw')).toBe(0);
+    expect(tooltip()?.textContent).toBe('<b class="raw">bold</b>');
+  });
+
+  it('should leave `content` as text when the step asks for html: false', () => {
+    const getTour = mountTour(
+      {
+        steps: [
+          {
+            target: 'one',
+            content: '<b class="raw">bold</b>',
+            tooltipOptions: { html: false },
+          },
+        ],
+        navigation: { showClose: false },
+        tooltipOptions: { html: true },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    expect(count('.raw')).toBe(0);
+  });
+
   it('should render navigation labels as text, not markup', () => {
     const getTour = mountTour(
       {

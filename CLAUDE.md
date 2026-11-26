@@ -87,9 +87,10 @@ panel_ and never "first focusable".
 React element (`TourPanel`), so its title, labels and `text` are escaped by React. A
 `content` string is the one thing it injects, scoped to the message element. A `text` or
 `content` step with no panel features passes its body to the tooltip as-is, so `useTour`
-forces `html` from the body's kind there - `true` for `content`, `false` for `text` -
-whatever the consumer's `tooltipOptions.html` says. A `body` step always renders the panel:
-a plain tooltip ignores the pointer and cannot scroll.
+sets `html` from the body's kind there: `false` for `text`, whatever the consumer's
+`tooltipOptions.html` says, and `true` for `content` unless the step or tour explicitly set
+`html: false` - which 1.3 consumers use to show untrusted strings as text. A `body` step
+always renders the panel: a plain tooltip ignores the pointer and cannot scroll.
 
 **Each tour step mounts a new panel.** `useTour` keys `LiveTourPanel` by step index. Focus
 inside the old panel drops to `<body>` and `autoFocus` resolves afresh - without the key,

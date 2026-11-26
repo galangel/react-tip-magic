@@ -207,7 +207,7 @@ The tour panel is now rendered by React instead of injected as an HTML string. T
 - `useTipMagic().tooltip.content` is `null` while a tour panel is showing. It used to hold the panel's HTML; it still returns string content for plain tooltips.
 - A custom `progress.render` is wrapped in a `<div style="display: contents">` inside `.tip-magic-tour-footer`, so a `.tip-magic-tour-footer > .your-class` selector no longer matches. Layout is unchanged.
 - A step whose only feature is a `title` now renders the panel (a `role="dialog"`) instead of dropping the title.
-- A `content` step with no panel features is injected as HTML, as documented, without `tooltipOptions.html`.
+- A `content` step with no panel features is injected as HTML, as documented, without `tooltipOptions.html: true`. An explicit `html: false` (tour or step) still shows it as text.
 - `text` is rendered once-escaped everywhere, and button labels as text rather than markup.
 - Unmounting the component that called `useTour` takes a running tour down without calling `onEnd`.
 
