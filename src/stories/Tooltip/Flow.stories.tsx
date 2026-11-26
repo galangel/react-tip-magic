@@ -1862,3 +1862,59 @@ export const ReactBody: Story = {
     </TipMagicProvider>
   ),
 };
+
+// =============================================================================
+// Announcement
+// =============================================================================
+
+/**
+ * Announcement
+ *
+ * A step without a `target` is not about any element: it opens centered in the viewport,
+ * with no arrow, and dims the page behind it.
+ *
+ * - Fixed to the viewport, so it stays centered as the page scrolls or resizes
+ * - The focus backdrop is on by default; `focus: false` turns it off
+ * - The same panel as any step: title, image, a React `body` that scrolls, and the
+ *   navigation - here a single "Got it"
+ * - Centered and anchored steps can be mixed in one tour
+ */
+const AnnouncementDemo = () => {
+  const announcement = useTour({
+    steps: [
+      {
+        id: 'whats-new',
+        title: "What's new this month",
+        image: DASHBOARD_IMAGE,
+        body: <ReleaseNotes />,
+      },
+    ],
+    navigation: { showControls: true, finishLabel: 'Got it' },
+    tooltipOptions: { maxWidth: 380 },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <button
+        className={`tour-start-btn ${announcement.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={announcement.start}
+        disabled={announcement.isActive}
+      >
+        {announcement.isActive ? 'Showing announcement…' : 'Show announcement'}
+      </button>
+
+      <MockDashboard
+        contentTitle="Announcement"
+        contentDescription="A step without a target opens centered, over a dimmed page."
+      />
+    </div>
+  );
+};
+
+export const Announcement: Story = {
+  render: () => (
+    <TipMagicProvider>
+      <AnnouncementDemo />
+    </TipMagicProvider>
+  ),
+};
