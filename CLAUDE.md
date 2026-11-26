@@ -108,6 +108,8 @@ stays closed; one whose effect simply calls `start()` again reopens.
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.
 
-**jsdom cannot answer two things**, so don't claim them from a passing test: it runs no
-transitions (`transitionBehavior: 'move'` timing) and has no `:focus-visible` heuristic
-(whether a programmatic focus draws a ring). Both need a browser.
+**jsdom cannot answer three things**, so don't claim them from a passing test: it runs no
+transitions (`transitionBehavior: 'move'` timing), has no `:focus-visible` heuristic
+(whether a programmatic focus draws a ring), and has no layout, so the size()
+middleware's `--tip-magic-available-height` is meaningless and whether a tall tour panel
+fits the viewport with a scrolling body is unknowable. All three need a browser.

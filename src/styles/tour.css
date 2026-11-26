@@ -43,6 +43,9 @@
   --tip-magic-tour-message-line-height: 1.5;
   --tip-magic-tour-message-color: rgba(255, 255, 255, 0.9);
 
+  /* Body - scrolls past this height */
+  --tip-magic-tour-body-max-height: 60vh;
+
   /* Navigation container */
   --tip-magic-tour-nav-margin: 12px 0 0 0;
   --tip-magic-tour-nav-padding: 4px 0;
@@ -81,9 +84,20 @@
    Tour Content Wrapper
    ============================================================================= */
 
+/**
+ * A column, so that when the panel is taller than the room beside its target only the
+ * body shrinks and scrolls. `--tip-magic-available-height` is set on the tooltip by
+ * Floating UI's size() middleware.
+ */
 .tip-magic-tour-content {
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-width: 200px;
+  max-height: calc(var(--tip-magic-available-height, 100vh) - 2 * var(--tip-magic-padding-y));
+}
+
+.tip-magic-tour-content > * {
+  flex-shrink: 0;
 }
 
 /* =============================================================================
@@ -133,6 +147,11 @@
 .tip-magic-tour-close:hover {
   background: var(--tip-magic-tour-close-hover-bg);
   color: var(--tip-magic-tour-close-hover-color);
+}
+
+/* Flex items' margins do not collapse - keep the gap the block layout gave */
+.tip-magic-tour-header:has(+ .tip-magic-tour-image, + .tip-magic-tour-video) {
+  margin-bottom: 0;
 }
 
 /* =============================================================================
@@ -207,6 +226,10 @@
 
 .tip-magic-tour-body {
   margin: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  max-height: var(--tip-magic-tour-body-max-height, 60vh);
+  overflow-y: auto;
 }
 
 .tip-magic-tour-message {

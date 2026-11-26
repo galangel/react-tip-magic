@@ -4,6 +4,7 @@ import {
   flip,
   offset,
   shift,
+  size,
   useFloating,
   type Placement,
 } from '@floating-ui/react';
@@ -18,6 +19,9 @@ import {
   getArrowStaticSide,
   getArrowStyles,
 } from '../../utils/tooltipStyles';
+
+/** Set from Floating UI's size() middleware, read by the tour panel's stylesheet */
+const AVAILABLE_HEIGHT_PROPERTY = '--tip-magic-available-height';
 
 /**
  * Content rendered from an HTML string.
@@ -57,6 +61,17 @@ export function Tooltip() {
         padding: 8,
       }),
       shift({ padding: 8 }),
+      // Exposed as a variable rather than applied as max-height: only the tour panel
+      // knows which part of itself can shrink, and a plain tooltip should not clip
+      size({
+        padding: 8,
+        apply({ availableHeight, elements }) {
+          elements.floating.style.setProperty(
+            AVAILABLE_HEIGHT_PROPERTY,
+            `${Math.max(0, availableHeight)}px`
+          );
+        },
+      }),
       arrow({ element: arrowRef }),
     ],
     [config.offset]

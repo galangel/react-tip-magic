@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_OPTIONS } from '../../../constants';
 import { TipMagicContext, type TipMagicContextValue } from '../../../context/TipMagicContext';
@@ -301,5 +301,17 @@ describe('React node content', () => {
     const rendered = document.querySelector('.tip-magic-text > #node');
     expect(rendered?.textContent).toBe('Bold');
     expect(rendered?.getAttribute('data-value')).toBe('<b>');
+  });
+});
+
+describe('available height', () => {
+  it('exposes the room beside the target as a variable, without clamping the tooltip', async () => {
+    renderTooltip(createMockState());
+    const element = document.querySelector('.tip-magic-tooltip') as HTMLElement;
+
+    await waitFor(() =>
+      expect(element.style.getPropertyValue('--tip-magic-available-height')).toMatch(/^\d+px$/)
+    );
+    expect(element.style.maxHeight).toBe('');
   });
 });
