@@ -1898,6 +1898,8 @@ const ANNOUNCEMENT_IMAGES = [
  *   its natural size. Pick an image size to compare.
  * - The same panel as any step: title, a React `body` that scrolls, and the navigation -
  *   here a single "Got it"
+ * - `navigation.autoFocus: 'primary'` puts focus on "Got it" as it opens, so Enter
+ *   dismisses it (the library default, `'panel'`, focuses the panel itself)
  */
 const AnnouncementDemo = () => {
   const [image, setImage] = useState(ANNOUNCEMENT_IMAGES[0].src);
@@ -1910,7 +1912,7 @@ const AnnouncementDemo = () => {
         body: <ReleaseNotes />,
       },
     ],
-    navigation: { showControls: true, finishLabel: 'Got it' },
+    navigation: { showControls: true, finishLabel: 'Got it', autoFocus: 'primary' },
   });
 
   return (
@@ -1950,6 +1952,67 @@ export const Announcement: Story = {
   render: () => (
     <TipMagicProvider>
       <AnnouncementDemo />
+    </TipMagicProvider>
+  ),
+};
+
+// =============================================================================
+// Video Announcement
+// =============================================================================
+
+/** Big Buck Bunny (CC BY 3.0, Blender Foundation), 1920×1080 */
+const ANNOUNCEMENT_VIDEO =
+  'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4';
+
+/**
+ * Video Announcement
+ *
+ * A centered step that is only a native video - no title, no text and no buttons
+ * (`showControls: false`, `showClose: false`). Click outside it or press Escape to close
+ * it: the step's `focus: { dismissOnClick: true }` makes a click on the dimmed backdrop
+ * end it, while a click on the video does not.
+ *
+ * - The video sets the panel's width like an image does: its natural width (1920px here),
+ *   capped at 70% of the viewport and at 80% of its height, never cropped. With nothing
+ *   else in the panel, it may use nearly all of that height
+ * - With no primary action, focus goes to the panel (the default `autoFocus`)
+ * - It autoplays muted and loops
+ * - With no title or text, the dialog is named by `video.title`
+ */
+const VideoAnnouncementDemo = () => {
+  const announcement = useTour({
+    steps: [
+      {
+        id: 'video-announcement',
+        video: { src: ANNOUNCEMENT_VIDEO, title: 'Watch: what is new this month' },
+        focus: { dismissOnClick: true },
+      },
+    ],
+    navigation: { showControls: false, showClose: false },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <button
+        className={`tour-start-btn ${announcement.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={announcement.start}
+        disabled={announcement.isActive}
+      >
+        {announcement.isActive ? 'Showing announcement…' : 'Show announcement'}
+      </button>
+
+      <MockDashboard
+        contentTitle="Video Announcement"
+        contentDescription="Only a video: click outside it or press Escape to close it."
+      />
+    </div>
+  );
+};
+
+export const VideoAnnouncement: Story = {
+  render: () => (
+    <TipMagicProvider>
+      <VideoAnnouncementDemo />
     </TipMagicProvider>
   ),
 };
