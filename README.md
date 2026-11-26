@@ -210,6 +210,15 @@ The tour panel is now rendered by React instead of injected as an HTML string. T
 - A `content` step with no panel features is injected as HTML, as documented, without `tooltipOptions.html: true`. An explicit `html: false` (tour or step) still shows it as text.
 - `text` is rendered once-escaped everywhere, and button labels as text rather than markup.
 - Unmounting the component that called `useTour` takes a running tour down without calling `onEnd`.
+- `CurrentTourStep.content` (in `currentStep`, `onStepChange`, `onTargetMissing`) is `''` for a `body` step: React content has no HTML form.
+- A panel without a `title` is labelled by its message, so `aria-labelledby` is now always set on a tour dialog.
+- `start()` also returns `false` when the first step has nothing to show (an empty body and no panel features).
+
+Type changes, for code that uses the exported context (`useTipMagicContext`, `TipMagicState`, `TipMagicAction`):
+
+- `TooltipState.content` and the `SHOW_TOOLTIP` / `MOVE_TOOLTIP` payloads' `content` widened from `string` to `ReactNode`. Writing a string still works; code that reads one and annotates it as `string` must widen or narrow with `typeof`.
+- `UPDATE_TOOLTIP_CONTENT` and `tooltip.updateContent` still take a `string`. Called while a tour runs, they replace the tour panel with that string.
+- `HIDE_TOOLTIP` and `END_FLOW` accept an optional `payload` (`onlyIfOwner`, `onlyIfSteps`), and `TooltipShowOptions` gains `owner`; both are additive.
 
 ---
 
