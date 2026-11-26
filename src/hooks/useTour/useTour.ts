@@ -182,6 +182,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   const prevRef = useRef<() => void>(() => {});
   const endRef = useRef<() => void>(() => {});
   const targetLostRef = useRef<() => void>(() => {});
+  const teardownRef = useRef<() => void>(() => {});
 
   // Compute visible steps (filter out steps with condition returning false)
   const visibleSteps = useMemo(() => filterVisibleSteps(steps), [steps]);
@@ -364,6 +365,18 @@ export function useTour(options: TourOptions): UseTourReturn {
   }, [tooltip]);
 
   /**
+   * Take the tour off screen and reset its state, without calling any consumer callback
+   */
+  const teardown = useCallback(() => {
+    cleanup();
+    helper.endFlow();
+    setIsActive(false);
+    isActiveRef.current = false;
+    setCurrentIndex(-1);
+    currentIndexRef.current = -1;
+  }, [cleanup, helper]);
+
+  /**
    * Tear the tour down and report the outcome
    */
   const finishTour = useCallback(
@@ -377,18 +390,13 @@ export function useTour(options: TourOptions): UseTourReturn {
         currentStep.onExit();
       }
 
-      cleanup();
-      helper.endFlow();
-      setIsActive(false);
-      isActiveRef.current = false;
-      setCurrentIndex(-1);
-      currentIndexRef.current = -1;
+      teardown();
 
       if (onEnd) {
         onEnd(completed);
       }
     },
-    [visibleSteps, cleanup, helper, onEnd]
+    [visibleSteps, teardown, onEnd]
   );
 
   /**
@@ -577,6 +585,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   prevRef.current = prev;
   endRef.current = end;
   targetLostRef.current = handleTargetLost;
+  teardownRef.current = teardown;
 
   /**
    * Jump to a specific step
@@ -696,6 +705,11 @@ export function useTour(options: TourOptions): UseTourReturn {
     const highlightManager = highlightManagerRef.current;
     const targetWatcher = targetWatcherRef.current;
     return () => {
+      // A running tour must not outlive its component as a panel with dead buttons. No
+      // onEnd: the consumer that would hear it is unmounting too.
+      if (isActiveRef.current) {
+        teardownRef.current();
+      }
       targetWatcher.destroy();
       backdropManager.destroy();
       highlightManager.destroy();

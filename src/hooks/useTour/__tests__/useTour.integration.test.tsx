@@ -1,5 +1,5 @@
 import { act, cleanup, render } from '@testing-library/react';
-import { useEffect } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TipMagicProvider } from '../../../components/TipMagicProvider';
 import { useTipMagic } from '../../useTipMagic';
@@ -1200,5 +1200,92 @@ describe('navigation.autoFocus', () => {
 
     expect(tooltip()?.getAttribute('role')).toBe('tooltip');
     expect(document.activeElement).toBe(document.body);
+  });
+});
+
+describe('unmounting the component that runs the tour', () => {
+  /**
+   * Render a tour beside a probe of the helper flow, with a way to unmount only the tour
+   */
+  function mountUnmountable(options: TourOptions, markup: string, sibling?: ReactNode) {
+    document.body.innerHTML = markup;
+    let tour!: UseTourReturn;
+    let flowActive: boolean | undefined;
+    let unmountTour!: () => void;
+
+    function FlowProbe() {
+      flowActive = useTipMagic().helper.isFlowActive;
+      return null;
+    }
+
+    function Toggle() {
+      const [mounted, setMounted] = useState(true);
+      unmountTour = () => setMounted(false);
+      return (
+        <>
+          {mounted && <Harness options={options} onReady={(value) => (tour = value)} />}
+          <FlowProbe />
+          {sibling}
+        </>
+      );
+    }
+
+    render(
+      <TipMagicProvider>
+        <Toggle />
+      </TipMagicProvider>
+    );
+
+    return {
+      tour: () => tour,
+      flowActive: () => flowActive,
+      unmountTour: () => act(() => unmountTour()),
+    };
+  }
+
+  it('takes the panel, backdrop and helper flow down without calling onEnd', () => {
+    const onEnd = vi.fn();
+    const onExit = vi.fn();
+    const api = mountUnmountable(
+      { steps: [{ target: 'one', text: 'A', onExit }], focus: true, onEnd },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      api.tour().start();
+    });
+    expect(count('.tip-magic-tooltip')).toBe(1);
+    expect(api.flowActive()).toBe(true);
+
+    api.unmountTour();
+
+    expect(count('.tip-magic-tooltip')).toBe(0);
+    expect(count('.tip-magic-tour-backdrop')).toBe(0);
+    expect(count('[data-tip-magic-focus]')).toBe(0);
+    expect(api.flowActive()).toBe(false);
+    expect(onEnd).not.toHaveBeenCalled();
+    expect(onExit).not.toHaveBeenCalled();
+  });
+
+  it('leaves a tooltip it does not own alone when the tour is not running', () => {
+    let showOther!: () => void;
+    function Shower() {
+      const { tooltip: api } = useTipMagic();
+      showOther = () => api.show('#other', 'Not the tour');
+      return null;
+    }
+
+    const api = mountUnmountable(
+      { steps: [{ target: 'one', text: 'A' }] },
+      '<div data-tip-id="one">One</div><div id="other">Other</div>',
+      <Shower />
+    );
+
+    act(() => {
+      showOther();
+    });
+    api.unmountTour();
+
+    expect(tooltip()?.textContent).toContain('Not the tour');
   });
 });

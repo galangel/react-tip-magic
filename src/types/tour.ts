@@ -332,7 +332,11 @@ export interface TourOptions {
   steps: TourStep[];
   /** Callback when tour starts */
   onStart?: () => void;
-  /** Callback when tour ends (completed = true if finished all steps, false if exited early) */
+  /**
+   * Callback when tour ends (completed = true if finished all steps, false if exited
+   * early). Not called when the component running the tour unmounts mid-tour - the
+   * panel is taken down silently.
+   */
   onEnd?: (completed: boolean) => void;
   /** Callback when step changes */
   onStepChange?: (step: CurrentTourStep, direction: TourDirection) => void;
