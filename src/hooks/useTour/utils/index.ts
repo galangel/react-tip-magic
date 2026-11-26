@@ -3,9 +3,11 @@ export {
   buildCurrentStep,
   calculateProgress,
   filterVisibleSteps,
+  resolveStepBody,
   resolveStepContent,
   resolveTargetElement,
 } from './tourSteps';
+export type { ResolvedStepBody } from './tourSteps';
 
 // Navigation utilities
 export {
@@ -17,17 +19,9 @@ export {
 } from './tourNavigation';
 export type { ResolvedProgressOptions, ResolvedTourFocus } from './tourNavigation';
 
-// Content building utilities
-export {
-  buildFooterHtml,
-  buildHeaderHtml,
-  buildMediaHtml,
-  buildNavHtml,
-  buildProgressHtml,
-  buildRingProgressHtml,
-  buildStepsProgressHtml,
-  buildTourContent,
-} from './buildTourContent';
+// Progress ring geometry
+export { getProgressRingGeometry } from './progressRing';
+export type { ProgressRingGeometry } from './progressRing';
 
 // DOM managers
 export { BackdropManager, createBackdropManager } from './backdropManager';

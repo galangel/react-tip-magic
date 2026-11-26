@@ -226,7 +226,7 @@ export function Tooltip() {
       data-tip-magic-motion={config.respectReducedMotion ? undefined : 'always'}
     >
       <div className={CSS_CLASSES.TOOLTIP_CONTENT}>
-        {isHtmlContent ? (
+        {isHtmlContent && typeof mainContent === 'string' ? (
           <HtmlContent html={mainContent} />
         ) : (
           <span className={CSS_CLASSES.TOOLTIP_TEXT}>{mainContent}</span>

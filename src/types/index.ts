@@ -141,8 +141,11 @@ export interface TipMagicOptions {
  * Options for programmatically showing a tooltip
  */
 export interface TooltipShowOptions {
-  /** Tooltip content (overrides element's data-tip) */
-  content?: string;
+  /**
+   * Tooltip content (overrides element's data-tip). A string, or any React node; `html`
+   * applies to string content only.
+   */
+  content?: React.ReactNode;
   /** Tooltip placement */
   placement?: Placement;
   /** Show delay (ms) */
@@ -159,7 +162,7 @@ export interface TooltipShowOptions {
   textBreak?: TextBreak;
   /** Maximum width in pixels */
   maxWidth?: number;
-  /** Parse content as HTML */
+  /** Parse string content as HTML */
   html?: boolean;
   /** Keep tooltip visible when hovering */
   interactive?: boolean;
@@ -195,7 +198,7 @@ export interface TooltipAPI {
   hide: () => void;
   /** Check if tooltip is visible */
   isVisible: boolean;
-  /** Current tooltip content */
+  /** Current tooltip content - null when hidden, or when the content is a React node */
   content: string | null;
   /** Current target element */
   target: Element | null;
@@ -372,7 +375,7 @@ export interface ParsedTooltipData {
  */
 export interface TooltipState {
   visible: boolean;
-  content: string;
+  content: React.ReactNode;
   target: Element | null;
   position: { x: number; y: number };
   placement: Placement;

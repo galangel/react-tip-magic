@@ -4,6 +4,7 @@ import {
   buildCurrentStep,
   calculateProgress,
   filterVisibleSteps,
+  resolveStepBody,
   resolveStepContent,
   resolveTargetElement,
 } from '../utils/tourSteps';
@@ -238,6 +239,63 @@ describe('tourSteps utilities', () => {
       const step: TourStep = { target: 'step1', content: '<b>bold</b>' };
 
       expect(resolveStepContent(step, stepInfo)).toBe('<b>bold</b>');
+    });
+
+    it('should resolve a `body` step to an empty string, without calling it', () => {
+      const body = vi.fn(() => 'node');
+      const step: TourStep = { target: 'step1', body };
+
+      expect(resolveStepContent(step, stepInfo)).toBe('');
+      expect(body).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveStepBody', () => {
+    const stepInfo: CurrentTourStep = {
+      index: 1,
+      target: 'step1',
+      content: '',
+      isFirst: false,
+      isLast: false,
+      total: 3,
+    };
+
+    it('should keep `text` unescaped, for React to render as text', () => {
+      const step: TourStep = { target: 'step1', text: 'Tom & <b>Jerry</b>' };
+
+      expect(resolveStepBody(step, stepInfo)).toEqual({
+        kind: 'text',
+        value: 'Tom & <b>Jerry</b>',
+      });
+    });
+
+    it('should pass a `body` node through', () => {
+      const step: TourStep = { target: 'step1', body: 'a node' };
+
+      expect(resolveStepBody(step, stepInfo)).toEqual({ kind: 'node', value: 'a node' });
+    });
+
+    it('should call a `body` function with the step info', () => {
+      const body = vi.fn((step: CurrentTourStep) => `Step ${step.index + 1} of ${step.total}`);
+      const step: TourStep = { target: 'step1', body };
+
+      expect(resolveStepBody(step, stepInfo)).toEqual({ kind: 'node', value: 'Step 2 of 3' });
+      expect(body).toHaveBeenCalledWith(stepInfo);
+    });
+
+    it('should resolve `content` to HTML', () => {
+      const step: TourStep = { target: 'step1', content: (s) => `<b>${s.index}</b>` };
+
+      expect(resolveStepBody(step, stepInfo)).toEqual({ kind: 'html', value: '<b>1</b>' });
+    });
+
+    // The type rules out more than one; this covers JS consumers who bypass it.
+    it('should prefer text, then body, when several are somehow present', () => {
+      const all = { target: 'step1', text: 'plain', body: 'node', content: '<b>html</b>' };
+      const bodyAndContent = { target: 'step1', body: 'node', content: '<b>html</b>' };
+
+      expect(resolveStepBody(all as unknown as TourStep, stepInfo).kind).toBe('text');
+      expect(resolveStepBody(bodyAndContent as unknown as TourStep, stepInfo).kind).toBe('node');
     });
   });
 

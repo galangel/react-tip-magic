@@ -19,6 +19,7 @@ npm run build      # library (dist/index.mjs, .cjs, styles.css)
 | -------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `src/components/`          | React components. `Tooltip` renders the single tooltip; the rest are internals mounted by `TipMagicProvider`. |
 | `src/hooks/`               | Public hooks and the API objects behind `useTipMagic()`.                                                      |
+| `src/hooks/useTour/`       | `useTour`, and `TourPanel`, the React component it passes to the tooltip as content.                          |
 | `src/hooks/useTour/utils/` | Tour helpers: DOM managers (classes) and pure functions.                                                      |
 | `src/utils/`               | Pure helpers shared across components. Tests in `__tests__/` beside them.                                     |
 | `src/types/`               | All public types. `tour.ts` re-exports through `index.ts`.                                                    |
@@ -49,9 +50,10 @@ on the next push rather than stranding the bump.
 
 **`dangerouslySetInnerHTML` is re-applied on every render.** React rewrites the subtree
 even when the html string is byte-identical. Anything focused inside it is dropped to
-`<body>`, an `<img>` or autoplaying `<video>` is recreated and restarts, and a tour
-panel's markup is re-parsed for nothing on every position or visibility update. This is
-why `Tooltip` renders html through a memoised `HtmlContent`. Don't inline it back.
+`<body>`, an `<img>` or autoplaying `<video>` is recreated and restarts, and the markup
+is re-parsed for nothing on every position or visibility update. This is why `Tooltip`
+renders html through a memoised `HtmlContent`, and `TourPanel` its HTML message and
+custom progress through a memoised `RawHtml`. Don't inline either back.
 
 **`Node.contains` includes the node itself.** `panel.contains(document.activeElement)` is
 true when the panel holds focus, so a containment check can never decide whether to focus
@@ -81,10 +83,21 @@ button - `autoFocus: 'primary'` would put Enter on "end the tour". With `showCon
 off, Close is the panel's only button, which is why the fallback is _marked primary →
 panel_ and never "first focusable".
 
-**Tour step `content` is injected as HTML.** `useTour` forces `html: true` whenever a step
-has navigation features, and `showClose` defaults to true, so in practice every step goes
-through `dangerouslySetInnerHTML`. Escape interpolations with the exported `escapeHtml`,
-or use `TourStep.text`, which the library escapes.
+**Tour step `content` is injected as HTML; `text` and `body` never are.** The panel is a
+React element (`TourPanel`), so its title, labels and `text` are escaped by React. A
+`content` string is the one thing it injects, scoped to the message element. A step with
+no panel features passes its body to the tooltip as-is, so `useTour` forces `html: false`
+for `text` there - otherwise a consumer's `tooltipOptions.html` would inject it.
+
+**Each tour step mounts a new panel.** `useTour` keys `TourPanel` by step index. Focus
+inside the old panel drops to `<body>` and `autoFocus` resolves afresh - without the key,
+React reuses the Next button as the next step's Finish, focus stays on it, and `'panel'`
+never moves focus to the new step's dialog. It also stops a `body` component's state
+leaking from one step into the next.
+
+**A `body` renders in the provider's tree, not the caller's.** The element is created in
+the component that called `useTour` but rendered by `Tooltip`, under `TipMagicProvider`,
+so it sees only the context providers above the provider.
 
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.

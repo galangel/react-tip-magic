@@ -286,3 +286,20 @@ describe('HTML content is not rebuilt on every re-render', () => {
     expect(document.getElementById('media')).toBeNull();
   });
 });
+
+describe('React node content', () => {
+  it('renders a node as React, even with html on', () => {
+    const base = createMockState().tooltip.parsedData as ParsedTooltipData;
+    const node = (
+      <strong id="node" data-value="<b>">
+        Bold
+      </strong>
+    );
+
+    renderTooltip(createMockState({ content: node, parsedData: { ...base, html: true } }));
+
+    const rendered = document.querySelector('.tip-magic-text > #node');
+    expect(rendered?.textContent).toBe('Bold');
+    expect(rendered?.getAttribute('data-value')).toBe('<b>');
+  });
+});

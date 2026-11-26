@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Placement, TooltipAutoFocus, TooltipShowOptions } from './index';
 
 // =============================================================================
@@ -118,8 +119,8 @@ export interface CurrentTourStep {
   /** Optional step title */
   title?: string;
   /**
-   * Resolved content, exactly as rendered. If the step used `text`, this is the
-   * HTML-escaped form of that string.
+   * The step's body as an HTML string: `content` resolved, or `text` HTML-escaped, so it
+   * is always safe to inject. Empty for a `body` step, which has no HTML form.
    */
   content: string;
   /** Whether this is the first step */
@@ -183,30 +184,17 @@ export interface TourStepBase {
 }
 
 /**
- * The body of a step: raw HTML via `content`, or plain text via `text`.
+ * The body of a step: plain text via `text`, React content via `body`, or raw HTML via
+ * `content`.
  *
- * Exactly one is required. Expressing it as a union rather than two optionals means a
- * step with neither does not compile, and a step with both does not either - so there is
- * no precedence rule to remember.
+ * Exactly one is required. Expressing it as a union rather than optionals means a step
+ * with none does not compile, and a step with two does not either - so there is no
+ * precedence rule to remember.
  */
 export type TourStepContent =
   | {
       /**
-       * Tooltip content - a string or a function that receives current step info.
-       *
-       * @remarks
-       * **This value is injected as HTML.** Steps are rendered with
-       * `dangerouslySetInnerHTML` so that titles, media and navigation controls work,
-       * which means any interpolated value - a user-supplied name, an account label -
-       * must be escaped by the caller. The exported `escapeHtml` helper is there for
-       * interpolating into markup; prefer `text` when the whole body is plain text.
-       */
-      content: string | ((step: CurrentTourStep) => string);
-      text?: never;
-    }
-  | {
-      /**
-       * Plain-text body, escaped by the library before it is rendered.
+       * Plain-text body, rendered as text - never parsed as HTML.
        *
        * @example
        * ```tsx
@@ -214,7 +202,40 @@ export type TourStepContent =
        * ```
        */
       text: string;
+      body?: never;
       content?: never;
+    }
+  | {
+      /**
+       * React body - a node, or a function that receives the current step info and
+       * returns one. Event handlers inside it work as anywhere else in your app.
+       *
+       * @remarks
+       * It renders inside `TipMagicProvider`, not inside the component that called
+       * `useTour`, so it sees only the context providers that wrap `TipMagicProvider`.
+       *
+       * @example
+       * ```tsx
+       * { target: 'news', title: "What's new", body: <Markdown source={notes} /> }
+       * ```
+       */
+      body: ReactNode | ((step: CurrentTourStep) => ReactNode);
+      text?: never;
+      content?: never;
+    }
+  | {
+      /**
+       * Raw HTML body - a string or a function that receives current step info.
+       *
+       * @remarks
+       * **This value is injected as HTML** with `dangerouslySetInnerHTML`, which means
+       * any interpolated value - a user-supplied name, an account label - must be escaped
+       * by the caller. The exported `escapeHtml` helper is there for interpolating into
+       * markup; prefer `text` for plain text and `body` for anything richer.
+       */
+      content: string | ((step: CurrentTourStep) => string);
+      text?: never;
+      body?: never;
     };
 
 /**

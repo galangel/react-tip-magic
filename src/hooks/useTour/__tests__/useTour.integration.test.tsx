@@ -477,6 +477,69 @@ describe('content escaping', () => {
     expect(count('.raw')).toBe(0);
   });
 
+  it('should render `text` once-escaped when the step renders no panel', () => {
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', text: 'Tom & <Jerry>' }],
+        navigation: { showClose: false },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    expect(tooltip()?.textContent).toBe('Tom & <Jerry>');
+  });
+
+  it('should keep `text` off the HTML path even when the tooltip options ask for html', () => {
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', text: '<b class="raw">bold</b>' }],
+        navigation: { showClose: false },
+        tooltipOptions: { html: true },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    expect(count('.raw')).toBe(0);
+    expect(tooltip()?.textContent).toBe('<b class="raw">bold</b>');
+  });
+
+  it('should render navigation labels as text, not markup', () => {
+    const getTour = mountTour(
+      {
+        steps: [
+          { target: 'one', text: 'A' },
+          { target: 'two', text: 'B' },
+        ],
+        navigation: { showControls: true, nextLabel: '<b>Go</b>', backLabel: '<i>Back</i>' },
+      },
+      '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    const next = document.querySelector('.tip-magic-tour-btn-next');
+    expect(next?.textContent).toBe('<b>Go</b>');
+    expect(next?.querySelector('b')).toBeNull();
+
+    act(() => {
+      getTour().next();
+    });
+
+    const back = document.querySelector('.tip-magic-tour-btn-back');
+    expect(back?.textContent).toBe('<i>Back</i>');
+    expect(back?.querySelector('i')).toBeNull();
+  });
+
   it('should escape a media src so it cannot break out of the attribute', () => {
     const getTour = mountTour(
       {
@@ -491,6 +554,85 @@ describe('content escaping', () => {
 
     const image = document.querySelector('.tip-magic-tour-image img');
     expect(image?.hasAttribute('onerror')).toBe(false);
+  });
+});
+
+describe('a React body', () => {
+  it('should render in a running tour, with its event handlers', () => {
+    const onClick = vi.fn();
+    const getTour = mountTour(
+      {
+        steps: [
+          {
+            target: 'one',
+            title: "What's new",
+            body: (
+              <p className="notes">
+                Release <strong>notes</strong>{' '}
+                <button type="button" onClick={onClick}>
+                  Details
+                </button>
+              </p>
+            ),
+          },
+        ],
+        navigation: { showControls: true },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    const notes = document.querySelector('.tip-magic-tour-message > .notes');
+    expect(notes?.querySelector('strong')?.textContent).toBe('notes');
+
+    act(() => {
+      (notes?.querySelector('button') as HTMLElement).click();
+    });
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(getTour().isActive).toBe(true);
+  });
+
+  it('should be called with the current step when it is a function', () => {
+    const getTour = mountTour(
+      {
+        steps: [
+          { target: 'one', body: (step) => <em>{`${step.index + 1} of ${step.total}`}</em> },
+          { target: 'two', body: (step) => <em>{`${step.index + 1} of ${step.total}`}</em> },
+        ],
+      },
+      '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+    act(() => {
+      getTour().next();
+    });
+
+    expect(document.querySelector('.tip-magic-tour-message em')?.textContent).toBe('2 of 2');
+    expect(getTour().currentStep?.content).toBe('');
+  });
+
+  it('should render with no panel features as the tooltip content', () => {
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', body: <em className="plain">Plain</em> }],
+        navigation: { showClose: false },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    expect(tooltip()?.querySelector('.tip-magic-text > .plain')?.textContent).toBe('Plain');
+    expect(tooltip()?.getAttribute('role')).toBe('tooltip');
   });
 });
 

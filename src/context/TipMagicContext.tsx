@@ -84,7 +84,7 @@ export type TipMagicAction =
       type: 'SHOW_TOOLTIP';
       payload: {
         target: Element;
-        content: string;
+        content: ReactNode;
         parsedData: ParsedTooltipData;
       };
     }
@@ -93,7 +93,7 @@ export type TipMagicAction =
       type: 'MOVE_TOOLTIP';
       payload: {
         target: Element;
-        content: string;
+        content: ReactNode;
         parsedData: ParsedTooltipData;
         previousGroup?: string;
       };

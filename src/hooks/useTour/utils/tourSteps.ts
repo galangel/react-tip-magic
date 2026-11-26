@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
 import { escapeHtml } from '../../../utils/escapeHtml';
 import { TOUR_DATA_ATTRIBUTES } from '../constants';
@@ -26,10 +27,10 @@ export function resolveTargetElement(target: string): HTMLElement | null {
 }
 
 /**
- * Resolve step content - handles `text`, string content and function content
+ * Resolve a step's body to its HTML form, for `CurrentTourStep.content`
  *
  * `text` takes precedence and is HTML-escaped; `content` is passed through as the raw
- * HTML it is documented to be.
+ * HTML it is documented to be. A `body` step has no HTML form and resolves to `''`.
  *
  * @param step - The tour step
  * @param stepInfo - Current step metadata (without content)
@@ -43,13 +44,45 @@ export function resolveStepContent(
     return escapeHtml(step.text);
   }
 
-  if (step.content === undefined) {
+  if (step.body !== undefined || step.content === undefined) {
     return '';
   }
 
   return typeof step.content === 'function'
     ? step.content(stepInfo as CurrentTourStep)
     : step.content;
+}
+
+/**
+ * A step's body, resolved for rendering, tagged with how it must be rendered
+ */
+export type ResolvedStepBody =
+  | { kind: 'text'; value: string }
+  | { kind: 'node'; value: ReactNode }
+  | { kind: 'html'; value: string };
+
+/**
+ * Resolve a step's body for rendering
+ *
+ * Precedence for JS callers who bypass the types is `text`, then `body`, then `content`.
+ *
+ * @param step - The tour step
+ * @param stepInfo - Current step data, passed to a function `body` or `content`
+ * @returns The body and how to render it
+ */
+export function resolveStepBody(step: TourStep, stepInfo: CurrentTourStep): ResolvedStepBody {
+  if (step.text !== undefined) {
+    return { kind: 'text', value: step.text };
+  }
+
+  if (step.body !== undefined) {
+    return {
+      kind: 'node',
+      value: typeof step.body === 'function' ? step.body(stepInfo) : step.body,
+    };
+  }
+
+  return { kind: 'html', value: resolveStepContent(step, stepInfo) };
 }
 
 /**

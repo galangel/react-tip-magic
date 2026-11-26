@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TooltipShowOptions } from '../../types';
 import type {
   CurrentTourStep,
@@ -11,9 +11,9 @@ import type {
 import { generateTooltipId } from '../../utils/parseDataAttributes';
 import { useTipMagic } from '../useTipMagic';
 import { TOUR_ACTIONS, TOUR_DATA_ATTRIBUTES } from './constants';
+import { TourPanel } from './TourPanel';
 import {
   buildCurrentStep,
-  buildTourContent,
   calculateProgress,
   createBackdropManager,
   createHighlightManager,
@@ -23,7 +23,7 @@ import {
   getMergedProgress,
   hasNavigationFeatures,
   resolveFocus,
-  resolveStepContent,
+  resolveStepBody,
   resolveTargetElement,
 } from './utils';
 
@@ -299,21 +299,22 @@ export function useTour(options: TourOptions): UseTourReturn {
       const progressOptions = getMergedProgress(tourProgress, step);
       const showProgress = progressOptions.show;
 
-      // Resolve content
-      const resolvedContent = resolveStepContent(step, currentStepData);
+      const body = resolveStepBody(step, currentStepData);
 
-      // Build tour content with navigation if needed
       const hasNavFeatures = hasNavigationFeatures(mergedNav, step, showProgress);
-      const finalContent = hasNavFeatures
-        ? buildTourContent(
+      // Keyed by step so every step mounts a fresh panel - see CLAUDE.md, "Each tour
+      // step mounts a new panel"
+      const content = hasNavFeatures
+        ? createElement(TourPanel, {
+            key: stepIndex,
             step,
-            currentStepData,
-            mergedNav,
-            resolvedContent,
-            showProgress ? progressOptions : null,
-            titleIdRef.current
-          )
-        : resolvedContent;
+            stepInfo: currentStepData,
+            navigation: mergedNav,
+            body,
+            progress: progressOptions,
+            titleId: titleIdRef.current,
+          })
+        : body.value;
 
       // Merge tooltip options: tour panel defaults < tour options < step overrides <
       // the values the tour panel cannot function without
@@ -323,13 +324,13 @@ export function useTour(options: TourOptions): UseTourReturn {
         ...(hasNavFeatures && { wordWrap: true }),
         ...tooltipOptions,
         ...step.tooltipOptions,
-        content: finalContent,
+        content,
         placement: step.placement ?? tooltipOptions?.placement,
-        // Enable html and interactive when using navigation features, and present the
-        // panel as a dialog - role="tooltip" is a description, so screen readers would
-        // not expose the buttons inside it
+        // Plain text must never reach the HTML path, whatever the consumer's options say
+        ...(body.kind === 'text' && { html: false }),
+        // Make the panel interactive and present it as a dialog - role="tooltip" is a
+        // description, so screen readers would not expose the buttons inside it
         ...(hasNavFeatures && {
-          html: true,
           interactive: true,
           role: 'dialog' as const,
           ariaLabelledBy: step.title ? titleIdRef.current : undefined,
