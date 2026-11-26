@@ -309,8 +309,8 @@ needs (a theme, a router) above it.
 
 A running step follows changes to `steps`: re-render with a new `body` - release notes
 that arrived after `start()`, say - and the panel on screen updates in place, without
-moving focus or firing `onStepChange` again. A `text` or `content` step shown as a plain
-tooltip picks up changes on the next navigation.
+moving focus or firing `onStepChange` again. A changed `placement` or other tooltip
+option is applied too, and the helper flow (`useTipMagic().helper`) follows the new list.
 
 When steps are added, removed or filtered out, the step on screen is found again by its
 `id`, or by its `target` when no other step shares it. If a `condition` filters out an

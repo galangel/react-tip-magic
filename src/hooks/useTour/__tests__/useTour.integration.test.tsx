@@ -1886,6 +1886,66 @@ describe('steps that share a target', () => {
   });
 });
 
+describe('the step on screen after its steps change', () => {
+  it('moves the tooltip when its placement changes', async () => {
+    const api = mountWithSteps([{ target: 'one', text: 'A', placement: 'top' }]);
+    await act(async () => {
+      api.tour().start();
+    });
+    const panel = document.querySelector('.tip-magic-tour-content');
+
+    api.replaceSteps([{ target: 'one', text: 'A', placement: 'right' }]);
+    // Floating UI positions asynchronously
+    await flushMutations();
+
+    expect(tooltip()?.getAttribute('data-placement')).toMatch(/^right/);
+    expect(document.querySelector('.tip-magic-tour-content')).toBe(panel);
+  });
+
+  it('updates the text of a step shown as a plain tooltip', () => {
+    const api = mountWithSteps([{ target: 'one', text: 'Loading...' }], {
+      navigation: { showClose: false },
+    });
+    act(() => {
+      api.tour().start();
+    });
+
+    api.replaceSteps([{ target: 'one', text: 'Ready' }]);
+
+    expect(tooltip()?.textContent).toBe('Ready');
+    expect(tooltip()?.getAttribute('role')).toBe('tooltip');
+  });
+
+  it('applies a changed maxWidth', () => {
+    const api = mountWithSteps([{ target: 'one', text: 'A' }]);
+    act(() => {
+      api.tour().start();
+    });
+
+    api.replaceSteps([{ target: 'one', text: 'A', tooltipOptions: { maxWidth: 480 } }]);
+
+    expect(tooltip()?.style.maxWidth).toBe('480px');
+  });
+
+  it('keeps the helper flow on the step on screen', () => {
+    const A: TourStep = { target: 'one', text: 'Step A' };
+    const B: TourStep = { target: 'two', text: 'Step B' };
+    const C: TourStep = { target: 'three', text: 'Step C' };
+    const api = mountWithSteps([A, B, C]);
+    act(() => {
+      api.tour().start();
+    });
+    act(() => {
+      api.tour().next();
+    });
+    expect(api.helperStep()).toBe('two');
+
+    api.replaceSteps([B, C]);
+
+    expect(api.helperStep()).toBe('two');
+  });
+});
+
 describe('accessible names', () => {
   it('names a dialog with no title by its message', () => {
     const getTour = mountTour(

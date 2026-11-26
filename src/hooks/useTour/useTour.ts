@@ -19,6 +19,7 @@ import type {
   UseTourReturn,
 } from '../../types/tour';
 import { generateTooltipId } from '../../utils/parseDataAttributes';
+import { haveSameTooltipOptions } from '../../utils/tooltipOptions';
 import { useTipMagicContext } from '../../context/TipMagicContext';
 import type { FlowStep } from '../../types';
 import { useTipMagic } from '../useTipMagic';
@@ -26,6 +27,7 @@ import { TOUR_ACTIONS, TOUR_DATA_ATTRIBUTES } from './constants';
 import { LiveTourPanel, type TourPanelProps } from './TourPanel';
 import {
   buildCurrentStep,
+  buildFlowSteps,
   calculateProgress,
   createBackdropManager,
   createHighlightManager,
@@ -36,6 +38,7 @@ import {
   getMergedNavigation,
   getMergedProgress,
   hasNavigationFeatures,
+  haveSameFlowSteps,
   haveSameStepOrder,
   resolveFocus,
   resolveStepBody,
@@ -80,9 +83,8 @@ interface ShownStep {
   content: ReactNode;
   /** Minted per show, so the tooltip can be told to be this tour's even by equal text */
   owner: object;
-  /** The panel-derived tooltip options it was shown with */
-  ariaLabelledBy?: string;
-  autoFocus?: TooltipShowOptions['autoFocus'];
+  /** The options it was shown with */
+  options: TooltipShowOptions;
 }
 
 /**
@@ -400,8 +402,7 @@ export function useTour(options: TourOptions): UseTourReturn {
         store,
         content,
         owner,
-        ariaLabelledBy: options.ariaLabelledBy,
-        autoFocus: options.autoFocus,
+        options,
       };
       tooltip.show(element, options);
     },
@@ -608,11 +609,7 @@ export function useTour(options: TourOptions): UseTourReturn {
     currentIndexRef.current = startIndex;
 
     // Sync with helper flow state
-    const flowSteps = visibleSteps.map((step, index) => ({
-      id: `tour-step-${index}`,
-      targetId: step.target,
-      message: step.text ?? (typeof step.content === 'string' ? step.content : ''),
-    }));
+    const flowSteps = buildFlowSteps(visibleSteps);
     flowStepsRef.current = flowSteps;
     helper.startFlow(flowSteps);
     // startFlow always opens at 0; a skipped first step means we are elsewhere
@@ -765,6 +762,14 @@ export function useTour(options: TourOptions): UseTourReturn {
     const shown = shownRef.current;
     if (!isActiveRef.current || !shown) return;
 
+    // The helper flow is a copy of the steps; keep it on the same list
+    const flowSteps = buildFlowSteps(visibleSteps);
+    const flowRebuilt = !haveSameFlowSteps(flowSteps, flowStepsRef.current);
+    if (flowRebuilt) {
+      flowStepsRef.current = flowSteps;
+      helper.startFlow(flowSteps);
+    }
+
     let index = shown.index;
     if (!haveSameStepOrder(shown.steps, visibleSteps)) {
       const found = findStep(visibleSteps, shown.step);
@@ -783,8 +788,10 @@ export function useTour(options: TourOptions): UseTourReturn {
         index = found;
         setCurrentIndex(index);
         currentIndexRef.current = index;
-        helper.goToStep(index);
       }
+    }
+    if (flowRebuilt || index !== shown.index) {
+      helper.goToStep(index);
     }
 
     const view = describeStep(index);
@@ -797,19 +804,17 @@ export function useTour(options: TourOptions): UseTourReturn {
     }
 
     shownRef.current = { ...shown, index, step: view.step, steps: visibleSteps };
-    if (!shown.store || !view.panel) return;
+    if (shown.store && view.panel) {
+      shown.store.set(view.panel);
+    }
 
-    shown.store.set(view.panel);
-
-    // Re-show only when a panel-derived option changed: showing re-renders every
-    // useTipMagic consumer, this one included
-    const options = buildTooltipOptions(view, shown.content, shown.owner);
-    if (options.ariaLabelledBy !== shown.ariaLabelledBy || options.autoFocus !== shown.autoFocus) {
-      shownRef.current = {
-        ...shownRef.current,
-        ariaLabelledBy: options.ariaLabelledBy,
-        autoFocus: options.autoFocus,
-      };
+    // Show again only when what the tooltip displays changed - placement, a title's
+    // label, a plain step's text - since showing re-renders every useTipMagic consumer,
+    // this one included. A panel's content is its store, already updated above.
+    const content = shown.store ? shown.content : view.body.value;
+    const options = buildTooltipOptions(view, content, shown.owner);
+    if (content !== shown.content || !haveSameTooltipOptions(options, shown.options)) {
+      shownRef.current = { ...shownRef.current, content, options };
       tooltip.show(shown.element, options);
     }
   };

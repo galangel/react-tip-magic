@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { FlowStep } from '../../../types';
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
 import { escapeHtml } from '../../../utils/escapeHtml';
 import { TOUR_DATA_ATTRIBUTES } from '../constants';
@@ -161,6 +162,40 @@ export function findStep(steps: TourStep[], step: TourStep): number | null {
     return null;
   }
   return matches.length === 1 ? matches[0] : -1;
+}
+
+/**
+ * The helper flow's copy of the tour's steps
+ *
+ * @param steps - The visible steps
+ * @returns One flow step per tour step
+ */
+export function buildFlowSteps(steps: TourStep[]): FlowStep[] {
+  return steps.map((step, index) => ({
+    id: `tour-step-${index}`,
+    targetId: step.target,
+    message: step.text ?? (typeof step.content === 'string' ? step.content : ''),
+  }));
+}
+
+/**
+ * Whether two flows hold the same steps, by value
+ *
+ * @param a - One flow's steps
+ * @param b - The other's, or null when there is no flow
+ * @returns Whether every step has the same id, target and message
+ */
+export function haveSameFlowSteps(a: FlowStep[], b: FlowStep[] | null): boolean {
+  return (
+    !!b &&
+    a.length === b.length &&
+    a.every(
+      (step, index) =>
+        step.id === b[index].id &&
+        step.targetId === b[index].targetId &&
+        step.message === b[index].message
+    )
+  );
 }
 
 /**

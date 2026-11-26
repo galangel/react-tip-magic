@@ -3,9 +3,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
 import {
   buildCurrentStep,
+  buildFlowSteps,
   calculateProgress,
   filterVisibleSteps,
   findStep,
+  haveSameFlowSteps,
   haveSameStepOrder,
   resolveStepBody,
   resolveStepContent,
@@ -373,6 +375,28 @@ describe('tourSteps utilities', () => {
 
     it('should refuse to choose between steps on the same target', () => {
       expect(findStep([one, { ...one, text: 'C' }], one)).toBeNull();
+    });
+  });
+
+  describe('buildFlowSteps / haveSameFlowSteps', () => {
+    const steps: TourStep[] = [
+      { target: 'one', text: 'A' },
+      { target: 'two', content: '<b>B</b>' },
+      { target: 'three', body: 'C' },
+    ];
+
+    it('should copy target and plain message of each step', () => {
+      expect(buildFlowSteps(steps)).toEqual([
+        { id: 'tour-step-0', targetId: 'one', message: 'A' },
+        { id: 'tour-step-1', targetId: 'two', message: '<b>B</b>' },
+        { id: 'tour-step-2', targetId: 'three', message: '' },
+      ]);
+    });
+
+    it('should compare flows by value', () => {
+      expect(haveSameFlowSteps(buildFlowSteps(steps), buildFlowSteps([...steps]))).toBe(true);
+      expect(haveSameFlowSteps(buildFlowSteps(steps), buildFlowSteps(steps.slice(1)))).toBe(false);
+      expect(haveSameFlowSteps(buildFlowSteps(steps), null)).toBe(false);
     });
   });
 

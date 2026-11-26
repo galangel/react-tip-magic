@@ -1,9 +1,11 @@
 // Tour step utilities
 export {
   buildCurrentStep,
+  buildFlowSteps,
   calculateProgress,
   filterVisibleSteps,
   findStep,
+  haveSameFlowSteps,
   haveSameStepOrder,
   resolveStepBody,
   resolveStepContent,
