@@ -327,7 +327,9 @@ export function useTour(options: TourOptions): UseTourReturn {
         ...step.tooltipOptions,
         content,
         placement: step.placement ?? tooltipOptions?.placement,
-        // Plain text must never reach the HTML path, whatever the consumer's options say
+        // A step with no panel hands its body to the tooltip as-is: `content` is HTML and
+        // `text` never is, whatever the consumer's options say
+        ...(body.kind === 'html' && { html: true }),
         ...(body.kind === 'text' && { html: false }),
         // Make the panel interactive and present it as a dialog - role="tooltip" is a
         // description, so screen readers would not expose the buttons inside it

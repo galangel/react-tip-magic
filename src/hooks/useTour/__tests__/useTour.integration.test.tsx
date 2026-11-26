@@ -529,6 +529,22 @@ describe('content escaping', () => {
     expect(tooltip()?.textContent).toBe('<b class="raw">bold</b>');
   });
 
+  it('should render `content` as HTML when the step renders no panel', () => {
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', content: '<b class="raw">bold</b>' }],
+        navigation: { showClose: false },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    expect(tooltip()?.querySelector('.raw')?.textContent).toBe('bold');
+  });
+
   it('should render navigation labels as text, not markup', () => {
     const getTour = mountTour(
       {
