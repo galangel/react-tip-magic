@@ -222,6 +222,21 @@
   opacity: 0;
 }
 
+/* The panel's padding is the gap at its edges: no part adds its own margin there */
+.tip-magic-tour-content > :first-child {
+  margin-top: 0;
+}
+
+.tip-magic-tour-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Media alone: as much space above and below it as beside it */
+.tip-magic-tour-content > .tip-magic-tour-image:only-child,
+.tip-magic-tour-content > .tip-magic-tour-video:only-child {
+  margin-block: calc(var(--tip-magic-padding-x) - var(--tip-magic-padding-y));
+}
+
 /* Flex items' margins do not collapse - keep the gap the block layout gave */
 .tip-magic-tour-header:has(+ .tip-magic-tour-image, + .tip-magic-tour-video) {
   margin-bottom: 0;

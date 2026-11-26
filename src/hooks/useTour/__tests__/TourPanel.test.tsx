@@ -519,6 +519,22 @@ describe('a panel sized by its media', () => {
     expect(content(withText).hasAttribute('data-tip-magic-media-only')).toBe(false);
   });
 
+  it('renders nothing but the media for a panel that is only media', () => {
+    const container = renderPanel({
+      step: { video: { src: 'clip.mp4' } },
+      body: { kind: 'html', value: '' },
+      navigation: withNav({ showClose: false }),
+      fitMedia: true,
+    });
+
+    expect(Array.from(content(container).children).map((child) => child.className)).toEqual([
+      'tip-magic-tour-video',
+    ]);
+    expect(query(container, '.tip-magic-tour-header')).toBeNull();
+    expect(query(container, '.tip-magic-tour-body, .tip-magic-tour-message')).toBeNull();
+    expect(query(container, '.tip-magic-tour-footer, .tip-magic-tour-nav')).toBeNull();
+  });
+
   it('leaves a panel that is not sized by its media unmarked', () => {
     const container = renderPanel({ step: { ...STEP, image: 'pic.png' } });
 

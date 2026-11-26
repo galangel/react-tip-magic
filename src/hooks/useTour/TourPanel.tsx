@@ -308,9 +308,11 @@ export function TourPanel({
         id={mediaId}
         onSized={fitMedia ? setSizedSrc : undefined}
       />
-      <div className={TOUR_CSS_CLASSES.BODY}>
-        <TourMessage body={body} id={messageId} />
-      </div>
+      {hasMessage && (
+        <div className={TOUR_CSS_CLASSES.BODY}>
+          <TourMessage body={body} id={messageId} />
+        </div>
+      )}
       {showProgress ? (
         <div className={TOUR_CSS_CLASSES.FOOTER}>
           <TourProgressIndicator stepInfo={stepInfo} progress={progress} />
