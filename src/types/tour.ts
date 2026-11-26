@@ -147,6 +147,13 @@ export interface CurrentTourStep {
  * ```
  */
 export interface TourStepBase {
+  /**
+   * Identifies the step while `steps` change under a running tour, so the step on screen
+   * is found again after one is added, removed or filtered out ahead of it. Unique among
+   * the steps. Without one a step is followed by its `target`, which only works while no
+   * other step shares that target.
+   */
+  id?: string;
   /** Target element's data-tip-id value */
   target: string;
   /** Optional step title (escaped by the library) */

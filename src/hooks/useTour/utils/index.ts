@@ -3,6 +3,8 @@ export {
   buildCurrentStep,
   calculateProgress,
   filterVisibleSteps,
+  findStep,
+  haveSameStepOrder,
   resolveStepBody,
   resolveStepContent,
   resolveTargetElement,

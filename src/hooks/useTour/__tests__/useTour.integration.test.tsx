@@ -1600,29 +1600,43 @@ describe('panel instances', () => {
   });
 });
 
+const STEPS_MARKUP =
+  '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div><div data-tip-id="three">Three</div>';
+
+/** Mount a tour whose steps can be replaced while it runs */
+function mountWithSteps(
+  steps: TourStep[],
+  options: Omit<TourOptions, 'steps'> = {},
+  markup = STEPS_MARKUP
+) {
+  document.body.innerHTML = markup;
+  let tour!: UseTourReturn;
+  let helperStep: string | undefined;
+  const onReady = (value: UseTourReturn) => (tour = value);
+
+  function HelperProbe() {
+    helperStep = useTipMagic().helper.currentStep?.targetId;
+    return null;
+  }
+
+  const ui = (current: TourStep[]) => (
+    <TipMagicProvider>
+      <Harness options={{ ...options, steps: current }} onReady={onReady} />
+      <HelperProbe />
+    </TipMagicProvider>
+  );
+  const { rerender } = render(ui(steps));
+  return {
+    tour: () => tour,
+    helperStep: () => helperStep,
+    replaceSteps: (next: TourStep[]) => act(() => rerender(ui(next))),
+  };
+}
+
 describe('a running tour whose steps change shape', () => {
   const A: TourStep = { target: 'one', text: 'Step A' };
   const B: TourStep = { target: 'two', text: 'Step B' };
   const C: TourStep = { target: 'three', text: 'Step C' };
-  const markup =
-    '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div><div data-tip-id="three">Three</div>';
-
-  /** Mount a tour whose steps can be replaced while it runs */
-  function mountWithSteps(steps: TourStep[], options: Omit<TourOptions, 'steps'> = {}) {
-    document.body.innerHTML = markup;
-    let tour!: UseTourReturn;
-    const onReady = (value: UseTourReturn) => (tour = value);
-    const ui = (current: TourStep[]) => (
-      <TipMagicProvider>
-        <Harness options={{ ...options, steps: current }} onReady={onReady} />
-      </TipMagicProvider>
-    );
-    const { rerender } = render(ui(steps));
-    return {
-      tour: () => tour,
-      replaceSteps: (next: TourStep[]) => act(() => rerender(ui(next))),
-    };
-  }
 
   const message = () => document.querySelector('.tip-magic-tour-message')?.textContent;
 
@@ -1760,5 +1774,56 @@ describe('one tour replacing another', () => {
     expect(flowActive).toBe(true);
     // Tour A's own DOM state is still cleaned up
     expect(count('.tip-magic-tour-backdrop')).toBe(0);
+  });
+});
+
+describe('steps that share a target', () => {
+  const first: TourStep = { target: 'one', text: 'First tip on one' };
+  const second: TourStep = { target: 'one', text: 'Second tip on one' };
+  const other: TourStep = { target: 'two', text: 'Inserted' };
+  const message = () => document.querySelector('.tip-magic-tour-message')?.textContent;
+
+  it('follows a step by its id through an insertion ahead of it', () => {
+    const onStepChange = vi.fn();
+    const api = mountWithSteps(
+      [
+        { ...first, id: 'first' },
+        { ...second, id: 'second' },
+      ],
+      { onStepChange }
+    );
+    act(() => {
+      api.tour().start();
+    });
+    act(() => {
+      api.tour().next();
+    });
+
+    api.replaceSteps([other, { ...first, id: 'first' }, { ...second, id: 'second' }]);
+
+    expect(message()).toBe('Second tip on one');
+    expect(api.tour().currentStep?.index).toBe(2);
+    expect(onStepChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not guess between steps on the same target: it shows the step now at its place, as a navigation', () => {
+    const onStepChange = vi.fn();
+    const api = mountWithSteps([first, second], { onStepChange });
+    act(() => {
+      api.tour().start();
+    });
+    act(() => {
+      api.tour().next();
+    });
+
+    api.replaceSteps([other, first, second]);
+
+    expect(message()).toBe('First tip on one');
+    expect(api.tour().currentStep?.index).toBe(1);
+    expect(onStepChange).toHaveBeenCalledTimes(3);
+    expect(onStepChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ index: 1, target: 'one' }),
+      'next'
+    );
   });
 });

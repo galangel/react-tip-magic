@@ -32,9 +32,11 @@ import {
   createTargetWatcher,
   createTourPanelStore,
   filterVisibleSteps,
+  findStep,
   getMergedNavigation,
   getMergedProgress,
   hasNavigationFeatures,
+  haveSameStepOrder,
   resolveFocus,
   resolveStepBody,
   resolveTargetElement,
@@ -69,6 +71,8 @@ interface StepView {
 interface ShownStep {
   index: number;
   step: TourStep;
+  /** The visible steps it was found in */
+  steps: TourStep[];
   element: HTMLElement;
   /** The store its panel reads from, or null when it is a plain tooltip */
   store: TourPanelStore | null;
@@ -383,6 +387,7 @@ export function useTour(options: TourOptions): UseTourReturn {
       shownRef.current = {
         index: stepIndex,
         step: view.step,
+        steps: visibleSteps,
         element,
         store,
         content,
@@ -391,7 +396,7 @@ export function useTour(options: TourOptions): UseTourReturn {
       };
       tooltip.show(element, options);
     },
-    [buildTooltipOptions, tooltip]
+    [visibleSteps, buildTooltipOptions, tooltip]
   );
 
   /**
@@ -741,18 +746,22 @@ export function useTour(options: TourOptions): UseTourReturn {
   /**
    * Bring the step on screen in line with new `steps` or options
    *
-   * Follows the step by its target, so a step filtered out ahead of it does not swap in
-   * another step's content. A shown step that is gone is replaced by whatever now holds
-   * its place, as a navigation; past the end, the tour ends.
+   * When the order of the steps changed, the step on screen is found again by its `id`,
+   * or by its `target` if no other step shares it, so a step filtered out ahead of it does
+   * not swap in another step's content. A shown step that is gone, or ambiguous, is
+   * replaced by whatever now holds its place, as a navigation; past the end, the tour
+   * ends.
    */
   const followSteps = () => {
     const shown = shownRef.current;
     if (!isActiveRef.current || !shown) return;
 
     let index = shown.index;
-    if (visibleSteps[index]?.target !== shown.step.target) {
-      const moved = visibleSteps.findIndex((step) => step.target === shown.step.target);
-      if (moved < 0) {
+    if (!haveSameStepOrder(shown.steps, visibleSteps)) {
+      const found = findStep(visibleSteps, shown.step);
+      if (found === null || found < 0) {
+        // Gone, or not to be told apart from another step on its target: show whatever
+        // now holds its place, as a navigation would
         if (index < visibleSteps.length) {
           navigateToStep(index, 'next');
         } else {
@@ -761,10 +770,12 @@ export function useTour(options: TourOptions): UseTourReturn {
         return;
       }
 
-      index = moved;
-      setCurrentIndex(index);
-      currentIndexRef.current = index;
-      helper.goToStep(index);
+      if (found !== index) {
+        index = found;
+        setCurrentIndex(index);
+        currentIndexRef.current = index;
+        helper.goToStep(index);
+      }
     }
 
     const view = describeStep(index);
@@ -776,7 +787,7 @@ export function useTour(options: TourOptions): UseTourReturn {
       return;
     }
 
-    shownRef.current = { ...shown, index, step: view.step };
+    shownRef.current = { ...shown, index, step: view.step, steps: visibleSteps };
     if (!shown.store || !view.panel) return;
 
     shown.store.set(view.panel);

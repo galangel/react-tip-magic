@@ -124,6 +124,46 @@ export function buildCurrentStep(visibleSteps: TourStep[], index: number): Curre
 }
 
 /**
+ * Whether two lists hold the same steps in the same order, judged by `id` and `target`
+ *
+ * @param previous - The steps a running step was found in
+ * @param next - The steps now
+ * @returns Whether nothing was added, removed or reordered
+ */
+export function haveSameStepOrder(previous: TourStep[], next: TourStep[]): boolean {
+  return (
+    previous.length === next.length &&
+    previous.every(
+      (step, index) => step.id === next[index].id && step.target === next[index].target
+    )
+  );
+}
+
+/**
+ * Find a step in a new list of steps
+ *
+ * By `id` when it has one; otherwise by `target`, but only when no other step shares it -
+ * two steps on one element cannot be told apart, and guessing would show the wrong one.
+ *
+ * @param steps - The steps now
+ * @param step - The step to find
+ * @returns Its index; -1 when it is gone; null when it cannot be told apart
+ */
+export function findStep(steps: TourStep[], step: TourStep): number | null {
+  if (step.id !== undefined) {
+    return steps.findIndex((candidate) => candidate.id === step.id);
+  }
+
+  const matches = steps.flatMap((candidate, index) =>
+    candidate.target === step.target ? [index] : []
+  );
+  if (matches.length > 1) {
+    return null;
+  }
+  return matches.length === 1 ? matches[0] : -1;
+}
+
+/**
  * Calculate progress info for the tour
  *
  * @param isActive - Whether the tour is active

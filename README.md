@@ -162,7 +162,7 @@ import { escapeHtml } from '@galangel/react-tip-magic';
 
 The panel itself is rendered by React, so titles, button labels and `text` are escaped for you. Only `content` is injected as HTML: escape any interpolated value with the exported `escapeHtml`.
 
-A `body` renders inside `TipMagicProvider`, not inside the component that called `useTour`, so it sees only the context providers above `TipMagicProvider`. Re-render with new `steps` while the tour runs — data that arrived after `start()` — and the panel on screen updates in place. The step on screen is followed by its `target`; if it is removed the tour moves on to the step that took its place, or ends. A long body scrolls once it reaches `--tip-magic-tour-body-max-height` (`60vh` by default), and the panel keeps itself within the viewport.
+A `body` renders inside `TipMagicProvider`, not inside the component that called `useTour`, so it sees only the context providers above `TipMagicProvider`. Re-render with new `steps` while the tour runs — data that arrived after `start()` — and the panel on screen updates in place. The step on screen is found again by its `id`, or by its `target` when no other step shares it — so give steps an `id` (or unique targets) if `steps` can change while the tour runs. If it is removed, or cannot be told apart, the tour moves on to the step now at its place, or ends. A long body scrolls once it reaches `--tip-magic-tour-body-max-height` (`60vh` by default), and the panel keeps itself within the viewport.
 
 ### When a target isn't there
 

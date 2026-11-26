@@ -5,6 +5,8 @@ import {
   buildCurrentStep,
   calculateProgress,
   filterVisibleSteps,
+  findStep,
+  haveSameStepOrder,
   resolveStepBody,
   resolveStepContent,
   resolveTargetElement,
@@ -332,6 +334,45 @@ describe('tourSteps utilities', () => {
 
       expect(resolveStepBody(all as unknown as TourStep, stepInfo).kind).toBe('text');
       expect(resolveStepBody(bodyAndContent as unknown as TourStep, stepInfo).kind).toBe('node');
+    });
+  });
+
+  describe('haveSameStepOrder', () => {
+    const a: TourStep = { target: 'one', text: 'A' };
+    const b: TourStep = { target: 'two', text: 'B' };
+
+    it('should ignore everything but id and target', () => {
+      expect(haveSameStepOrder([a, b], [{ ...a, text: 'changed' }, b])).toBe(true);
+    });
+
+    it('should notice an added, removed or reordered step', () => {
+      expect(haveSameStepOrder([a, b], [a])).toBe(false);
+      expect(haveSameStepOrder([a, b], [b, a])).toBe(false);
+      expect(haveSameStepOrder([a], [{ ...a, id: 'a' }])).toBe(false);
+    });
+  });
+
+  describe('findStep', () => {
+    const one: TourStep = { target: 'one', text: 'A' };
+    const two: TourStep = { target: 'two', text: 'B' };
+
+    it('should find a step by its id', () => {
+      const steps: TourStep[] = [
+        { ...one, id: 'x' },
+        { ...one, id: 'y' },
+      ];
+
+      expect(findStep(steps, { ...one, id: 'y' })).toBe(1);
+      expect(findStep(steps, { ...one, id: 'z' })).toBe(-1);
+    });
+
+    it('should find a step by a target no other step shares', () => {
+      expect(findStep([two, one], one)).toBe(1);
+      expect(findStep([two], one)).toBe(-1);
+    });
+
+    it('should refuse to choose between steps on the same target', () => {
+      expect(findStep([one, { ...one, text: 'C' }], one)).toBeNull();
     });
   });
 
