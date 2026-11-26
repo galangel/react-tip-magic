@@ -200,6 +200,17 @@ const tour = useTour({
 
 Tours also support progress indicators, keyboard support, and backdrop highlighting (`focus: true`, or `focus: { dismissOnClick: true }` to let a click on the backdrop end the tour)—all configurable to fit your needs.
 
+### Upgrading to 1.4
+
+The tour panel is now rendered by React instead of injected as an HTML string. Things you can observe:
+
+- `useTipMagic().tooltip.content` is `null` while a tour panel is showing. It used to hold the panel's HTML; it still returns string content for plain tooltips.
+- A custom `progress.render` is wrapped in a `<div style="display: contents">` inside `.tip-magic-tour-footer`, so a `.tip-magic-tour-footer > .your-class` selector no longer matches. Layout is unchanged.
+- A step whose only feature is a `title` now renders the panel (a `role="dialog"`) instead of dropping the title.
+- A `content` step with no panel features is injected as HTML, as documented, without `tooltipOptions.html`.
+- `text` is rendered once-escaped everywhere, and button labels as text rather than markup.
+- Unmounting the component that called `useTour` takes a running tour down without calling `onEnd`.
+
 ---
 
 ## Tip Advisor
