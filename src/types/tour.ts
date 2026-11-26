@@ -221,7 +221,7 @@ export type TourStepContent =
        * { target: 'news', title: "What's new", body: <Markdown source={notes} /> }
        * ```
        */
-      body: ReactNode | ((step: CurrentTourStep) => ReactNode);
+      body: NonNullable<ReactNode> | ((step: CurrentTourStep) => ReactNode);
       text?: never;
       content?: never;
     }

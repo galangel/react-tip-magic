@@ -124,7 +124,7 @@ export function hasNavigationFeatures(
   showProgress: boolean = false
 ): boolean {
   return (
-    'body' in step ||
+    step.body !== undefined ||
     !!step.title ||
     nav.showControls ||
     nav.showClose ||

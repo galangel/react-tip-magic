@@ -289,6 +289,22 @@ describe('tourSteps utilities', () => {
       expect(resolveStepBody(step, stepInfo)).toEqual({ kind: 'html', value: '<b>1</b>' });
     });
 
+    it('should not accept a missing body as a body', () => {
+      // @ts-expect-error - a body step has to have a body
+      const nullBody: TourStep = { target: 'step1', body: null };
+      // @ts-expect-error - as above
+      const undefinedBody: TourStep = { target: 'step1', body: undefined };
+
+      expect(resolveStepBody(nullBody, stepInfo)).toEqual({ kind: 'node', value: null });
+      expect(resolveStepBody(undefinedBody, stepInfo)).toEqual({ kind: 'html', value: '' });
+    });
+
+    it('should ignore an undefined body spread onto a content step', () => {
+      const step: TourStep = { target: 'step1', content: '<b>x</b>', body: undefined };
+
+      expect(resolveStepBody(step, stepInfo)).toEqual({ kind: 'html', value: '<b>x</b>' });
+    });
+
     // The type rules out more than one; this covers JS consumers who bypass it.
     it('should prefer text, then body, when several are somehow present', () => {
       const all = { target: 'step1', text: 'plain', body: 'node', content: '<b>html</b>' };
