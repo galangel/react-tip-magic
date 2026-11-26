@@ -7,6 +7,7 @@ import {
   calculateProgress,
   filterVisibleSteps,
   findStep,
+  fitsPanelToMedia,
   haveSameFlowSteps,
   haveSameStepOrder,
   rendersNothing,
@@ -428,6 +429,28 @@ describe('tourSteps utilities', () => {
       for (const node of something) {
         expect(rendersNothing(node), String(node)).toBe(false);
       }
+    });
+  });
+
+  describe('fitsPanelToMedia', () => {
+    it('should be true for a centered step with an image or a native video', () => {
+      expect(fitsPanelToMedia({ text: 'A', image: 'pic.png' })).toBe(true);
+      expect(fitsPanelToMedia({ text: 'A', video: { src: 'clip.mp4' } })).toBe(true);
+    });
+
+    it('should be false for an embed, no media, or a step with a target', () => {
+      expect(fitsPanelToMedia({ text: 'A', video: { src: 'https://v', type: 'embed' } })).toBe(
+        false
+      );
+      expect(
+        fitsPanelToMedia({
+          text: 'A',
+          image: 'pic.png',
+          video: { src: 'https://v', type: 'embed' },
+        })
+      ).toBe(false);
+      expect(fitsPanelToMedia({ text: 'A' })).toBe(false);
+      expect(fitsPanelToMedia({ target: 'one', text: 'A', image: 'pic.png' })).toBe(false);
     });
   });
 

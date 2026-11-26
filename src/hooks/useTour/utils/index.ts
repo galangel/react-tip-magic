@@ -5,6 +5,7 @@ export {
   calculateProgress,
   filterVisibleSteps,
   findStep,
+  fitsPanelToMedia,
   haveSameFlowSteps,
   haveSameStepOrder,
   rendersNothing,

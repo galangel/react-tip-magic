@@ -183,6 +183,23 @@ export function findStep(steps: TourStep[], step: TourStep, index: number): numb
 }
 
 /**
+ * Whether a step's media sets the width of its panel: a centered step (no `target`) whose
+ * media has a size of its own - an image or a native video, not an embed
+ *
+ * @param step - The tour step
+ * @returns Whether the panel takes its width from the media
+ */
+export function fitsPanelToMedia(step: TourStep): boolean {
+  if (step.target !== undefined) {
+    return false;
+  }
+  if (step.video) {
+    return step.video.type !== 'embed';
+  }
+  return !!step.image;
+}
+
+/**
  * The helper flow's copy of the tour's steps
  *
  * @param steps - The visible steps

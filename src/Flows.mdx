@@ -307,6 +307,20 @@ const announcement = useTour({
 });
 ```
 
+A centered panel is at most 80% of the viewport's height
+(`--tip-magic-tour-centered-max-height`); its body scrolls past that.
+
+**Its image sets its width.** A centered step with an `image` or a native `video` takes
+the media's natural width, capped at 70% of the viewport (`--tip-magic-tour-centered-max-width`,
+and an explicit `tooltipOptions.maxWidth` if you set one); the title, body and footer wrap
+inside it. The media is never cropped or distorted: when it would leave too little height
+for the title, a few lines of body and the footer
+(`--tip-magic-tour-media-reserved-height`), it is scaled down uniformly. The panel is never
+narrower than 280px (`--tip-magic-tour-min-width`) - a smaller image is centered at its
+natural size, not stretched. The panel stays hidden until the media's size is known, so it
+does not open narrow and then widen. Without media, or with an embedded video, which has no
+size of its own, the width comes from `maxWidth` as for any tooltip.
+
 Everything else works as for an anchored step: the same panel, media, `text` / `body` /
 `content`, navigation, progress, `autoFocus` and Escape. With no target there is nothing to
 highlight, scroll to or watch, so `onTargetMissing` never fires for it. Centered and

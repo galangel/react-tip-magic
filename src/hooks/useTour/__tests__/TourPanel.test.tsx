@@ -441,3 +441,75 @@ describe('LiveTourPanel', () => {
     expect(query(container, '.tip-magic-tour-content')).toBe(panel);
   });
 });
+
+describe('a panel sized by its media', () => {
+  const content = (container: HTMLElement) =>
+    container.querySelector('.tip-magic-tour-content') as HTMLElement;
+
+  it('marks itself, and stays marked loading until the image has loaded', () => {
+    const container = renderPanel({ step: { ...STEP, image: 'pic.png' }, fitMedia: true });
+
+    expect(content(container).hasAttribute('data-tip-magic-media-fit')).toBe(true);
+    expect(content(container).hasAttribute('data-tip-magic-media-loading')).toBe(true);
+
+    fireEvent.load(query(container, 'img') as HTMLElement);
+
+    expect(content(container).hasAttribute('data-tip-magic-media-loading')).toBe(false);
+  });
+
+  it('stops loading when the image fails, rather than staying hidden', () => {
+    const container = renderPanel({ step: { ...STEP, image: 'missing.png' }, fitMedia: true });
+
+    fireEvent.error(query(container, 'img') as HTMLElement);
+
+    expect(content(container).hasAttribute('data-tip-magic-media-loading')).toBe(false);
+  });
+
+  it("waits for a native video's metadata", () => {
+    const container = renderPanel({
+      step: { ...STEP, video: { src: 'clip.mp4' } },
+      fitMedia: true,
+    });
+    expect(content(container).hasAttribute('data-tip-magic-media-loading')).toBe(true);
+
+    fireEvent.loadedMetadata(query(container, 'video') as HTMLElement);
+
+    expect(content(container).hasAttribute('data-tip-magic-media-loading')).toBe(false);
+  });
+
+  it('loads again when the image changes in place', () => {
+    const props: TourPanelProps = {
+      step: { ...STEP, image: 'one.png' },
+      stepInfo: STEP_INFO,
+      navigation: DEFAULT_NAVIGATION,
+      body: { kind: 'text', value: 'Message' },
+      progress: DEFAULT_PROGRESS,
+      fitMedia: true,
+    };
+    const { container, rerender } = render(<TourPanel {...props} />);
+    fireEvent.load(query(container, 'img') as HTMLElement);
+
+    rerender(<TourPanel {...props} step={{ ...STEP, image: 'two.png' }} />);
+
+    expect(content(container).hasAttribute('data-tip-magic-media-loading')).toBe(true);
+  });
+
+  it('passes an explicit width cap to the stylesheet', () => {
+    const container = renderPanel({
+      step: { ...STEP, image: 'pic.png' },
+      fitMedia: true,
+      mediaMaxWidth: 600,
+    });
+
+    expect(content(container).style.getPropertyValue('--tip-magic-tour-media-max-width')).toBe(
+      '600px'
+    );
+  });
+
+  it('leaves a panel that is not sized by its media unmarked', () => {
+    const container = renderPanel({ step: { ...STEP, image: 'pic.png' } });
+
+    expect(content(container).hasAttribute('data-tip-magic-media-fit')).toBe(false);
+    expect(content(container).hasAttribute('data-tip-magic-media-loading')).toBe(false);
+  });
+});

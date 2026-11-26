@@ -1,4 +1,4 @@
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import {
   startTransition,
   StrictMode,
@@ -2184,5 +2184,56 @@ describe('a step without a target', () => {
 
     expect(onEnd).toHaveBeenCalledWith(false);
     expect(count('.tip-magic-tooltip')).toBe(0);
+  });
+});
+
+describe('a centered step sized by its image', () => {
+  const content = () => document.querySelector('.tip-magic-tour-content') as HTMLElement;
+
+  it('lets the image set the width, instead of the default maxWidth', () => {
+    const getTour = mountTour(
+      { steps: [{ title: 'News', image: 'pic.png', text: 'A' }] },
+      '<div id="app"></div>'
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    expect(tooltip()?.style.maxWidth).toBe('none');
+    expect(content().hasAttribute('data-tip-magic-media-fit')).toBe(true);
+    expect(content().hasAttribute('data-tip-magic-media-loading')).toBe(true);
+
+    act(() => {
+      fireEvent.load(document.querySelector('.tip-magic-tour-image img') as HTMLElement);
+    });
+
+    expect(content().hasAttribute('data-tip-magic-media-loading')).toBe(false);
+  });
+
+  it('honours an explicit maxWidth as an extra cap', () => {
+    const getTour = mountTour(
+      { steps: [{ image: 'pic.png', text: 'A' }], tooltipOptions: { maxWidth: 600 } },
+      '<div id="app"></div>'
+    );
+    act(() => {
+      getTour().start();
+    });
+
+    expect(tooltip()?.style.maxWidth).toBe('600px');
+    expect(content().style.getPropertyValue('--tip-magic-tour-media-max-width')).toBe('600px');
+  });
+
+  it.each([
+    ['an anchored step with an image', { target: 'one', image: 'pic.png', text: 'A' }],
+    ['a centered step with an embed', { video: { src: 'https://v', type: 'embed' }, text: 'A' }],
+    ['a centered step without media', { title: 'News', text: 'A' }],
+  ] as [string, TourStep][])('leaves %s at the default width', (_name, step) => {
+    const getTour = mountTour({ steps: [step] }, '<div data-tip-id="one">One</div>');
+    act(() => {
+      getTour().start();
+    });
+
+    expect(tooltip()?.style.maxWidth).toBe('300px');
+    expect(content().hasAttribute('data-tip-magic-media-fit')).toBe(false);
   });
 });

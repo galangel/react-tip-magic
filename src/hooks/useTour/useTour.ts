@@ -35,6 +35,7 @@ import {
   createTourPanelStore,
   filterVisibleSteps,
   findStep,
+  fitsPanelToMedia,
   getMergedNavigation,
   getMergedProgress,
   hasNavigationFeatures,
@@ -332,6 +333,7 @@ export function useTour(options: TourOptions): UseTourReturn {
       const mergedNav = getMergedNavigation(navigation, step);
       const progressOptions = getMergedProgress(tourProgress, step);
       const body = resolveStepBody(step, stepInfo);
+      const maxWidth = step.tooltipOptions?.maxWidth ?? tooltipOptions?.maxWidth;
 
       const panel = hasNavigationFeatures(mergedNav, step, progressOptions.show, body)
         ? {
@@ -342,12 +344,14 @@ export function useTour(options: TourOptions): UseTourReturn {
             progress: progressOptions,
             titleId,
             messageId,
+            fitMedia: fitsPanelToMedia(step),
+            mediaMaxWidth: typeof maxWidth === 'number' ? maxWidth : undefined,
           }
         : null;
 
       return { step, body, panel };
     },
-    [visibleSteps, navigation, tourProgress, titleId, messageId]
+    [visibleSteps, navigation, tourProgress, tooltipOptions, titleId, messageId]
   );
 
   /**
@@ -366,6 +370,10 @@ export function useTour(options: TourOptions): UseTourReturn {
       placement: step.placement ?? tooltipOptions?.placement,
       // A step without a target has nothing to sit beside
       ...(step.target === undefined && { centered: true }),
+      // ...and its media, when it has some with a size, sets its width
+      ...(panel?.fitMedia &&
+        step.tooltipOptions?.maxWidth === undefined &&
+        tooltipOptions?.maxWidth === undefined && { maxWidth: 'none' as const }),
       // A step with no panel hands its body to the tooltip as-is: `content` is HTML unless
       // the consumer explicitly said otherwise, and `text` never is
       ...(body.kind === 'html' && {

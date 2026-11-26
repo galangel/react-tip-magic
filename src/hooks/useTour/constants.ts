@@ -63,6 +63,10 @@ export const TOUR_DATA_ATTRIBUTES = {
   ELEVATED: 'data-tip-magic-elevated',
   /** Applied to the backdrop when it should capture pointer events */
   BACKDROP_INTERACTIVE: 'data-tip-magic-backdrop-interactive',
+  /** On a centered panel whose image or video sets its width */
+  MEDIA_FIT: 'data-tip-magic-media-fit',
+  /** On such a panel until its media's size is known; the stylesheet hides it meanwhile */
+  MEDIA_LOADING: 'data-tip-magic-media-loading',
 } as const;
 
 /**

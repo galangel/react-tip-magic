@@ -142,6 +142,17 @@ between centered and anchored - the two strategies are different coordinate syst
 the transform would slide from the wrong place. `size()` does not run for it; the
 stylesheet caps a centered panel at the viewport instead.
 
+**A centered panel's media sets its width in CSS, which only works without percentages.**
+The panel is `width: fit-content`, everything but the media is `contain: inline-size` (so
+text wraps instead of widening it), and the media is `width: auto` with `max-width` /
+`max-height` in viewport units - a replaced element scaled by both keeps its aspect ratio.
+A percentage `max-width` on the media would make its min-content contribution zero
+("compressible" replaced element) and the panel would collapse to its minimum width. The
+tooltip's own `max-width` is lifted with `maxWidth: 'none'` for such a step, since the
+default 300px would clip it. The panel is hidden (`data-tip-magic-media-loading`, read by a
+`:has()` rule) until the media's size is known; without `:has()` it opens at the minimum
+width and widens on load.
+
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.
 

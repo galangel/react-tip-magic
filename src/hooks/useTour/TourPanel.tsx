@@ -1,4 +1,4 @@
-import { memo, useSyncExternalStore, type CSSProperties } from 'react';
+import { memo, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { PRIMARY_ACTION_ATTRIBUTE } from '../../constants';
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../types/tour';
 import { TOUR_ACTIONS, TOUR_CSS_CLASSES, TOUR_DATA_ATTRIBUTES } from './constants';
@@ -23,6 +23,10 @@ export interface TourPanelProps {
   titleId?: string;
   /** id for the message, which labels the panel when the step has no title */
   messageId?: string;
+  /** Whether the panel takes its width from its image or native video (a centered step) */
+  fitMedia?: boolean;
+  /** An explicit cap on the panel's width, in pixels, when it takes it from its media */
+  mediaMaxWidth?: number;
 }
 
 type TourAction = (typeof TOUR_ACTIONS)[keyof typeof TOUR_ACTIONS];
@@ -31,6 +35,9 @@ const EMBED_ALLOW =
   'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
 
 const DEFAULT_EMBED_TITLE = 'Tour video';
+
+/** Read by the stylesheet to cap media that sets the panel's width */
+const MEDIA_MAX_WIDTH_PROPERTY = '--tip-magic-tour-media-max-width';
 
 /** Leaves custom progress markup laid out as direct children of the footer */
 const CUSTOM_PROGRESS_STYLE: CSSProperties = { display: 'contents' };
@@ -71,7 +78,12 @@ const RawHtml = memo(function RawHtml({
   );
 });
 
-function TourMedia({ image, video }: Pick<TourStep, 'image' | 'video'>) {
+interface TourMediaProps extends Pick<TourStep, 'image' | 'video'> {
+  /** Called once the media's size is known - loaded, or failed to */
+  onSized?: (src: string) => void;
+}
+
+function TourMedia({ image, video, onSized }: TourMediaProps) {
   if (video) {
     const {
       src,
@@ -100,6 +112,8 @@ function TourMedia({ image, video }: Pick<TourStep, 'image' | 'video'>) {
           loop={loop}
           muted={muted}
           playsInline
+          onLoadedMetadata={() => onSized?.(src)}
+          onError={() => onSized?.(src)}
         >
           <source src={src} type="video/mp4" />
         </video>
@@ -110,7 +124,7 @@ function TourMedia({ image, video }: Pick<TourStep, 'image' | 'video'>) {
   if (image) {
     return (
       <div className={TOUR_CSS_CLASSES.IMAGE}>
-        <img src={image} alt="" />
+        <img src={image} alt="" onLoad={() => onSized?.(image)} onError={() => onSized?.(image)} />
       </div>
     );
   }
@@ -222,13 +236,32 @@ export function TourPanel({
   progress,
   titleId,
   messageId,
+  fitMedia = false,
+  mediaMaxWidth,
 }: TourPanelProps) {
   const hasHeader = !!step.title || navigation.showClose;
+
+  // A panel sized by its media is hidden until that size is known, so it does not open
+  // at its minimum width and then jump
+  const mediaSrc = step.video?.src ?? step.image;
+  const [sizedSrc, setSizedSrc] = useState<string | undefined>();
+  const mediaLoading = fitMedia && mediaSrc !== sizedSrc;
   const showControls = navigation.showControls;
   const showProgress = progress.show;
 
   return (
-    <div className={TOUR_CSS_CLASSES.CONTENT}>
+    <div
+      className={TOUR_CSS_CLASSES.CONTENT}
+      {...(fitMedia && {
+        [TOUR_DATA_ATTRIBUTES.MEDIA_FIT]: '',
+        ...(mediaLoading && { [TOUR_DATA_ATTRIBUTES.MEDIA_LOADING]: '' }),
+      })}
+      style={
+        fitMedia && mediaMaxWidth !== undefined
+          ? ({ [MEDIA_MAX_WIDTH_PROPERTY]: `${mediaMaxWidth}px` } as CSSProperties)
+          : undefined
+      }
+    >
       {hasHeader && (
         <div className={TOUR_CSS_CLASSES.HEADER}>
           {step.title ? (
@@ -250,7 +283,11 @@ export function TourPanel({
           )}
         </div>
       )}
-      <TourMedia image={step.image} video={step.video} />
+      <TourMedia
+        image={step.image}
+        video={step.video}
+        onSized={fitMedia ? setSizedSrc : undefined}
+      />
       <div className={TOUR_CSS_CLASSES.BODY}>
         <TourMessage body={body} id={messageId} />
       </div>

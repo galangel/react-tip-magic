@@ -160,8 +160,11 @@ export interface TooltipShowOptions {
   wordWrap?: boolean;
   /** Text break behavior */
   textBreak?: TextBreak;
-  /** Maximum width in pixels */
-  maxWidth?: number;
+  /**
+   * Maximum width in pixels, or `'none'` to let the content decide. A centered tour step
+   * with an image uses `'none'` unless you set a number, so the image sets its width.
+   */
+  maxWidth?: number | 'none';
   /** Parse string content as HTML */
   html?: boolean;
   /** Keep tooltip visible when hovering */
@@ -358,7 +361,8 @@ export interface ParsedTooltipData {
   wordWrap: boolean;
   /** Text break behavior - controls where words can break */
   textBreak: TextBreak;
-  maxWidth: number;
+  /** Maximum width in pixels, or `'none'` to let the content decide */
+  maxWidth: number | 'none';
   html: boolean;
   interactive: boolean;
   /** Override transition behavior for this specific tooltip */

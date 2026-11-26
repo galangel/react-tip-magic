@@ -175,6 +175,8 @@ const announcement = useTour({
 });
 ```
 
+A centered panel is at most 80% of the viewport's height (`--tip-magic-tour-centered-max-height`), and its `image` (or native `video`) sets its width: the media's natural width, capped at 70% of the viewport (`--tip-magic-tour-centered-max-width`, and an explicit `tooltipOptions.maxWidth`), never cropped and scaled down uniformly when it would crowd out the text. The panel is never narrower than 280px (`--tip-magic-tour-min-width`); a smaller image is centered at its natural size.
+
 Centered and anchored steps mix in one tour. With no target there is nothing to highlight, scroll to or watch, and `onTargetMissing` never fires for it.
 
 ### When a target isn't there
@@ -233,6 +235,7 @@ Type changes, for code that uses the exported context (`useTipMagicContext`, `Ti
 - `TooltipState.content` and the `SHOW_TOOLTIP` / `MOVE_TOOLTIP` payloads' `content` widened from `string` to `ReactNode`. Writing a string still works; code that reads one and annotates it as `string` must widen or narrow with `typeof`.
 - `UPDATE_TOOLTIP_CONTENT` and `tooltip.updateContent` still take a `string`. Called while a tour runs, they replace the tour panel with that string.
 - `HIDE_TOOLTIP` and `END_FLOW` accept an optional `payload` (`onlyIfOwner`, `onlyIfSteps`), and `TooltipShowOptions` gains `owner` and `centered`; all additive.
+- `TooltipShowOptions.maxWidth` and `ParsedTooltipData.maxWidth` also accept `'none'` (let the content decide), which a centered step with an image uses. Code that reads `parsedData.maxWidth` as a `number` must handle it.
 
 ---
 
