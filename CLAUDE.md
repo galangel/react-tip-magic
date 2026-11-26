@@ -92,8 +92,10 @@ sets `html` from the body's kind there: `false` for `text`, whatever the consume
 `html: false` - which 1.3 consumers use to show untrusted strings as text. A `body` step
 always renders the panel: a plain tooltip ignores the pointer and cannot scroll.
 
-**Each tour step mounts a new panel.** `useTour` keys `LiveTourPanel` by step index. Focus
-inside the old panel drops to `<body>` and `autoFocus` resolves afresh - without the key,
+**Each tour step mounts a new panel.** `useTour` gives every presented step's
+`LiveTourPanel` a key of its own - a counter, not the step index, which can move under a
+running step when `steps` change. Focus inside the old panel drops to `<body>` and
+`autoFocus` resolves afresh - without the key,
 React reuses the Next button as the next step's Finish, focus stays on it, and `'panel'`
 never moves focus to the new step's dialog. It also stops a `body` component's state
 leaking from one step into the next.
