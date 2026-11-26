@@ -96,9 +96,9 @@ export interface TourNavigation {
    * `false` is an escape hatch: focus stays behind the panel, so a screen reader is not
    * told the dialog opened. Prefer `'panel'` unless you are moving focus yourself.
    *
-   * Only applies to steps that render as a dialog. A step with no title, navigation
-   * features, media or progress is a plain tooltip and never moves focus, whatever this
-   * is set to.
+   * Only applies to steps that render as a dialog. A `text` or `content` step with no
+   * title, navigation features, media or progress is a plain tooltip and never moves
+   * focus, whatever this is set to.
    *
    * @example
    * ```tsx
@@ -209,7 +209,8 @@ export type TourStepContent =
   | {
       /**
        * React body - a node, or a function that receives the current step info and
-       * returns one. Event handlers inside it work as anywhere else in your app.
+       * returns one. Event handlers inside it work as anywhere else in your app. A `body`
+       * step always renders the tour panel, so it is interactive and scrolls.
        *
        * @remarks
        * It renders inside `TipMagicProvider`, not inside the component that called

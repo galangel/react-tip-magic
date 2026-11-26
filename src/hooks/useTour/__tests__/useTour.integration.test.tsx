@@ -636,10 +636,20 @@ describe('a React body', () => {
     expect(getTour().currentStep?.content).toBe('');
   });
 
-  it('should render with no panel features as the tooltip content', () => {
+  it('should render in an interactive, scrollable panel even with no other panel features', () => {
+    const onClick = vi.fn();
     const getTour = mountTour(
       {
-        steps: [{ target: 'one', body: <em className="plain">Plain</em> }],
+        steps: [
+          {
+            target: 'one',
+            body: (
+              <button type="button" className="act" onClick={onClick}>
+                Act
+              </button>
+            ),
+          },
+        ],
         navigation: { showClose: false },
       },
       '<div data-tip-id="one">One</div>'
@@ -649,8 +659,14 @@ describe('a React body', () => {
       getTour().start();
     });
 
-    expect(tooltip()?.querySelector('.tip-magic-text > .plain')?.textContent).toBe('Plain');
-    expect(tooltip()?.getAttribute('role')).toBe('tooltip');
+    expect(tooltip()?.querySelector('.tip-magic-tour-body .act')).not.toBeNull();
+    expect(tooltip()?.hasAttribute('data-interactive')).toBe(true);
+    expect(tooltip()?.getAttribute('role')).toBe('dialog');
+
+    act(() => {
+      (tooltip()?.querySelector('.act') as HTMLElement).click();
+    });
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
 

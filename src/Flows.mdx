@@ -488,8 +488,9 @@ steps: [
 ];
 ```
 
-Steps that render as a plain tooltip rather than a dialog — no title, navigation controls,
-close button, media or progress — never move focus, whatever `autoFocus` is set to.
+Steps that render as a plain tooltip rather than a dialog — a `text` or `content` step
+with no title, navigation controls, close button, media or progress — never move focus,
+whatever `autoFocus` is set to. A `body` step always renders the panel.
 
 ---
 

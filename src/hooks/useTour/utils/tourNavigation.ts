@@ -109,7 +109,9 @@ export function getMergedProgress(
 
 /**
  * Check if a step has anything that needs the tour panel rather than a plain tooltip
- * (a title, navigation controls, close button, media, or progress)
+ * (a React body, a title, navigation controls, close button, media, or progress)
+ *
+ * A `body` always needs the panel: a plain tooltip ignores the pointer and cannot scroll.
  *
  * @param nav - Merged navigation config
  * @param step - Current step
@@ -122,6 +124,7 @@ export function hasNavigationFeatures(
   showProgress: boolean = false
 ): boolean {
   return (
+    'body' in step ||
     !!step.title ||
     nav.showControls ||
     nav.showClose ||

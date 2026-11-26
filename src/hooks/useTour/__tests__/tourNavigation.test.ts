@@ -183,6 +183,13 @@ describe('tourNavigation utilities', () => {
       expect(hasNavigationFeatures(nav, step)).toBe(true);
     });
 
+    it('should return true for a body step', () => {
+      const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
+      const step: TourStep = { target: 'step1', body: 'React content' };
+
+      expect(hasNavigationFeatures(nav, step)).toBe(true);
+    });
+
     it('should return true when showProgress is true', () => {
       const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
       const step: TourStep = { target: 'step1', content: 'Content' };
