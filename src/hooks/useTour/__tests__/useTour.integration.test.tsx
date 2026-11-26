@@ -1594,3 +1594,62 @@ describe('a running tour whose steps change shape', () => {
     expect(document.getElementById(labelId!)?.textContent).toBe('Hello');
   });
 });
+
+describe('one tour replacing another', () => {
+  it("does not take down the next tour's panel or flow when the previous one unmounts", async () => {
+    let flowActive: boolean | undefined;
+    let showB!: () => void;
+    let tourA!: UseTourReturn;
+
+    function FlowProbe() {
+      flowActive = useTipMagic().helper.isFlowActive;
+      return null;
+    }
+
+    function TourA() {
+      tourA = useTour({ steps: [{ target: 'one', text: 'Tour A' }], focus: true });
+      return null;
+    }
+
+    /** Starts on mount, the way a route's announcement does */
+    function TourB() {
+      const tour = useTour({ steps: [{ target: 'two', text: 'Tour B' }] });
+      const startRef = useRef(tour.start);
+      startRef.current = tour.start;
+      useEffect(() => {
+        startRef.current();
+      }, []);
+      return null;
+    }
+
+    function Route() {
+      const [route, setRoute] = useState<'a' | 'b'>('a');
+      showB = () => setRoute('b');
+      return (
+        <>
+          {route === 'a' ? <TourA /> : <TourB />}
+          <FlowProbe />
+        </>
+      );
+    }
+
+    document.body.innerHTML = '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div>';
+    render(
+      <TipMagicProvider>
+        <Route />
+      </TipMagicProvider>
+    );
+    act(() => {
+      tourA.start();
+    });
+
+    await act(async () => {
+      showB();
+    });
+
+    expect(tooltip()?.textContent).toContain('Tour B');
+    expect(flowActive).toBe(true);
+    // Tour A's own DOM state is still cleaned up
+    expect(count('.tip-magic-tour-backdrop')).toBe(0);
+  });
+});

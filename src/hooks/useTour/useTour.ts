@@ -18,6 +18,8 @@ import type {
   UseTourReturn,
 } from '../../types/tour';
 import { generateTooltipId } from '../../utils/parseDataAttributes';
+import { useTipMagicContext } from '../../context/TipMagicContext';
+import type { FlowStep } from '../../types';
 import { useTipMagic } from '../useTipMagic';
 import { TOUR_ACTIONS, TOUR_DATA_ATTRIBUTES } from './constants';
 import { LiveTourPanel, type TourPanelProps } from './TourPanel';
@@ -189,6 +191,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   } = options;
 
   const { tooltip, helper, config } = useTipMagic();
+  const { dispatch } = useTipMagicContext();
 
   // Internal state
   const [isActive, setIsActive] = useState(false);
@@ -210,6 +213,8 @@ export function useTour(options: TourOptions): UseTourReturn {
   const shownRef = useRef<ShownStep | null>(null);
   // Counts presented steps, to key each panel uniquely
   const presentCountRef = useRef(0);
+  // The steps handed to the helper flow, which identify it as this tour's
+  const flowStepsRef = useRef<FlowStep[] | null>(null);
 
   // One id per tour instance for the panel's aria-labelledby. Generated rather than
   // hardcoded so it cannot collide with an id the host page already owns, and held for
@@ -224,7 +229,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   const prevRef = useRef<() => void>(() => {});
   const endRef = useRef<() => void>(() => {});
   const targetLostRef = useRef<() => void>(() => {});
-  const teardownRef = useRef<() => void>(() => {});
+  const abandonRef = useRef<() => void>(() => {});
   const followStepsRef = useRef<() => void>(() => {});
 
   // Compute visible steps (filter out steps with condition returning false)
@@ -442,17 +447,41 @@ export function useTour(options: TourOptions): UseTourReturn {
   }, [tooltip]);
 
   /**
-   * Take the tour off screen and reset its state, without calling any consumer callback
+   * Forget the running tour
    */
-  const teardown = useCallback(() => {
+  const resetTourState = useCallback(() => {
     shownRef.current = null;
-    cleanup();
-    helper.endFlow();
+    flowStepsRef.current = null;
     setIsActive(false);
     isActiveRef.current = false;
     setCurrentIndex(-1);
     currentIndexRef.current = -1;
-  }, [cleanup, helper]);
+  }, []);
+
+  /**
+   * Take the tour off screen and reset its state, without calling any consumer callback
+   */
+  const teardown = useCallback(() => {
+    cleanup();
+    helper.endFlow();
+    resetTourState();
+  }, [cleanup, helper, resetTourState]);
+
+  /**
+   * Teardown for a tour whose component has unmounted: the tooltip and the helper flow
+   * are released only if this tour still owns them, since the component that replaced
+   * it may already have started a tour of its own
+   */
+  const abandon = useCallback(() => {
+    const shown = shownRef.current;
+    if (shown) {
+      dispatch({ type: 'HIDE_TOOLTIP', payload: { onlyIfContent: shown.content } });
+    }
+    if (flowStepsRef.current) {
+      dispatch({ type: 'END_FLOW', payload: { onlyIfSteps: flowStepsRef.current } });
+    }
+    resetTourState();
+  }, [dispatch, resetTourState]);
 
   /**
    * Tear the tour down and report the outcome
@@ -561,6 +590,7 @@ export function useTour(options: TourOptions): UseTourReturn {
       targetId: step.target,
       message: step.text ?? (typeof step.content === 'string' ? step.content : ''),
     }));
+    flowStepsRef.current = flowSteps;
     helper.startFlow(flowSteps);
     // startFlow always opens at 0; a skipped first step means we are elsewhere
     if (startIndex !== 0) {
@@ -654,7 +684,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   prevRef.current = prev;
   endRef.current = end;
   targetLostRef.current = handleTargetLost;
-  teardownRef.current = teardown;
+  abandonRef.current = abandon;
 
   /**
    * Jump to a specific step
@@ -849,7 +879,7 @@ export function useTour(options: TourOptions): UseTourReturn {
         // A running tour must not outlive its component as a panel with dead buttons.
         // No onEnd: the consumer that would hear it has unmounted too.
         if (isActiveRef.current) {
-          teardownRef.current();
+          abandonRef.current();
         }
         targetWatcher.destroy();
         backdropManager.destroy();

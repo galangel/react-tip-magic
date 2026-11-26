@@ -88,7 +88,11 @@ export type TipMagicAction =
         parsedData: ParsedTooltipData;
       };
     }
-  | { type: 'HIDE_TOOLTIP' }
+  | {
+      type: 'HIDE_TOOLTIP';
+      /** Hide only while the tooltip still holds this content - it may be someone else's */
+      payload?: { onlyIfContent: ReactNode };
+    }
   | {
       type: 'MOVE_TOOLTIP';
       payload: {
@@ -112,7 +116,11 @@ export type TipMagicAction =
   | { type: 'NEXT_FLOW_STEP' }
   | { type: 'PREV_FLOW_STEP' }
   | { type: 'SET_FLOW_STEP'; payload: number }
-  | { type: 'END_FLOW' };
+  | {
+      type: 'END_FLOW';
+      /** End only while the flow is still this one - it may be someone else's */
+      payload?: { onlyIfSteps: FlowStep[] };
+    };
 
 /**
  * Reducer for TipMagic state
@@ -133,6 +141,9 @@ export function tipMagicReducer(state: TipMagicState, action: TipMagicAction): T
       };
 
     case 'HIDE_TOOLTIP':
+      if (action.payload && state.tooltip.content !== action.payload.onlyIfContent) {
+        return state;
+      }
       return {
         ...state,
         tooltip: {
@@ -260,6 +271,9 @@ export function tipMagicReducer(state: TipMagicState, action: TipMagicAction): T
       };
 
     case 'END_FLOW':
+      if (action.payload && state.flow.steps !== action.payload.onlyIfSteps) {
+        return state;
+      }
       return {
         ...state,
         flow: initialFlowState,
