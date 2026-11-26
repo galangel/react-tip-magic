@@ -120,6 +120,15 @@ again, because `StrictMode`'s simulated unmount remounts within the same task: t
 down there closed a tour started from a guarded mount effect, for good. A test has to
 `await act(async () => ...)` the unmount to see the teardown.
 
+Two consequences of the deferral. The cleanup is a layout effect that clears `mountedRef`
+during the unmount commit, and `handleTargetLost` ignores a lost target once it is clear:
+a target rendered inside the unmounting component detaches in the same commit, and the
+`MutationObserver` would otherwise end the tour with `onTargetMissing`, `onExit` and
+`onEnd` before the teardown ran. And the teardown releases the tooltip and helper flow only
+while this tour still owns them (`HIDE_TOOLTIP` / `END_FLOW` with `onlyIfContent` /
+`onlyIfSteps`): by the time it runs, the component that replaced this one may have started
+its own tour.
+
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.
 

@@ -1375,6 +1375,51 @@ describe('unmounting the component that runs the tour', () => {
     expect(onExit).not.toHaveBeenCalled();
   });
 
+  it('reports nothing when the target unmounts with the component', async () => {
+    const onEnd = vi.fn();
+    const onExit = vi.fn();
+    const onTargetMissing = vi.fn();
+    let tour!: UseTourReturn;
+    let unmountTour!: () => void;
+
+    function TourWithTarget() {
+      tour = useTour({
+        steps: [{ target: 'inside', text: 'A', onExit }],
+        onEnd,
+        onTargetMissing,
+      });
+      return <div data-tip-id="inside">Inside</div>;
+    }
+
+    function Toggle() {
+      const [mounted, setMounted] = useState(true);
+      unmountTour = () => setMounted(false);
+      return mounted ? <TourWithTarget /> : null;
+    }
+
+    document.body.innerHTML = '';
+    render(
+      <TipMagicProvider>
+        <Toggle />
+      </TipMagicProvider>
+    );
+    act(() => {
+      tour.start();
+    });
+    expect(count('.tip-magic-tooltip')).toBe(1);
+
+    await act(async () => {
+      unmountTour();
+    });
+    await flushMutations();
+
+    expect(count('.tip-magic-tooltip')).toBe(0);
+    expect(onTargetMissing).not.toHaveBeenCalled();
+    expect(onExit).not.toHaveBeenCalled();
+    expect(onEnd).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
   it('leaves a tooltip it does not own alone when the tour is not running', async () => {
     let showOther!: () => void;
     function Shower() {

@@ -2,6 +2,7 @@ import {
   createElement,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -40,6 +41,9 @@ import {
   type ResolvedStepBody,
   type TourPanelStore,
 } from './utils';
+
+/** useLayoutEffect, without React 18's warning when rendered on the server */
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
  * A step that can render, and the element it renders against
@@ -223,6 +227,9 @@ export function useTour(options: TourOptions): UseTourReturn {
   if (!titleIdRef.current) {
     titleIdRef.current = `${generateTooltipId()}-title`;
   }
+
+  // Whether the hook is mounted, cleared during the unmount commit
+  const mountedRef = useRef(false);
 
   // Refs for navigation handlers to avoid stale closures
   const nextRef = useRef<() => void>(() => {});
@@ -665,7 +672,9 @@ export function useTour(options: TourOptions): UseTourReturn {
    * Recover from the current step's target leaving the DOM
    */
   const handleTargetLost = useCallback(() => {
-    if (!isActiveRef.current) return;
+    // A target that left with this component is not a missing target: the unmount
+    // cleanup ends the tour silently
+    if (!isActiveRef.current || !mountedRef.current) return;
 
     const idx = currentIndexRef.current;
     const stepData = buildCurrentStep(visibleSteps, idx);
@@ -862,9 +871,10 @@ export function useTour(options: TourOptions): UseTourReturn {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isActive]);
 
-  // Cleanup on unmount
-  const mountedRef = useRef(false);
-  useEffect(() => {
+  // Cleanup on unmount. A layout effect, so `mountedRef` is cleared before the
+  // MutationObserver reports a target that unmounted in the same commit - see
+  // handleTargetLost.
+  useIsomorphicLayoutEffect(() => {
     mountedRef.current = true;
     const backdropManager = backdropManagerRef.current;
     const highlightManager = highlightManagerRef.current;
