@@ -128,6 +128,32 @@ describe('TourPanel', () => {
       expect(video.hasAttribute('muted')).toBe(false);
     });
 
+    it('drops the muted attribute when the same video is unmuted', () => {
+      const props: TourPanelProps = {
+        step: { ...STEP, video: { src: 'clip.mp4' } },
+        stepInfo: STEP_INFO,
+        navigation: DEFAULT_NAVIGATION,
+        body: { kind: 'text', value: 'Message' },
+        progress: DEFAULT_PROGRESS,
+      };
+      const { container, rerender } = render(<TourPanel {...props} />);
+      const video = query(container, 'video') as HTMLVideoElement;
+      expect(video.hasAttribute('muted')).toBe(true);
+
+      rerender(
+        <TourPanel {...props} step={{ ...STEP, video: { src: 'clip.mp4', muted: false } }} />
+      );
+
+      expect(query(container, 'video')).toBe(video);
+      expect(video.hasAttribute('muted')).toBe(false);
+      expect(video.defaultMuted).toBe(false);
+      expect(video.muted).toBe(false);
+
+      rerender(<TourPanel {...props} />);
+
+      expect(video.hasAttribute('muted')).toBe(true);
+    });
+
     it('renders an embed in an iframe with a semicolon-separated allow list', () => {
       const container = renderPanel({
         step: { ...STEP, video: { src: 'https://example.com/v', type: 'embed' } },

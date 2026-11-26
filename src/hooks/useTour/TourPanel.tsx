@@ -32,13 +32,15 @@ const EMBED_ALLOW =
 const CUSTOM_PROGRESS_STYLE: CSSProperties = { display: 'contents' };
 
 /**
- * Write the `muted` attribute React leaves out - it only sets the property, and iOS
- * Safari's autoplay policy reads the attribute
+ * Keep the `muted` attribute in step with the prop. React only sets the property, and iOS
+ * Safari's autoplay policy reads the attribute, which `defaultMuted` reflects.
  */
 const markMuted = (video: HTMLVideoElement | null) => {
-  if (!video) return;
-  video.defaultMuted = true;
-  video.setAttribute('muted', '');
+  if (video) video.defaultMuted = true;
+};
+
+const markUnmuted = (video: HTMLVideoElement | null) => {
+  if (video) video.defaultMuted = false;
 };
 
 const actionAttribute = (action: TourAction) => ({ [TOUR_DATA_ATTRIBUTES.ACTION]: action });
@@ -78,7 +80,7 @@ function TourMedia({ image, video }: Pick<TourStep, 'image' | 'video'>) {
         {/* Keyed on src: React does not reload a <video> whose <source> changes */}
         <video
           key={src}
-          ref={muted ? markMuted : undefined}
+          ref={muted ? markMuted : markUnmuted}
           autoPlay={autoplay}
           loop={loop}
           muted={muted}
