@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { TipMagicProvider } from '../../components/TipMagicProvider';
 import { TOUR_CSS_CLASSES, useTour } from '../../hooks/useTour';
 import '../../styles/index.css';
-import type { TourAutoFocus, TourStep } from '../../types/tour';
+import type { TourAutoFocus, TourMediaPlacement, TourStep } from '../../types/tour';
 import { MockDashboard } from './MockDashboard';
 import './tooltip-stories.css';
 
@@ -1900,10 +1900,17 @@ const ANNOUNCEMENT_IMAGES = [
  *   here a single "Got it"
  * - `navigation.autoFocus: 'primary'` puts focus on "Got it" as it opens, so Enter
  *   dismisses it (the library default, `'panel'`, focuses the panel itself)
+ * - `mediaPlacement` puts the image on top (the default), or in a column to the left or
+ *   right of the text. Beside the text, the panel is at most 70% of the viewport wide,
+ *   the text column 280-400px; below a 640px viewport the image goes back on top.
  */
+const MEDIA_PLACEMENTS: TourMediaPlacement[] = ['top', 'left', 'right'];
+
 const AnnouncementDemo = () => {
   const [image, setImage] = useState(ANNOUNCEMENT_IMAGES[0].src);
+  const [mediaPlacement, setMediaPlacement] = useState<TourMediaPlacement>('top');
   const announcement = useTour({
+    mediaPlacement,
     steps: [
       {
         id: 'whats-new',
@@ -1927,6 +1934,16 @@ const AnnouncementDemo = () => {
               disabled={announcement.isActive}
             >
               {option.label}
+            </button>
+          ))}
+          {MEDIA_PLACEMENTS.map((placement) => (
+            <button
+              key={placement}
+              className={`tour-control-btn ${placement === mediaPlacement ? 'tour-control-btn-primary' : 'tour-control-btn-secondary'}`}
+              onClick={() => setMediaPlacement(placement)}
+              disabled={announcement.isActive}
+            >
+              {placement[0].toUpperCase() + placement.slice(1)}
             </button>
           ))}
         </div>
