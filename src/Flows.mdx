@@ -297,6 +297,11 @@ The panel is React too, so its title, button labels and `text` are escaped by Re
 so it sees only the context providers that wrap `TipMagicProvider`. Put providers the body
 needs (a theme, a router) above it.
 
+A running step follows changes to `steps`: re-render with a new `body` - release notes
+that arrived after `start()`, say - and the panel on screen updates in place, without
+moving focus or firing `onStepChange` again. A `text` or `content` step shown as a plain
+tooltip picks up changes on the next navigation.
+
 A long body scrolls: `.tip-magic-tour-body` stops growing at
 `--tip-magic-tour-body-max-height` (`60vh` by default), and the panel shrinks the body
 further when there is less room beside the target.

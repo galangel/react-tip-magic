@@ -95,6 +95,14 @@ React reuses the Next button as the next step's Finish, focus stays on it, and `
 never moves focus to the new step's dialog. It also stops a `body` component's state
 leaking from one step into the next.
 
+**The tour panel reads its props from a store, not from the tooltip's state.** The
+element `useTour` hands the tooltip is a `LiveTourPanel` that subscribes to a
+`TourPanelStore`, so a running step can follow new `steps` (a body whose data arrived
+after `start()`) in place. Routing that update through `tooltip.show` instead would
+re-render every `useTipMagic` consumer - the component that called `useTour` among them,
+whose inline `steps` would then update again, forever - and would re-run the tooltip's
+`autoFocus` effect, which keys on its content.
+
 **A `body` renders in the provider's tree, not the caller's.** The element is created in
 the component that called `useTour` but rendered by `Tooltip`, under `TipMagicProvider`,
 so it sees only the context providers above the provider.

@@ -1,8 +1,8 @@
-import { memo, type CSSProperties } from 'react';
+import { memo, useSyncExternalStore, type CSSProperties } from 'react';
 import { PRIMARY_ACTION_ATTRIBUTE } from '../../constants';
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../types/tour';
 import { TOUR_ACTIONS, TOUR_CSS_CLASSES, TOUR_DATA_ATTRIBUTES } from './constants';
-import { getProgressRingGeometry } from './utils';
+import { getProgressRingGeometry, type TourPanelStore } from './utils';
 import type { ResolvedProgressOptions, ResolvedStepBody } from './utils';
 
 /**
@@ -218,4 +218,15 @@ export function TourPanel({ step, stepInfo, navigation, body, progress, titleId 
       )}
     </div>
   );
+}
+
+/**
+ * The tour panel, rendering whatever props the store currently holds
+ *
+ * This is the element `useTour` hands the tooltip, so a running step can be updated in
+ * place - see `TourPanelStore`.
+ */
+export function LiveTourPanel({ store }: { store: TourPanelStore }) {
+  const props = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  return props && <TourPanel {...props} />;
 }

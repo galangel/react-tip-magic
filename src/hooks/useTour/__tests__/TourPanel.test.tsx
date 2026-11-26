@@ -1,9 +1,9 @@
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CurrentTourStep, TourNavigation, TourStep } from '../../../types/tour';
 import { DEFAULT_NAVIGATION } from '../constants';
-import { TourPanel, type TourPanelProps } from '../TourPanel';
-import { DEFAULT_PROGRESS, type ResolvedProgressOptions } from '../utils';
+import { LiveTourPanel, TourPanel, type TourPanelProps } from '../TourPanel';
+import { createTourPanelStore, DEFAULT_PROGRESS, type ResolvedProgressOptions } from '../utils';
 
 afterEach(() => {
   cleanup();
@@ -351,5 +351,29 @@ describe('TourPanel', () => {
       expect(query(container, '.tip-magic-tour-footer .custom')?.textContent).toBe('2-3');
       expect(query(container, '.tip-magic-tour-progress-ring')).toBeNull();
     });
+  });
+});
+
+describe('LiveTourPanel', () => {
+  const propsWith = (text: string): TourPanelProps => ({
+    step: STEP,
+    stepInfo: STEP_INFO,
+    navigation: DEFAULT_NAVIGATION,
+    body: { kind: 'text', value: text },
+    progress: DEFAULT_PROGRESS,
+  });
+
+  it('re-renders the same panel when the store is set', () => {
+    const store = createTourPanelStore();
+    store.set(propsWith('Before'));
+    const { container } = render(<LiveTourPanel store={store} />);
+    const panel = query(container, '.tip-magic-tour-content');
+
+    act(() => {
+      store.set(propsWith('After'));
+    });
+
+    expect(query(container, '.tip-magic-tour-message')?.textContent).toBe('After');
+    expect(query(container, '.tip-magic-tour-content')).toBe(panel);
   });
 });

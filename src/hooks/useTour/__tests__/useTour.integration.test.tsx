@@ -686,6 +686,79 @@ describe('a React body', () => {
   });
 });
 
+describe('a running step follows changes to its steps', () => {
+  function Notes({ text }: { text: string }) {
+    return <p className="notes">{text}</p>;
+  }
+
+  const onEnter = vi.fn();
+  beforeEach(() => {
+    onEnter.mockReset();
+  });
+
+  const stepsWith = (text: string): TourStep[] => [
+    { target: 'one', title: 'News', body: <Notes text={text} />, onEnter },
+    { target: 'two', text: 'Second' },
+  ];
+
+  /** Mount a tour whose steps can be replaced while it runs */
+  function mountReplaceable(options: Omit<TourOptions, 'steps'>, initial: string) {
+    document.body.innerHTML = '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div>';
+    let tour!: UseTourReturn;
+    const onReady = (value: UseTourReturn) => (tour = value);
+    const ui = (text: string) => (
+      <TipMagicProvider>
+        <Harness options={{ ...options, steps: stepsWith(text) }} onReady={onReady} />
+      </TipMagicProvider>
+    );
+    const { rerender } = render(ui(initial));
+    return { tour: () => tour, replaceSteps: (text: string) => act(() => rerender(ui(text))) };
+  }
+
+  it('updates the panel in place, without re-firing callbacks or moving focus', async () => {
+    const onStepChange = vi.fn();
+    const api = mountReplaceable(
+      { navigation: { showControls: true, autoFocus: 'primary' }, onStepChange },
+      'Loading...'
+    );
+
+    await act(async () => {
+      api.tour().start();
+    });
+    const panel = document.querySelector('.tip-magic-tour-content');
+    expect(document.querySelector('.notes')?.textContent).toBe('Loading...');
+
+    // The user moves focus off the primary action
+    const close = document.querySelector('.tip-magic-tour-close') as HTMLElement;
+    close.focus();
+
+    await api.replaceSteps('Release notes');
+
+    expect(document.querySelector('.notes')?.textContent).toBe('Release notes');
+    expect(document.querySelector('.tip-magic-tour-content')).toBe(panel);
+    expect(document.activeElement).toBe(close);
+    expect(onStepChange).toHaveBeenCalledTimes(1);
+    expect(onEnter).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the latest steps after navigating', () => {
+    const api = mountReplaceable({ navigation: { showControls: true } }, 'Loading...');
+
+    act(() => {
+      api.tour().start();
+    });
+    api.replaceSteps('Release notes');
+    act(() => {
+      api.tour().next();
+    });
+    act(() => {
+      api.tour().prev();
+    });
+
+    expect(document.querySelector('.notes')?.textContent).toBe('Release notes');
+  });
+});
+
 describe('provider options', () => {
   it('should apply the configured z-index to the panel', () => {
     const getTour = mountTour(

@@ -23,6 +23,9 @@ export type { ResolvedProgressOptions, ResolvedTourFocus } from './tourNavigatio
 export { getProgressRingGeometry } from './progressRing';
 export type { ProgressRingGeometry } from './progressRing';
 
+// Live props for the tour panel on screen
+export { createTourPanelStore, TourPanelStore } from './tourPanelStore';
+
 // DOM managers
 export { BackdropManager, createBackdropManager } from './backdropManager';
 export type { BackdropShowOptions } from './backdropManager';
