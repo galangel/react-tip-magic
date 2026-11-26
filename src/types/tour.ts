@@ -222,8 +222,9 @@ export type TourStepContent =
        * React body - a node, or a function that receives the current step info and
        * returns one. Event handlers inside it work as anywhere else in your app. A `body`
        * step always renders the tour panel, so it is interactive and scrolls - unless the
-       * body renders nothing (`null`, `undefined`, a boolean, `''`), when the step is
-       * treated as having no body at all.
+       * body renders nothing (`null`, `undefined`, a boolean, `''`, or an empty fragment
+       * or array), when the step is treated as having no body at all. A first step left
+       * with nothing to show at all makes `start()` return `false`.
        *
        * @remarks
        * It renders inside `TipMagicProvider`, not inside the component that called

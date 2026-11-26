@@ -1979,3 +1979,38 @@ describe('accessible names', () => {
     expect(document.getElementById(labelId!)?.textContent).toBe('News');
   });
 });
+
+describe('a first step with nothing to show', () => {
+  it.each([
+    ['null', null],
+    ['an empty fragment', <></>],
+    ['an empty array', []],
+    [
+      'a fragment of nothing',
+      <>
+        {false}
+        {''}
+      </>,
+    ],
+  ])('does not start for a body of %s', (_name, value) => {
+    const onStart = vi.fn();
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', body: () => value }],
+        navigation: { showClose: false },
+        onStart,
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    let started: boolean | undefined;
+    act(() => {
+      started = getTour().start();
+    });
+
+    expect(started).toBe(false);
+    expect(getTour().isActive).toBe(false);
+    expect(onStart).not.toHaveBeenCalled();
+    expect(count('.tip-magic-tooltip')).toBe(0);
+  });
+});

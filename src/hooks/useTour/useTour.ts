@@ -603,6 +603,13 @@ export function useTour(options: TourOptions): UseTourReturn {
 
     const { index: startIndex, element: targetElement } = resolved;
 
+    // A first step with no panel and an empty body - `body: notes && <Notes />` before
+    // the notes exist - shows nothing, so the tour has not started
+    const firstView = describeStep(startIndex);
+    if (!firstView || (!firstView.panel && firstView.body.value === '')) {
+      return false;
+    }
+
     setIsActive(true);
     isActiveRef.current = true;
     setCurrentIndex(startIndex);
@@ -638,7 +645,15 @@ export function useTour(options: TourOptions): UseTourReturn {
     }
 
     return true;
-  }, [visibleSteps, helper, showStepTooltip, onStart, onStepChange, findResolvableStep]);
+  }, [
+    visibleSteps,
+    helper,
+    describeStep,
+    showStepTooltip,
+    onStart,
+    onStepChange,
+    findResolvableStep,
+  ]);
 
   /**
    * End the tour (incomplete)

@@ -7,6 +7,7 @@ export {
   findStep,
   haveSameFlowSteps,
   haveSameStepOrder,
+  rendersNothing,
   resolveStepBody,
   resolveStepContent,
   resolveTargetElement,

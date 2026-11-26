@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { createElement, Fragment, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
 import {
@@ -9,6 +9,7 @@ import {
   findStep,
   haveSameFlowSteps,
   haveSameStepOrder,
+  rendersNothing,
   resolveStepBody,
   resolveStepContent,
   resolveTargetElement,
@@ -397,6 +398,25 @@ describe('tourSteps utilities', () => {
       expect(haveSameFlowSteps(buildFlowSteps(steps), buildFlowSteps([...steps]))).toBe(true);
       expect(haveSameFlowSteps(buildFlowSteps(steps), buildFlowSteps(steps.slice(1)))).toBe(false);
       expect(haveSameFlowSteps(buildFlowSteps(steps), null)).toBe(false);
+    });
+  });
+
+  describe('rendersNothing', () => {
+    const fragment = (...children: ReactNode[]) => createElement(Fragment, null, ...children);
+
+    it('should be true for what React renders no nodes for', () => {
+      const nothing: ReactNode[] = [null, undefined, false, true, '', [], [null, ''], fragment()];
+      for (const node of nothing) {
+        expect(rendersNothing(node), String(node)).toBe(true);
+      }
+      expect(rendersNothing(fragment(false, [null, fragment()]))).toBe(true);
+    });
+
+    it('should be false for anything that renders', () => {
+      const something: ReactNode[] = [0, 'a', createElement('span'), [null, 'a'], fragment('a')];
+      for (const node of something) {
+        expect(rendersNothing(node), String(node)).toBe(false);
+      }
     });
   });
 

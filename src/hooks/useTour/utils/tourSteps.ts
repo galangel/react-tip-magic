@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Fragment, isValidElement, type ReactNode } from 'react';
 import type { FlowStep } from '../../../types';
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
 import { escapeHtml } from '../../../utils/escapeHtml';
@@ -63,18 +63,28 @@ export type ResolvedStepBody =
   | { kind: 'html'; value: string };
 
 /**
- * Whether React renders nothing for a node
+ * Whether React renders no nodes for a node - null, undefined, a boolean, '', or a
+ * fragment or array of only those
  */
-function rendersNothing(node: ReactNode): boolean {
-  return node === null || node === undefined || typeof node === 'boolean' || node === '';
+export function rendersNothing(node: ReactNode): boolean {
+  if (node === null || node === undefined || typeof node === 'boolean' || node === '') {
+    return true;
+  }
+  if (Array.isArray(node)) {
+    return node.every(rendersNothing);
+  }
+  if (isValidElement<{ children?: ReactNode }>(node) && node.type === Fragment) {
+    return rendersNothing(node.props.children);
+  }
+  return false;
 }
 
 /**
  * Resolve a step's body for rendering
  *
  * Precedence for JS callers who bypass the types is `text`, then `body`, then `content`.
- * A `body` that renders nothing (null, undefined, a boolean, '') resolves as a step with
- * no body: an empty HTML string.
+ * A `body` that renders nothing (see `rendersNothing`) resolves as a step with no body: an
+ * empty HTML string.
  *
  * @param step - The tour step
  * @param stepInfo - Current step data, passed to a function `body` or `content`
