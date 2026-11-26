@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
 import {
@@ -295,8 +296,27 @@ describe('tourSteps utilities', () => {
       // @ts-expect-error - as above
       const undefinedBody: TourStep = { target: 'step1', body: undefined };
 
-      expect(resolveStepBody(nullBody, stepInfo)).toEqual({ kind: 'node', value: null });
+      expect(resolveStepBody(nullBody, stepInfo)).toEqual({ kind: 'html', value: '' });
       expect(resolveStepBody(undefinedBody, stepInfo)).toEqual({ kind: 'html', value: '' });
+    });
+
+    it('should treat a body that renders nothing as no body', () => {
+      const empty: unknown[] = [null, undefined, false, true, ''];
+      for (const value of empty) {
+        const step: TourStep = { target: 'step1', body: () => value as ReactNode };
+        expect(resolveStepBody(step, stepInfo), String(value)).toEqual({ kind: 'html', value: '' });
+      }
+
+      const notes = '';
+      const shortCircuited: TourStep = { target: 'step1', body: notes && 'Notes' };
+      expect(resolveStepBody(shortCircuited, stepInfo)).toEqual({ kind: 'html', value: '' });
+    });
+
+    it('should not accept a boolean body', () => {
+      // @ts-expect-error - a boolean renders nothing
+      const step: TourStep = { target: 'step1', body: false };
+
+      expect(resolveStepBody(step, stepInfo)).toEqual({ kind: 'html', value: '' });
     });
 
     it('should ignore an undefined body spread onto a content step', () => {

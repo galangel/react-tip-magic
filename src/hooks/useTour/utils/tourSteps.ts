@@ -62,9 +62,18 @@ export type ResolvedStepBody =
   | { kind: 'html'; value: string };
 
 /**
+ * Whether React renders nothing for a node
+ */
+function rendersNothing(node: ReactNode): boolean {
+  return node === null || node === undefined || typeof node === 'boolean' || node === '';
+}
+
+/**
  * Resolve a step's body for rendering
  *
  * Precedence for JS callers who bypass the types is `text`, then `body`, then `content`.
+ * A `body` that renders nothing (null, undefined, a boolean, '') resolves as a step with
+ * no body: an empty HTML string.
  *
  * @param step - The tour step
  * @param stepInfo - Current step data, passed to a function `body` or `content`
@@ -76,10 +85,11 @@ export function resolveStepBody(step: TourStep, stepInfo: CurrentTourStep): Reso
   }
 
   if (step.body !== undefined) {
-    return {
-      kind: 'node',
-      value: typeof step.body === 'function' ? step.body(stepInfo) : step.body,
-    };
+    const value = typeof step.body === 'function' ? step.body(stepInfo) : step.body;
+    // A body that renders nothing is no body - not an empty, focus-taking dialog
+    if (!rendersNothing(value)) {
+      return { kind: 'node', value };
+    }
   }
 
   return { kind: 'html', value: resolveStepContent(step, stepInfo) };

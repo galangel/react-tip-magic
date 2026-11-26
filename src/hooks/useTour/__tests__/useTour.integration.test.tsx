@@ -686,6 +686,29 @@ describe('a React body', () => {
   });
 });
 
+describe('an empty body', () => {
+  it('should not open an empty dialog for a body that short-circuits to nothing', async () => {
+    const notes = '';
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', body: notes && <p>{notes}</p> }],
+        navigation: { showClose: false },
+      },
+      '<button id="trigger">Start</button><div data-tip-id="one">One</div>'
+    );
+    const trigger = document.getElementById('trigger') as HTMLElement;
+    trigger.focus();
+
+    await act(async () => {
+      getTour().start();
+    });
+
+    expect(count('.tip-magic-tour-content')).toBe(0);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+});
+
 describe('a running step follows changes to its steps', () => {
   function Notes({ text }: { text: string }) {
     return <p className="notes">{text}</p>;

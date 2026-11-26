@@ -210,7 +210,9 @@ export type TourStepContent =
       /**
        * React body - a node, or a function that receives the current step info and
        * returns one. Event handlers inside it work as anywhere else in your app. A `body`
-       * step always renders the tour panel, so it is interactive and scrolls.
+       * step always renders the tour panel, so it is interactive and scrolls - unless the
+       * body renders nothing (`null`, `undefined`, a boolean, `''`), when the step is
+       * treated as having no body at all.
        *
        * @remarks
        * It renders inside `TipMagicProvider`, not inside the component that called
@@ -221,7 +223,7 @@ export type TourStepContent =
        * { target: 'news', title: "What's new", body: <Markdown source={notes} /> }
        * ```
        */
-      body: NonNullable<ReactNode> | ((step: CurrentTourStep) => ReactNode);
+      body: Exclude<NonNullable<ReactNode>, boolean> | ((step: CurrentTourStep) => ReactNode);
       text?: never;
       content?: never;
     }

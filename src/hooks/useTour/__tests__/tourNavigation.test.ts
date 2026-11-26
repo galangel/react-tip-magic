@@ -183,18 +183,20 @@ describe('tourNavigation utilities', () => {
       expect(hasNavigationFeatures(nav, step)).toBe(true);
     });
 
-    it('should return true for a body step', () => {
+    it('should return true for a step whose body resolved to React content', () => {
       const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
       const step: TourStep = { target: 'step1', body: 'React content' };
 
-      expect(hasNavigationFeatures(nav, step)).toBe(true);
+      expect(
+        hasNavigationFeatures(nav, step, false, { kind: 'node', value: 'React content' })
+      ).toBe(true);
     });
 
-    it('should not count an undefined body spread onto a content step', () => {
+    it('should not count a body that resolved to nothing', () => {
       const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
-      const step: TourStep = { target: 'step1', content: 'Content', body: undefined };
+      const step: TourStep = { target: 'step1', body: () => null };
 
-      expect(hasNavigationFeatures(nav, step)).toBe(false);
+      expect(hasNavigationFeatures(nav, step, false, { kind: 'html', value: '' })).toBe(false);
     });
 
     it('should return true when showProgress is true', () => {

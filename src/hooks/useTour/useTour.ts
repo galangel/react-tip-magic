@@ -315,7 +315,7 @@ export function useTour(options: TourOptions): UseTourReturn {
       const progressOptions = getMergedProgress(tourProgress, step);
       const body = resolveStepBody(step, stepInfo);
 
-      const panel = hasNavigationFeatures(mergedNav, step, progressOptions.show)
+      const panel = hasNavigationFeatures(mergedNav, step, progressOptions.show, body)
         ? {
             step,
             stepInfo,

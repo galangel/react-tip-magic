@@ -6,6 +6,7 @@ import type {
   TourStep,
 } from '../../../types/tour';
 import { DEFAULT_NAVIGATION } from '../constants';
+import type { ResolvedStepBody } from './tourSteps';
 
 /**
  * Default progress options
@@ -109,22 +110,26 @@ export function getMergedProgress(
 
 /**
  * Check if a step has anything that needs the tour panel rather than a plain tooltip
- * (a React body, a title, navigation controls, close button, media, or progress)
+ * (React content, a title, navigation controls, close button, media, or progress)
  *
- * A `body` always needs the panel: a plain tooltip ignores the pointer and cannot scroll.
+ * React content always needs the panel: a plain tooltip ignores the pointer and cannot
+ * scroll. It is judged on the resolved body, so a `body` that renders nothing does not
+ * open an empty dialog.
  *
  * @param nav - Merged navigation config
  * @param step - Current step
  * @param showProgress - Whether progress is enabled for this step
+ * @param body - The step's body, resolved
  * @returns Whether any navigation features are enabled
  */
 export function hasNavigationFeatures(
   nav: Required<TourNavigation>,
   step: TourStep,
-  showProgress: boolean = false
+  showProgress: boolean = false,
+  body?: ResolvedStepBody
 ): boolean {
   return (
-    step.body !== undefined ||
+    body?.kind === 'node' ||
     !!step.title ||
     nav.showControls ||
     nav.showClose ||
