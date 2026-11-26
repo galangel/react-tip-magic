@@ -239,6 +239,16 @@
   margin: 0;
 }
 
+/* The scrolling body stops margins collapsing through it, so a body of <p>s would get
+   its outer margins as extra space */
+.tip-magic-tour-message > :first-child {
+  margin-top: 0;
+}
+
+.tip-magic-tour-message > :last-child {
+  margin-bottom: 0;
+}
+
 /* =============================================================================
    Navigation Controls
    ============================================================================= */
