@@ -88,6 +88,7 @@ export function useTooltipAPI(
               target: element,
               content: tooltipContent,
               parsedData: mergedData,
+              owner: options.owner,
             },
           });
         } else {
@@ -98,6 +99,7 @@ export function useTooltipAPI(
               target: element,
               content: tooltipContent,
               parsedData: mergedData,
+              owner: options.owner,
             },
           });
         }
@@ -108,6 +110,7 @@ export function useTooltipAPI(
             target: element,
             content: tooltipContent,
             parsedData: mergedData,
+            owner: options.owner,
           },
         });
       }

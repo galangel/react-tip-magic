@@ -1,5 +1,13 @@
 import { act, cleanup, render } from '@testing-library/react';
-import { startTransition, StrictMode, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  startTransition,
+  StrictMode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TipMagicProvider } from '../../../components/TipMagicProvider';
 import { useTipMagic } from '../../useTipMagic';
@@ -1719,6 +1727,55 @@ describe('a running tour whose steps change shape', () => {
 });
 
 describe('one tour replacing another', () => {
+  it('does not hide the next tour when both show the same text and it starts in a layout effect', async () => {
+    let showB!: () => void;
+    let tourA!: UseTourReturn;
+
+    function TourA() {
+      tourA = useTour({
+        steps: [{ target: 'one', text: 'Saved' }],
+        navigation: { showClose: false },
+      });
+      return null;
+    }
+
+    /** Starts before paint, so the announcement never flickers */
+    function TourB() {
+      const tour = useTour({
+        steps: [{ target: 'two', text: 'Saved' }],
+        navigation: { showClose: false },
+      });
+      const startRef = useRef(tour.start);
+      startRef.current = tour.start;
+      useLayoutEffect(() => {
+        startRef.current();
+      }, []);
+      return null;
+    }
+
+    function Route() {
+      const [route, setRoute] = useState<'a' | 'b'>('a');
+      showB = () => setRoute('b');
+      return route === 'a' ? <TourA /> : <TourB />;
+    }
+
+    document.body.innerHTML = '<div data-tip-id="one">One</div><div data-tip-id="two">Two</div>';
+    render(
+      <TipMagicProvider>
+        <Route />
+      </TipMagicProvider>
+    );
+    act(() => {
+      tourA.start();
+    });
+
+    await act(async () => {
+      showB();
+    });
+
+    expect(tooltip()?.textContent).toBe('Saved');
+  });
+
   it("does not take down the next tour's panel or flow when the previous one unmounts", async () => {
     let flowActive: boolean | undefined;
     let showB!: () => void;

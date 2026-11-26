@@ -86,12 +86,13 @@ export type TipMagicAction =
         target: Element;
         content: ReactNode;
         parsedData: ParsedTooltipData;
+        owner?: object;
       };
     }
   | {
       type: 'HIDE_TOOLTIP';
-      /** Hide only while the tooltip still holds this content - it may be someone else's */
-      payload?: { onlyIfContent: ReactNode };
+      /** Hide only while the tooltip is still this owner's - see `TooltipShowOptions.owner` */
+      payload?: { onlyIfOwner: object };
     }
   | {
       type: 'MOVE_TOOLTIP';
@@ -99,6 +100,7 @@ export type TipMagicAction =
         target: Element;
         content: ReactNode;
         parsedData: ParsedTooltipData;
+        owner?: object;
         previousGroup?: string;
       };
     }
@@ -136,12 +138,13 @@ export function tipMagicReducer(state: TipMagicState, action: TipMagicAction): T
           target: action.payload.target,
           content: action.payload.content,
           parsedData: action.payload.parsedData,
+          owner: action.payload.owner,
           isTransitioning: false,
         },
       };
 
     case 'HIDE_TOOLTIP':
-      if (action.payload && state.tooltip.content !== action.payload.onlyIfContent) {
+      if (action.payload && state.tooltip.owner !== action.payload.onlyIfOwner) {
         return state;
       }
       return {
@@ -160,6 +163,7 @@ export function tipMagicReducer(state: TipMagicState, action: TipMagicAction): T
           target: action.payload.target,
           content: action.payload.content,
           parsedData: action.payload.parsedData,
+          owner: action.payload.owner,
           isTransitioning: true,
           previousGroup: action.payload.previousGroup,
         },

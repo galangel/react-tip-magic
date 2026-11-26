@@ -128,9 +128,11 @@ during the unmount commit, and `handleTargetLost` ignores a lost target once it 
 a target rendered inside the unmounting component detaches in the same commit, and the
 `MutationObserver` would otherwise end the tour with `onTargetMissing`, `onExit` and
 `onEnd` before the teardown ran. And the teardown releases the tooltip and helper flow only
-while this tour still owns them (`HIDE_TOOLTIP` / `END_FLOW` with `onlyIfContent` /
+while this tour still owns them (`HIDE_TOOLTIP` / `END_FLOW` with `onlyIfOwner` /
 `onlyIfSteps`): by the time it runs, the component that replaced this one may have started
-its own tour.
+its own tour - from a layout effect, before the teardown. Ownership is a token minted per
+show (`TooltipShowOptions.owner`), never the content: two plain-text steps with the same
+string would compare equal.
 
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.

@@ -186,6 +186,12 @@ export interface TooltipShowOptions {
    * `role` is `'dialog'`.
    */
   autoFocus?: TooltipAutoFocus;
+  /**
+   * Who is showing the tooltip - any object unique to the caller. Kept until the tooltip
+   * is next shown or hidden, so a caller can release the tooltip only while it is still
+   * its own (`HIDE_TOOLTIP` with `onlyIfOwner`). `useTour` sets it.
+   */
+  owner?: object;
 }
 
 /**
@@ -381,6 +387,8 @@ export interface TooltipState {
   placement: Placement;
   isTransitioning: boolean;
   parsedData: ParsedTooltipData | null;
+  /** Who showed the tooltip - `TooltipShowOptions.owner` */
+  owner?: object;
   /** Group of the previous tooltip (for group-based move transitions) */
   previousGroup?: string;
 }

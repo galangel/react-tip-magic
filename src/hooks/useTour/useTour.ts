@@ -78,6 +78,8 @@ interface ShownStep {
   store: TourPanelStore | null;
   /** What the tooltip was given as content */
   content: ReactNode;
+  /** Minted per show, so the tooltip can be told to be this tour's even by equal text */
+  owner: object;
   /** The panel-derived tooltip options it was shown with */
   ariaLabelledBy?: string;
   autoFocus?: TooltipShowOptions['autoFocus'];
@@ -340,13 +342,14 @@ export function useTour(options: TourOptions): UseTourReturn {
    * the values the step cannot function without
    */
   const buildTooltipOptions = useCallback(
-    ({ step, body, panel }: StepView, content: ReactNode): TooltipShowOptions => ({
+    ({ step, body, panel }: StepView, content: ReactNode, owner: object): TooltipShowOptions => ({
       // The panel holds prose, a header row and a nav row - it has to be able to wrap.
       // Overridable, unlike the forced values below.
       ...(panel && { wordWrap: true }),
       ...tooltipOptions,
       ...step.tooltipOptions,
       content,
+      owner,
       placement: step.placement ?? tooltipOptions?.placement,
       // A step with no panel hands its body to the tooltip as-is: `content` is HTML unless
       // the consumer explicitly said otherwise, and `text` never is
@@ -383,7 +386,8 @@ export function useTour(options: TourOptions): UseTourReturn {
         ? createElement(LiveTourPanel, { key: presentCountRef.current, store })
         : view.body.value;
 
-      const options = buildTooltipOptions(view, content);
+      const owner = {};
+      const options = buildTooltipOptions(view, content, owner);
       shownRef.current = {
         index: stepIndex,
         step: view.step,
@@ -391,6 +395,7 @@ export function useTour(options: TourOptions): UseTourReturn {
         element,
         store,
         content,
+        owner,
         ariaLabelledBy: options.ariaLabelledBy,
         autoFocus: options.autoFocus,
       };
@@ -489,7 +494,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   const abandon = useCallback(() => {
     const shown = shownRef.current;
     if (shown) {
-      dispatch({ type: 'HIDE_TOOLTIP', payload: { onlyIfContent: shown.content } });
+      dispatch({ type: 'HIDE_TOOLTIP', payload: { onlyIfOwner: shown.owner } });
     }
     if (flowStepsRef.current) {
       dispatch({ type: 'END_FLOW', payload: { onlyIfSteps: flowStepsRef.current } });
@@ -794,7 +799,7 @@ export function useTour(options: TourOptions): UseTourReturn {
 
     // Re-show only when a panel-derived option changed: showing re-renders every
     // useTipMagic consumer, this one included
-    const options = buildTooltipOptions(view, shown.content);
+    const options = buildTooltipOptions(view, shown.content, shown.owner);
     if (options.ariaLabelledBy !== shown.ariaLabelledBy || options.autoFocus !== shown.autoFocus) {
       shownRef.current = {
         ...shownRef.current,
