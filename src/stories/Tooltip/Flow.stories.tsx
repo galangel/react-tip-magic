@@ -1867,6 +1867,22 @@ export const ReactBody: Story = {
 // Announcement
 // =============================================================================
 
+const ANNOUNCEMENT_IMAGES = [
+  { label: '400×200', src: DASHBOARD_IMAGE },
+  {
+    label: 'Wide 1200×600',
+    src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop',
+  },
+  {
+    label: 'Portrait 400×700',
+    src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=700&fit=crop',
+  },
+  {
+    label: 'Tiny 160×90',
+    src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=160&h=90&fit=crop',
+  },
+];
+
 /**
  * Announcement
  *
@@ -1875,26 +1891,45 @@ export const ReactBody: Story = {
  *
  * - Fixed to the viewport, so it stays centered as the page scrolls or resizes
  * - The focus backdrop is on by default; `focus: false` turns it off
- * - The same panel as any step: title, image, a React `body` that scrolls, and the
- *   navigation - here a single "Got it"
- * - Centered and anchored steps can be mixed in one tour
+ * - Its image sets its width: the image's natural width, capped at 70% of the viewport
+ *   (`--tip-magic-tour-centered-max-width`), never cropped or distorted, and scaled down
+ *   uniformly when it would leave too little room for the text. The panel is never
+ *   narrower than 280px (`--tip-magic-tour-min-width`); a smaller image is centered at
+ *   its natural size. Pick an image size to compare.
+ * - The same panel as any step: title, a React `body` that scrolls, and the navigation -
+ *   here a single "Got it"
  */
 const AnnouncementDemo = () => {
+  const [image, setImage] = useState(ANNOUNCEMENT_IMAGES[0].src);
   const announcement = useTour({
     steps: [
       {
         id: 'whats-new',
         title: "What's new this month",
-        image: DASHBOARD_IMAGE,
+        image,
         body: <ReleaseNotes />,
       },
     ],
     navigation: { showControls: true, finishLabel: 'Got it' },
-    tooltipOptions: { maxWidth: 380 },
   });
 
   return (
     <div className="tour-demo-container">
+      <div className="tour-controls">
+        <div className="tour-control-buttons">
+          {ANNOUNCEMENT_IMAGES.map((option) => (
+            <button
+              key={option.label}
+              className={`tour-control-btn ${option.src === image ? 'tour-control-btn-primary' : 'tour-control-btn-secondary'}`}
+              onClick={() => setImage(option.src)}
+              disabled={announcement.isActive}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <button
         className={`tour-start-btn ${announcement.isActive ? 'tour-start-btn-disabled' : ''}`}
         onClick={announcement.start}
@@ -1905,7 +1940,7 @@ const AnnouncementDemo = () => {
 
       <MockDashboard
         contentTitle="Announcement"
-        contentDescription="A step without a target opens centered, over a dimmed page."
+        contentDescription="A step without a target opens centered, sized by its image."
       />
     </div>
   );
