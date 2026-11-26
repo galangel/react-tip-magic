@@ -112,6 +112,10 @@
   flex-direction: column;
   min-width: 200px;
   max-height: calc(var(--tip-magic-available-height, 100vh) - 2 * var(--tip-magic-padding-y));
+  /* Only the body gives way: below the title, media and footer the panel stops
+     shrinking, so it overflows its side and flip() moves it, rather than its parts
+     spilling out of it */
+  min-height: min-content;
 }
 
 .tip-magic-tour-content > * {
