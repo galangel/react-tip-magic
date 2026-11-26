@@ -46,6 +46,9 @@
   /* Body - scrolls past this height */
   --tip-magic-tour-body-max-height: 60vh;
 
+  /* An anchored panel is never squeezed below this; with less room it flips instead */
+  --tip-magic-tour-min-height: 240px;
+
   /* A centered step (no target) is at most this tall */
   --tip-magic-tour-centered-max-height: 80vh;
 
@@ -111,11 +114,13 @@
   display: flex;
   flex-direction: column;
   min-width: 200px;
-  max-height: calc(var(--tip-magic-available-height, 100vh) - 2 * var(--tip-magic-padding-y));
-  /* Only the body gives way: below the title, media and footer the panel stops
-     shrinking, so it overflows its side and flip() moves it, rather than its parts
-     spilling out of it */
-  min-height: min-content;
+  /* No shorter than --tip-magic-tour-min-height, however little room the target leaves:
+     a panel that does not fit overflows its side, which is what makes flip() move it -
+     squeezed to fit, its title, media and footer would spill out of it instead */
+  max-height: max(
+    var(--tip-magic-tour-min-height),
+    calc(var(--tip-magic-available-height, 100vh) - 2 * var(--tip-magic-padding-y))
+  );
 }
 
 .tip-magic-tour-content > * {
