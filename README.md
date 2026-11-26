@@ -144,21 +144,46 @@ const tour = useTour({ steps });
 }
 ```
 
-### Step content is HTML
+### Step content: `text`, `body` or `content`
 
-Step `content` is injected as HTML so that titles, media and controls work. Use `text` instead when the value is plain text the library should escape for you:
+Each step takes at most one of them, and a step with none must have an `image` or `video` — a step with nothing to show, or with two bodies, won't compile.
 
 ```tsx
+// Plain text, rendered as text
 { target: 'profile', text: `Signed in as ${user.name}` }
-```
 
-Exactly one of `content` or `text` is required — a step with neither, or with both, won't compile. For markup with an interpolated value, keep `content` and escape the value with the exported `escapeHtml`:
+// Any React node (or a function of the current step returning one)
+{ target: 'whats-new', title: "What's new", body: <Markdown source={releaseNotes} /> }
 
-```tsx
+// Raw HTML, injected as-is - escape interpolations
 import { escapeHtml } from '@galangel/react-tip-magic';
-
 { target: 'profile', content: `Signed in as <b>${escapeHtml(user.name)}</b>` }
 ```
+
+The panel itself is rendered by React, so titles, button labels and `text` are escaped for you. Only `content` is injected as HTML: escape any interpolated value with the exported `escapeHtml`.
+
+A `body` renders inside `TipMagicProvider`, not inside the component that called `useTour`, so it sees only the context providers above `TipMagicProvider`. Re-render with new `steps` while the tour runs — data that arrived after `start()` — and the panel on screen updates in place. The step on screen is found again by its `id`, or by its `target` when no other step shares it — so give steps an `id` (or unique targets) if `steps` can change while the tour runs. If it is removed, or cannot be told apart, the tour moves on to the step now at its place, or ends. A long body scrolls once it reaches `--tip-magic-tour-body-max-height` (`60vh` by default), and the panel keeps itself within the viewport.
+
+### Announcements: a step without a target
+
+A step without a `target` opens centered in the viewport, with no arrow and the focus backdrop on (`focus: false` turns it off). It is the same panel as any other step, so a one-step announcement is just:
+
+```tsx
+const announcement = useTour({
+  steps: [{ title: "What's new", body: <Markdown source={releaseNotes} /> }],
+  navigation: { showControls: true, finishLabel: 'Got it' },
+});
+```
+
+A centered panel is at most 80% of the viewport's height (`--tip-magic-tour-centered-max-height`), and its `image` (or native `video`) sets its width: the media's natural width, capped at 70% of the viewport (`--tip-magic-tour-centered-max-width`, and an explicit `tooltipOptions.maxWidth`), never cropped and scaled down uniformly when it would crowd out the text. The panel is never narrower than 280px (`--tip-magic-tour-min-width`); a smaller image is centered at its natural size.
+
+A step can be only its media — `{ video: { src, title } }` — in which case the panel is named by `video.title`. Pass `navigation.autoFocus: 'primary'` to put focus on a "Got it" button so Enter dismisses the announcement.
+
+Centered and anchored steps mix in one tour. With no target there is nothing to highlight, scroll to or watch, and `onTargetMissing` never fires for it.
+
+### Media beside the text
+
+`mediaPlacement: 'left' | 'right'` (tour-level, overridable per step) puts a step's image or video in a column beside its text, instead of above it (`'top'`, the default). The text column is 280–400px, its body scrolls, and its buttons sit at the bottom; the media keeps its aspect ratio. Below a 640px viewport it falls back to `'top'`.
 
 ### When a target isn't there
 
@@ -195,6 +220,31 @@ const tour = useTour({
 `'primary'` falls back to the panel when a step renders no Next/Finish button — never to the close button. Overridable per step via `step.navigation.autoFocus`.
 
 Tours also support progress indicators, keyboard support, and backdrop highlighting (`focus: true`, or `focus: { dismissOnClick: true }` to let a click on the backdrop end the tour)—all configurable to fit your needs.
+
+### Upgrading to 1.4
+
+The tour panel is now rendered by React instead of injected as an HTML string. Things you can observe:
+
+- `useTipMagic().tooltip.content` is `null` while a tour panel is showing. It used to hold the panel's HTML; it still returns string content for plain tooltips.
+- A custom `progress.render` is wrapped in a `<div style="display: contents">` inside `.tip-magic-tour-footer`, so a `.tip-magic-tour-footer > .your-class` selector no longer matches. Layout is unchanged.
+- A step whose only feature is a `title` now renders the panel (a `role="dialog"`) instead of dropping the title.
+- A `content` step with no panel features is injected as HTML, as documented, without `tooltipOptions.html: true`. An explicit `html: false` (tour or step) still shows it as text.
+- `text` is rendered once-escaped everywhere, and button labels as text rather than markup.
+- Unmounting the component that called `useTour` takes a running tour down without calling `onEnd`.
+- `CurrentTourStep.content` (in `currentStep`, `onStepChange`, `onTargetMissing`) is `''` for a `body` step: React content has no HTML form.
+- A panel without a `title` is labelled by its message, so `aria-labelledby` is now always set on a tour dialog.
+- `start()` also returns `false` when the first step has nothing to show (an empty body and no panel features).
+- A step may be only its `image` or `video`, with no `text`, `body` or `content`; the video's type is exported as `TourVideo`, and `video.title` now names native videos too.
+- `mediaPlacement` (`TourOptions` and `TourStep`, type `TourMediaPlacement`) is new and defaults to `'top'`, the existing layout.
+- An anchored panel's height cap never drops below `--tip-magic-tour-min-height` (240px): with less room beside its target it flips to another side.
+- `TourStep.target` is optional: a step without one opens centered. `CurrentTourStep.target` is `undefined` for such a step, so code that reads it as a `string` must handle that.
+
+Type changes, for code that uses the exported context (`useTipMagicContext`, `TipMagicState`, `TipMagicAction`):
+
+- `TooltipState.content` and the `SHOW_TOOLTIP` / `MOVE_TOOLTIP` payloads' `content` widened from `string` to `ReactNode`. Writing a string still works; code that reads one and annotates it as `string` must widen or narrow with `typeof`.
+- `UPDATE_TOOLTIP_CONTENT` and `tooltip.updateContent` still take a `string`. Called while a tour runs, they replace the tour panel with that string.
+- `HIDE_TOOLTIP` and `END_FLOW` accept an optional `payload` (`onlyIfOwner`, `onlyIfSteps`), and `TooltipShowOptions` gains `owner` and `centered`; all additive.
+- `TooltipShowOptions.maxWidth` and `ParsedTooltipData.maxWidth` also accept `'none'` (let the content decide), which a centered step with an image uses. Code that reads `parsedData.maxWidth` as a `number` must handle it.
 
 ---
 

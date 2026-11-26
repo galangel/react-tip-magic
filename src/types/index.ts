@@ -141,8 +141,11 @@ export interface TipMagicOptions {
  * Options for programmatically showing a tooltip
  */
 export interface TooltipShowOptions {
-  /** Tooltip content (overrides element's data-tip) */
-  content?: string;
+  /**
+   * Tooltip content (overrides element's data-tip). A string, or any React node; `html`
+   * applies to string content only.
+   */
+  content?: React.ReactNode;
   /** Tooltip placement */
   placement?: Placement;
   /** Show delay (ms) */
@@ -157,9 +160,12 @@ export interface TooltipShowOptions {
   wordWrap?: boolean;
   /** Text break behavior */
   textBreak?: TextBreak;
-  /** Maximum width in pixels */
-  maxWidth?: number;
-  /** Parse content as HTML */
+  /**
+   * Maximum width in pixels, or `'none'` to let the content decide. A centered tour step
+   * with an image uses `'none'` unless you set a number, so the image sets its width.
+   */
+  maxWidth?: number | 'none';
+  /** Parse string content as HTML */
   html?: boolean;
   /** Keep tooltip visible when hovering */
   interactive?: boolean;
@@ -183,6 +189,17 @@ export interface TooltipShowOptions {
    * `role` is `'dialog'`.
    */
   autoFocus?: TooltipAutoFocus;
+  /**
+   * Center the tooltip in the viewport instead of placing it beside its target: fixed to
+   * the viewport, with no arrow. Tours set it for a step without a `target`.
+   */
+  centered?: boolean;
+  /**
+   * Who is showing the tooltip - any object unique to the caller. Kept until the tooltip
+   * is next shown or hidden, so a caller can release the tooltip only while it is still
+   * its own (`HIDE_TOOLTIP` with `onlyIfOwner`). `useTour` sets it.
+   */
+  owner?: object;
 }
 
 /**
@@ -195,7 +212,7 @@ export interface TooltipAPI {
   hide: () => void;
   /** Check if tooltip is visible */
   isVisible: boolean;
-  /** Current tooltip content */
+  /** Current tooltip content - null when hidden, or when the content is a React node */
   content: string | null;
   /** Current target element */
   target: Element | null;
@@ -344,7 +361,8 @@ export interface ParsedTooltipData {
   wordWrap: boolean;
   /** Text break behavior - controls where words can break */
   textBreak: TextBreak;
-  maxWidth: number;
+  /** Maximum width in pixels, or `'none'` to let the content decide */
+  maxWidth: number | 'none';
   html: boolean;
   interactive: boolean;
   /** Override transition behavior for this specific tooltip */
@@ -365,6 +383,8 @@ export interface ParsedTooltipData {
   ariaLabelledBy?: string;
   /** Where focus goes when a role="dialog" tooltip becomes visible */
   autoFocus?: TooltipAutoFocus;
+  /** Center the tooltip in the viewport instead of beside its target */
+  centered?: boolean;
 }
 
 /**
@@ -372,12 +392,14 @@ export interface ParsedTooltipData {
  */
 export interface TooltipState {
   visible: boolean;
-  content: string;
+  content: React.ReactNode;
   target: Element | null;
   position: { x: number; y: number };
   placement: Placement;
   isTransitioning: boolean;
   parsedData: ParsedTooltipData | null;
+  /** Who showed the tooltip - `TooltipShowOptions.owner` */
+  owner?: object;
   /** Group of the previous tooltip (for group-based move transitions) */
   previousGroup?: string;
 }
@@ -427,6 +449,7 @@ export type {
   TourDirection,
   TourFocus,
   TourFocusOptions,
+  TourMediaPlacement,
   TourNavigation,
   TourOptions,
   TourProgress,
@@ -434,6 +457,7 @@ export type {
   TourStepBase,
   TourStepContent,
   TourTargetMissingAction,
+  TourVideo,
   UseTourReturn,
 } from './tour';
 

@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_OPTIONS } from '../../../constants';
 import { TipMagicContext, type TipMagicContextValue } from '../../../context/TipMagicContext';
@@ -284,5 +284,56 @@ describe('HTML content is not rebuilt on every re-render', () => {
 
     expect(document.getElementById('plain')?.textContent).toBe('Step two');
     expect(document.getElementById('media')).toBeNull();
+  });
+});
+
+describe('React node content', () => {
+  it('renders a node as React, even with html on', () => {
+    const base = createMockState().tooltip.parsedData as ParsedTooltipData;
+    const node = (
+      <strong id="node" data-value="<b>">
+        Bold
+      </strong>
+    );
+
+    renderTooltip(createMockState({ content: node, parsedData: { ...base, html: true } }));
+
+    const rendered = document.querySelector('.tip-magic-text > #node');
+    expect(rendered?.textContent).toBe('Bold');
+    expect(rendered?.getAttribute('data-value')).toBe('<b>');
+  });
+});
+
+describe('available height', () => {
+  it('exposes the room beside the target as a variable, without clamping the tooltip', async () => {
+    renderTooltip(createMockState());
+    const element = document.querySelector('.tip-magic-tooltip') as HTMLElement;
+
+    await waitFor(() =>
+      expect(element.style.getPropertyValue('--tip-magic-available-height')).toMatch(/^\d+px$/)
+    );
+    expect(element.style.maxHeight).toBe('');
+  });
+});
+
+describe('centered', () => {
+  it('positions a centered tooltip fixed, with no arrow and no placement', async () => {
+    const base = createMockState().tooltip.parsedData as ParsedTooltipData;
+    renderTooltip(createMockState({ parsedData: { ...base, centered: true } }));
+    const element = document.querySelector('.tip-magic-tooltip') as HTMLElement;
+
+    await waitFor(() => expect(element.style.position).toBe('fixed'));
+    expect(element.hasAttribute('data-tip-magic-centered')).toBe(true);
+    expect(element.hasAttribute('data-placement')).toBe(false);
+    expect(element.querySelector('.tip-magic-arrow')).toBeNull();
+  });
+
+  it('leaves an anchored tooltip absolute, with its arrow', async () => {
+    renderTooltip(createMockState());
+    const element = document.querySelector('.tip-magic-tooltip') as HTMLElement;
+
+    await waitFor(() => expect(element.style.position).toBe('absolute'));
+    expect(element.hasAttribute('data-tip-magic-centered')).toBe(false);
+    expect(element.querySelector('.tip-magic-arrow')).not.toBeNull();
   });
 });

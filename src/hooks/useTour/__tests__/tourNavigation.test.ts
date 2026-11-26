@@ -176,6 +176,29 @@ describe('tourNavigation utilities', () => {
       expect(hasNavigationFeatures(nav, step)).toBe(true);
     });
 
+    it('should return true when step has a title', () => {
+      const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
+      const step: TourStep = { target: 'step1', content: 'Content', title: 'Welcome' };
+
+      expect(hasNavigationFeatures(nav, step)).toBe(true);
+    });
+
+    it('should return true for a step whose body resolved to React content', () => {
+      const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
+      const step: TourStep = { target: 'step1', body: 'React content' };
+
+      expect(
+        hasNavigationFeatures(nav, step, false, { kind: 'node', value: 'React content' })
+      ).toBe(true);
+    });
+
+    it('should not count a body that resolved to nothing', () => {
+      const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
+      const step: TourStep = { target: 'step1', body: () => null };
+
+      expect(hasNavigationFeatures(nav, step, false, { kind: 'html', value: '' })).toBe(false);
+    });
+
     it('should return true when showProgress is true', () => {
       const nav = { ...DEFAULT_NAVIGATION, showControls: false, showClose: false };
       const step: TourStep = { target: 'step1', content: 'Content' };
@@ -193,6 +216,19 @@ describe('tourNavigation utilities', () => {
 
   describe('resolveFocus', () => {
     const step: TourStep = { target: 'step1', content: 'Content' };
+
+    it('should default off for a step with a target, and on for a centered one', () => {
+      expect(resolveFocus(undefined, step).enabled).toBe(false);
+      expect(resolveFocus(undefined, { content: 'Centered' }).enabled).toBe(true);
+    });
+
+    it("should let the tour or the step turn a centered step's backdrop off", () => {
+      expect(resolveFocus(false, { content: 'Centered' }).enabled).toBe(false);
+      expect(resolveFocus(undefined, { content: 'Centered', focus: false }).enabled).toBe(false);
+      expect(
+        resolveFocus(undefined, { content: 'Centered', focus: { dismissOnClick: true } })
+      ).toEqual({ enabled: true, block: false, dismissOnClick: true });
+    });
 
     it('should resolve a disabled backdrop', () => {
       expect(resolveFocus(false, step)).toEqual({

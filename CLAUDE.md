@@ -19,6 +19,7 @@ npm run build      # library (dist/index.mjs, .cjs, styles.css)
 | -------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `src/components/`          | React components. `Tooltip` renders the single tooltip; the rest are internals mounted by `TipMagicProvider`. |
 | `src/hooks/`               | Public hooks and the API objects behind `useTipMagic()`.                                                      |
+| `src/hooks/useTour/`       | `useTour`, and `TourPanel`, the React component it passes to the tooltip as content.                          |
 | `src/hooks/useTour/utils/` | Tour helpers: DOM managers (classes) and pure functions.                                                      |
 | `src/utils/`               | Pure helpers shared across components. Tests in `__tests__/` beside them.                                     |
 | `src/types/`               | All public types. `tour.ts` re-exports through `index.ts`.                                                    |
@@ -49,9 +50,10 @@ on the next push rather than stranding the bump.
 
 **`dangerouslySetInnerHTML` is re-applied on every render.** React rewrites the subtree
 even when the html string is byte-identical. Anything focused inside it is dropped to
-`<body>`, an `<img>` or autoplaying `<video>` is recreated and restarts, and a tour
-panel's markup is re-parsed for nothing on every position or visibility update. This is
-why `Tooltip` renders html through a memoised `HtmlContent`. Don't inline it back.
+`<body>`, an `<img>` or autoplaying `<video>` is recreated and restarts, and the markup
+is re-parsed for nothing on every position or visibility update. This is why `Tooltip`
+renders html through a memoised `HtmlContent`, and `TourPanel` its HTML message and
+custom progress through a memoised `RawHtml`. Don't inline either back.
 
 **`Node.contains` includes the node itself.** `panel.contains(document.activeElement)` is
 true when the panel holds focus, so a containment check can never decide whether to focus
@@ -81,14 +83,93 @@ button - `autoFocus: 'primary'` would put Enter on "end the tour". With `showCon
 off, Close is the panel's only button, which is why the fallback is _marked primary →
 panel_ and never "first focusable".
 
-**Tour step `content` is injected as HTML.** `useTour` forces `html: true` whenever a step
-has navigation features, and `showClose` defaults to true, so in practice every step goes
-through `dangerouslySetInnerHTML`. Escape interpolations with the exported `escapeHtml`,
-or use `TourStep.text`, which the library escapes.
+**Tour step `content` is injected as HTML; `text` and `body` never are.** The panel is a
+React element (`TourPanel`), so its title, labels and `text` are escaped by React. A
+`content` string is the one thing it injects, scoped to the message element. A `text` or
+`content` step with no panel features passes its body to the tooltip as-is, so `useTour`
+sets `html` from the body's kind there: `false` for `text`, whatever the consumer's
+`tooltipOptions.html` says, and `true` for `content` unless the step or tour explicitly set
+`html: false` - which 1.3 consumers use to show untrusted strings as text. A `body` step
+always renders the panel: a plain tooltip ignores the pointer and cannot scroll.
+
+**Each tour step mounts a new panel.** `useTour` gives every presented step's
+`LiveTourPanel` a key of its own - a counter, not the step index, which can move under a
+running step when `steps` change. Focus inside the old panel drops to `<body>` and
+`autoFocus` resolves afresh - without the key,
+React reuses the Next button as the next step's Finish, focus stays on it, and `'panel'`
+never moves focus to the new step's dialog. It also stops a `body` component's state
+leaking from one step into the next.
+
+**The tour panel reads its props from a store, not from the tooltip's state.** The
+element `useTour` hands the tooltip is a `LiveTourPanel` that subscribes to a
+`TourPanelStore`, so a running step can follow new `steps` (a body whose data arrived
+after `start()`) in place. Routing that update through `tooltip.show` instead would
+re-render every `useTipMagic` consumer - the component that called `useTour` among them,
+whose inline `steps` would then update again, forever - and would re-run the tooltip's
+`autoFocus` effect, which keys on its content.
+
+Each shown step gets a store of its own. A store update re-renders synchronously while the
+tooltip's dispatch may not (a navigation inside `startTransition`), so with one shared
+store the outgoing panel rendered the next step's `body` before it was replaced.
+
+**A `body` renders in the provider's tree, not the caller's.** The element is created in
+the component that called `useTour` but rendered by `Tooltip`, under `TipMagicProvider`,
+so it sees only the context providers above the provider.
+
+**Unmounting the component that called `useTour` ends a running tour silently, a
+microtask later.** The unmount cleanup tears it down - panel, backdrop, highlight, helper
+flow - without `onExit` or `onEnd`. It is deferred and skipped if the hook has mounted
+again, because `StrictMode`'s simulated unmount remounts within the same task: tearing
+down there closed a tour started from a guarded mount effect, for good. A test has to
+`await act(async () => ...)` the unmount to see the teardown.
+
+Two consequences of the deferral. The cleanup is a layout effect that clears `mountedRef`
+during the unmount commit, and `handleTargetLost` ignores a lost target once it is clear:
+a target rendered inside the unmounting component detaches in the same commit, and the
+`MutationObserver` would otherwise end the tour with `onTargetMissing`, `onExit` and
+`onEnd` before the teardown ran. And the teardown releases the tooltip and helper flow only
+while this tour still owns them (`HIDE_TOOLTIP` / `END_FLOW` with `onlyIfOwner` /
+`onlyIfSteps`): by the time it runs, the component that replaced this one may have started
+its own tour - from a layout effect, before the teardown. Ownership is a token minted per
+show (`TooltipShowOptions.owner`), never the content: two plain-text steps with the same
+string would compare equal.
+
+**A centered step is shown against `document.body`.** `tooltip.show` needs an element, so
+a step without a target passes `document.body` with `centered: true`; the target only
+identifies the tooltip there, it never positions it. `Tooltip` then swaps its middleware
+for `centerInViewport` and Floating UI's strategy for `fixed`, and never animates a move
+between centered and anchored - the two strategies are different coordinate systems, so
+the transform would slide from the wrong place. `size()` does not run for it; the
+stylesheet caps a centered panel at the viewport instead.
+
+**A centered panel's media sets its width in CSS, which only works without percentages.**
+The panel is `width: fit-content`, everything but the media is `contain: inline-size` (so
+text wraps instead of widening it), and the media is `width: auto` with `max-width` /
+`max-height` in viewport units - a replaced element scaled by both keeps its aspect ratio.
+A percentage `max-width` on the media would make its min-content contribution zero
+("compressible" replaced element) and the panel would collapse to its minimum width. The
+tooltip's own `max-width` is lifted with `maxWidth: 'none'` for such a step, since the
+default 300px would clip it. The panel is hidden (`data-tip-magic-media-loading`, read by a
+`:has()` rule) until the media's size is known; without `:has()` it opens at the minimum
+width and widens on load.
+
+**A squeezed panel has to overflow for `flip()` to move it.** `size()` caps the panel at
+the room beside its target, and `flip()` measures the panel as it is - so a panel shrunk to
+fit never flips. The cap therefore never drops below `--tip-magic-tour-min-height`.
+`min-height: min-content` looks like the answer and is not: a scroll container's min-content
+height is its whole content, so the body stops shrinking at all.
+
+**Media beside the text is a grid, and its parts keep their DOM order.** The header, media,
+body and footer are placed with `grid-template-areas`, so the header's `:has(+ media)` margin
+rule (meant for media below it) is undone there, and the close button is positioned at the
+panel's corner. The 640px fallback is a media query: a custom property cannot hold a
+breakpoint.
 
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.
 
-**jsdom cannot answer two things**, so don't claim them from a passing test: it runs no
-transitions (`transitionBehavior: 'move'` timing) and has no `:focus-visible` heuristic
-(whether a programmatic focus draws a ring). Both need a browser.
+**jsdom cannot answer three things**, so don't claim them from a passing test: it runs no
+transitions (`transitionBehavior: 'move'` timing), has no `:focus-visible` heuristic
+(whether a programmatic focus draws a ring), and has no layout, so the size()
+middleware's `--tip-magic-available-height` is meaningless and whether a tall tour panel
+fits the viewport with a scrolling body is unknowable. All three need a browser.

@@ -6,6 +6,7 @@ import type {
   TourStep,
 } from '../../../types/tour';
 import { DEFAULT_NAVIGATION } from '../constants';
+import type { ResolvedStepBody } from './tourSteps';
 
 /**
  * Default progress options
@@ -46,14 +47,17 @@ export interface ResolvedTourFocus {
 }
 
 /**
- * Resolve focus/backdrop options for a step: tour-level < step-level
+ * Resolve focus/backdrop options for a step: default < tour-level < step-level
+ *
+ * The default is off for a step with a target and on for a centered one.
  *
  * @param tourFocus - Tour-level focus setting
  * @param step - Current step (may have step-level override)
  * @returns Resolved focus configuration
  */
-export function resolveFocus(tourFocus: TourFocus, step: TourStep): ResolvedTourFocus {
-  const value = step.focus !== undefined ? step.focus : tourFocus;
+export function resolveFocus(tourFocus: TourFocus | undefined, step: TourStep): ResolvedTourFocus {
+  // A centered step has nothing to point at, so it dims the page unless told otherwise
+  const value = step.focus ?? tourFocus ?? step.target === undefined;
 
   if (typeof value === 'boolean') {
     return { enabled: value, block: false, dismissOnClick: false };
@@ -108,18 +112,32 @@ export function getMergedProgress(
 }
 
 /**
- * Check if a step has any navigation-related features enabled
- * (navigation controls, close button, media, or progress)
+ * Check if a step has anything that needs the tour panel rather than a plain tooltip
+ * (React content, a title, navigation controls, close button, media, or progress)
+ *
+ * React content always needs the panel: a plain tooltip ignores the pointer and cannot
+ * scroll. It is judged on the resolved body, so a `body` that renders nothing does not
+ * open an empty dialog.
  *
  * @param nav - Merged navigation config
  * @param step - Current step
  * @param showProgress - Whether progress is enabled for this step
+ * @param body - The step's body, resolved
  * @returns Whether any navigation features are enabled
  */
 export function hasNavigationFeatures(
   nav: Required<TourNavigation>,
   step: TourStep,
-  showProgress: boolean = false
+  showProgress: boolean = false,
+  body?: ResolvedStepBody
 ): boolean {
-  return nav.showControls || nav.showClose || !!step.image || !!step.video || showProgress;
+  return (
+    body?.kind === 'node' ||
+    !!step.title ||
+    nav.showControls ||
+    nav.showClose ||
+    !!step.image ||
+    !!step.video ||
+    showProgress
+  );
 }

@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TipMagicProvider } from '../../components/TipMagicProvider';
-import { useTour } from '../../hooks/useTour';
+import { TOUR_CSS_CLASSES, useTour } from '../../hooks/useTour';
 import '../../styles/index.css';
-import type { TourStep } from '../../types/tour';
+import type { TourAutoFocus, TourMediaPlacement, TourStep } from '../../types/tour';
 import { MockDashboard } from './MockDashboard';
 import './tooltip-stories.css';
 
@@ -1646,6 +1646,390 @@ export const CompleteTour: Story = {
   render: () => (
     <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
       <CompleteTourDemo />
+    </TipMagicProvider>
+  ),
+};
+
+// =============================================================================
+// Where Focus Lands
+// =============================================================================
+
+const AUTO_FOCUS_MODES: TourAutoFocus[] = ['panel', 'primary', false];
+
+/** Describe what holds focus well enough to tell the three modes apart */
+function describeFocus(element: Element | null): string {
+  if (!element || element === document.body) return 'nothing (document.body)';
+  if (element.classList.contains('tip-magic-tooltip')) return 'the tour panel';
+  const action = element.getAttribute('data-tour-action');
+  if (action) return `the "${element.textContent?.trim()}" button`;
+  return `<${element.tagName.toLowerCase()}>`;
+}
+
+/** Shows what currently holds focus */
+function useFocusedElement(): string {
+  const [focused, setFocused] = useState('nothing (document.body)');
+
+  useEffect(() => {
+    const update = () => setFocused(describeFocus(document.activeElement));
+    document.addEventListener('focusin', update);
+    document.addEventListener('focusout', update);
+    return () => {
+      document.removeEventListener('focusin', update);
+      document.removeEventListener('focusout', update);
+    };
+  }, []);
+
+  return focused;
+}
+
+/**
+ * Where Focus Lands
+ *
+ * `navigation.autoFocus` decides where keyboard focus lands when a step opens:
+ * - `'panel'` (default) - the tour panel itself. The dialog is announced and Escape works,
+ *   but Enter does nothing until you Tab to a control.
+ * - `'primary'` - the step's main action (Next, or Finish on the last step), so Enter
+ *   advances the tour.
+ * - `false` - focus is left alone. Nothing is announced; use it only if you move focus
+ *   yourself.
+ *
+ * Pick a mode, start the tour, then press Enter without touching the mouse.
+ */
+const AutoFocusDemo = () => {
+  const [autoFocus, setAutoFocus] = useState<TourAutoFocus>('panel');
+  const focused = useFocusedElement();
+
+  const tour = useTour({
+    steps: [
+      { target: 'focus-sidebar', title: 'Navigation', content: 'Access all sections here.' },
+      { target: 'focus-search', title: 'Search', content: 'Find anything quickly.' },
+      { target: 'focus-profile', title: 'Profile', content: 'Manage your account.' },
+    ],
+    navigation: { showControls: true, autoFocus },
+    progress: { show: true },
+    tooltipOptions: {
+      placement: 'bottom',
+      maxWidth: 320,
+      transitionBehavior: 'move',
+    },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <div className="tour-controls">
+        <div className="tour-control-buttons">
+          {AUTO_FOCUS_MODES.map((mode) => (
+            <button
+              key={String(mode)}
+              className={`tour-control-btn ${mode === autoFocus ? 'tour-control-btn-primary' : 'tour-control-btn-secondary'}`}
+              onClick={() => setAutoFocus(mode)}
+              disabled={tour.isActive}
+            >
+              autoFocus: {mode === false ? 'false' : `'${mode}'`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        className={`tour-start-btn ${tour.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={tour.start}
+        disabled={tour.isActive}
+      >
+        {tour.isActive ? 'Tour in Progress...' : 'Start Tour, then press Enter'}
+      </button>
+
+      <span className="tour-step-indicator">Focus is on: {focused}</span>
+
+      <MockDashboard
+        contentTitle="Where Focus Lands"
+        contentDescription="With 'primary', Enter moves through the tour; with 'panel', Tab first."
+        elementIds={{
+          sidebar: 'focus-sidebar',
+          search: 'focus-search',
+          profile: 'focus-profile',
+        }}
+      />
+    </div>
+  );
+};
+
+export const AutoFocus: Story = {
+  render: () => (
+    <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
+      <AutoFocusDemo />
+    </TipMagicProvider>
+  ),
+};
+
+// =============================================================================
+// React Body
+// =============================================================================
+
+const DASHBOARD_IMAGE =
+  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop';
+
+const RELEASE_NOTES = [
+  { heading: 'Faster search', detail: 'Results stream in as they are found.' },
+  { heading: 'Saved views', detail: 'Pin a filtered view to the sidebar, and share it.' },
+  { heading: 'Alerts', detail: 'Snooze an alert for an hour, a day or a week.' },
+  { heading: 'Keyboard shortcuts', detail: 'Press ? anywhere to list them.' },
+  { heading: 'Accessibility', detail: 'Every chart has a table view.' },
+  { heading: 'Exports', detail: 'Download any table as CSV.' },
+  { heading: 'Teams', detail: 'Invite a whole team with one link.' },
+  { heading: 'Audit log', detail: 'See who changed what, and when.' },
+];
+
+/** A React component with its own state, rendered as a step's body */
+function ReleaseNotes() {
+  const [votes, setVotes] = useState(0);
+
+  return (
+    <>
+      <p>
+        Here is everything that changed this month. <strong>Scroll</strong> for the rest.
+      </p>
+      {RELEASE_NOTES.map(({ heading, detail }) => (
+        <p key={heading}>
+          <strong>{heading}</strong>
+          <br />
+          {detail}
+        </p>
+      ))}
+      <button
+        type="button"
+        className={`${TOUR_CSS_CLASSES.BTN} ${TOUR_CSS_CLASSES.BTN_BACK}`}
+        onClick={() => setVotes((count) => count + 1)}
+      >
+        Helpful? ({votes})
+      </button>
+    </>
+  );
+}
+
+/**
+ * React Body
+ *
+ * A step's `body` takes any React node - here a component with its own state and an
+ * ordinary `onClick`, the way an app renders markdown or release notes.
+ *
+ * - The body scrolls once it reaches `--tip-magic-tour-body-max-height` (`60vh` by
+ *   default), while the title and the buttons stay put
+ * - The panel also shrinks the body when there is less room beside the target - resize
+ *   the window to see it
+ * - Title, labels and `text` are escaped by React; only `content` is injected as HTML
+ */
+const ReactBodyDemo = () => {
+  const tour = useTour({
+    steps: [
+      {
+        target: 'reactbody-stats',
+        title: "What's new",
+        image: DASHBOARD_IMAGE,
+        body: <ReleaseNotes />,
+      },
+    ],
+    navigation: { showControls: true, finishLabel: 'Got it' },
+    tooltipOptions: {
+      placement: 'bottom',
+      maxWidth: 340,
+    },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <button
+        className={`tour-start-btn ${tour.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={tour.start}
+        disabled={tour.isActive}
+      >
+        {tour.isActive ? 'Showing announcement…' : 'Show announcement'}
+      </button>
+
+      <MockDashboard
+        contentTitle="React Body"
+        contentDescription="The step's body is a React component with its own state."
+        elementIds={{ stats: 'reactbody-stats' }}
+      />
+    </div>
+  );
+};
+
+export const ReactBody: Story = {
+  render: () => (
+    <TipMagicProvider options={{ tourHighlightClass: 'tour-highlight' }}>
+      <ReactBodyDemo />
+    </TipMagicProvider>
+  ),
+};
+
+// =============================================================================
+// Announcement
+// =============================================================================
+
+const ANNOUNCEMENT_IMAGES = [
+  { label: '400×200', src: DASHBOARD_IMAGE },
+  {
+    label: 'Wide 1200×600',
+    src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop',
+  },
+  {
+    label: 'Portrait 400×700',
+    src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=700&fit=crop',
+  },
+  {
+    label: 'Tiny 160×90',
+    src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=160&h=90&fit=crop',
+  },
+];
+
+/**
+ * Announcement
+ *
+ * A step without a `target` is not about any element: it opens centered in the viewport,
+ * with no arrow, and dims the page behind it.
+ *
+ * - Fixed to the viewport, so it stays centered as the page scrolls or resizes
+ * - The focus backdrop is on by default; `focus: false` turns it off
+ * - Its image sets its width: the image's natural width, capped at 70% of the viewport
+ *   (`--tip-magic-tour-centered-max-width`), never cropped or distorted, and scaled down
+ *   uniformly when it would leave too little room for the text. The panel is never
+ *   narrower than 280px (`--tip-magic-tour-min-width`); a smaller image is centered at
+ *   its natural size. Pick an image size to compare.
+ * - The same panel as any step: title, a React `body` that scrolls, and the navigation -
+ *   here a single "Got it"
+ * - `navigation.autoFocus: 'primary'` puts focus on "Got it" as it opens, so Enter
+ *   dismisses it (the library default, `'panel'`, focuses the panel itself)
+ * - `mediaPlacement` puts the image on top (the default), or in a column to the left or
+ *   right of the text. Beside the text, the panel is at most 70% of the viewport wide,
+ *   the text column 280-400px; below a 640px viewport the image goes back on top.
+ */
+const MEDIA_PLACEMENTS: TourMediaPlacement[] = ['top', 'left', 'right'];
+
+const AnnouncementDemo = () => {
+  const [image, setImage] = useState(ANNOUNCEMENT_IMAGES[0].src);
+  const [mediaPlacement, setMediaPlacement] = useState<TourMediaPlacement>('top');
+  const announcement = useTour({
+    mediaPlacement,
+    steps: [
+      {
+        id: 'whats-new',
+        title: "What's new this month",
+        image,
+        body: <ReleaseNotes />,
+      },
+    ],
+    navigation: { showControls: true, finishLabel: 'Got it', autoFocus: 'primary' },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <div className="tour-controls">
+        <div className="tour-control-buttons">
+          {ANNOUNCEMENT_IMAGES.map((option) => (
+            <button
+              key={option.label}
+              className={`tour-control-btn ${option.src === image ? 'tour-control-btn-primary' : 'tour-control-btn-secondary'}`}
+              onClick={() => setImage(option.src)}
+              disabled={announcement.isActive}
+            >
+              {option.label}
+            </button>
+          ))}
+          {MEDIA_PLACEMENTS.map((placement) => (
+            <button
+              key={placement}
+              className={`tour-control-btn ${placement === mediaPlacement ? 'tour-control-btn-primary' : 'tour-control-btn-secondary'}`}
+              onClick={() => setMediaPlacement(placement)}
+              disabled={announcement.isActive}
+            >
+              {placement[0].toUpperCase() + placement.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        className={`tour-start-btn ${announcement.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={announcement.start}
+        disabled={announcement.isActive}
+      >
+        {announcement.isActive ? 'Showing announcement…' : 'Show announcement'}
+      </button>
+
+      <MockDashboard
+        contentTitle="Announcement"
+        contentDescription="A step without a target opens centered, sized by its image."
+      />
+    </div>
+  );
+};
+
+export const Announcement: Story = {
+  render: () => (
+    <TipMagicProvider>
+      <AnnouncementDemo />
+    </TipMagicProvider>
+  ),
+};
+
+// =============================================================================
+// Video Announcement
+// =============================================================================
+
+/** Big Buck Bunny (CC BY 3.0, Blender Foundation), 1920×1080 */
+const ANNOUNCEMENT_VIDEO =
+  'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4';
+
+/**
+ * Video Announcement
+ *
+ * A centered step that is only a native video - no title, no text and no buttons
+ * (`showControls: false`, `showClose: false`). Click outside it or press Escape to close
+ * it: the step's `focus: { dismissOnClick: true }` makes a click on the dimmed backdrop
+ * end it, while a click on the video does not.
+ *
+ * - The video sets the panel's width like an image does: its natural width (1920px here),
+ *   capped at 70% of the viewport and at 80% of its height, never cropped. With nothing
+ *   else in the panel, it may use nearly all of that height
+ * - With no primary action, focus goes to the panel (the default `autoFocus`)
+ * - It autoplays muted and loops
+ * - With no title or text, the dialog is named by `video.title`
+ */
+const VideoAnnouncementDemo = () => {
+  const announcement = useTour({
+    steps: [
+      {
+        id: 'video-announcement',
+        video: { src: ANNOUNCEMENT_VIDEO, title: 'Watch: what is new this month' },
+        focus: { dismissOnClick: true },
+      },
+    ],
+    navigation: { showControls: false, showClose: false },
+  });
+
+  return (
+    <div className="tour-demo-container">
+      <button
+        className={`tour-start-btn ${announcement.isActive ? 'tour-start-btn-disabled' : ''}`}
+        onClick={announcement.start}
+        disabled={announcement.isActive}
+      >
+        {announcement.isActive ? 'Showing announcement…' : 'Show announcement'}
+      </button>
+
+      <MockDashboard
+        contentTitle="Video Announcement"
+        contentDescription="Only a video: click outside it or press Escape to close it."
+      />
+    </div>
+  );
+};
+
+export const VideoAnnouncement: Story = {
+  render: () => (
+    <TipMagicProvider>
+      <VideoAnnouncementDemo />
     </TipMagicProvider>
   ),
 };

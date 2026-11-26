@@ -37,11 +37,32 @@
   --tip-magic-tour-close-color: rgba(255, 255, 255, 0.7);
   --tip-magic-tour-close-hover-color: #ffffff;
   --tip-magic-tour-close-hover-bg: rgba(255, 255, 255, 0.15);
+  --tip-magic-tour-close-on-media-bg: rgba(0, 0, 0, 0.45);
 
   /* Message */
   --tip-magic-tour-message-font-size: 13px;
   --tip-magic-tour-message-line-height: 1.5;
   --tip-magic-tour-message-color: rgba(255, 255, 255, 0.9);
+
+  /* Body - scrolls past this height */
+  --tip-magic-tour-body-max-height: 60vh;
+
+  /* An anchored panel is never squeezed below this; with less room it flips instead */
+  --tip-magic-tour-min-height: 240px;
+
+  /* A centered step (no target) is at most this tall */
+  --tip-magic-tour-centered-max-height: 80vh;
+
+  /* A centered step with an image or native video takes its width from the media */
+  --tip-magic-tour-min-width: 280px;
+  --tip-magic-tour-centered-max-width: 70vw;
+
+  /* Media beside the text (mediaPlacement 'left' / 'right'): the text column's widest */
+  --tip-magic-tour-side-text-max-width: 400px;
+  /* Height kept for the title, a few body lines and the footer below such media */
+  --tip-magic-tour-media-reserved-height: 200px;
+  /* ...and for at most a close button, when the panel is nothing but its media */
+  --tip-magic-tour-media-only-reserved-height: 64px;
 
   /* Navigation container */
   --tip-magic-tour-nav-margin: 12px 0 0 0;
@@ -77,13 +98,42 @@
   --tip-magic-tour-focus-z-index: calc(var(--tip-magic-tour-z-base) + 1);
 }
 
+/* The dynamic viewport leaves out mobile browser chrome that comes and goes */
+@supports (height: 1dvh) {
+  :root {
+    --tip-magic-tour-centered-max-height: 80dvh;
+  }
+}
+
 /* =============================================================================
    Tour Content Wrapper
    ============================================================================= */
 
+/**
+ * A column, so that when the panel is taller than the room beside its target only the
+ * body shrinks and scrolls. `--tip-magic-available-height` is set on the tooltip by
+ * Floating UI's size() middleware.
+ */
 .tip-magic-tour-content {
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-width: 200px;
+  /* No shorter than --tip-magic-tour-min-height, however little room the target leaves:
+     a panel that does not fit overflows its side, which is what makes flip() move it -
+     squeezed to fit, its title, media and footer would spill out of it instead */
+  max-height: max(
+    var(--tip-magic-tour-min-height),
+    calc(var(--tip-magic-available-height, 100vh) - 2 * var(--tip-magic-padding-y))
+  );
+}
+
+.tip-magic-tour-content > * {
+  flex-shrink: 0;
+}
+
+/* A centered panel (a step without a target) is capped at a share of the viewport */
+.tip-magic-tooltip[data-tip-magic-centered] .tip-magic-tour-content {
+  max-height: calc(var(--tip-magic-tour-centered-max-height) - 2 * var(--tip-magic-padding-y));
 }
 
 /* =============================================================================
@@ -133,6 +183,76 @@
 .tip-magic-tour-close:hover {
   background: var(--tip-magic-tour-close-hover-bg);
   color: var(--tip-magic-tour-close-hover-color);
+}
+
+/* =============================================================================
+   Centered Panel Sized By Its Media
+
+   The media sets the width: it renders at its natural size, capped at
+   --tip-magic-tour-centered-max-width (and an explicit maxWidth), and scaled down
+   uniformly when it would leave too little height for the text. Everything else is
+   kept out of the width calculation with `contain: inline-size`, so text wraps inside
+   the media's width instead of widening the panel. The panel never narrows below
+   --tip-magic-tour-min-width; smaller media is centered at its natural size.
+   ============================================================================= */
+
+.tip-magic-tour-content[data-tip-magic-media-fit] {
+  width: fit-content;
+  min-width: min(
+    var(--tip-magic-tour-min-width),
+    calc(100vw - 16px - 2 * var(--tip-magic-padding-x))
+  );
+}
+
+.tip-magic-tour-content[data-tip-magic-media-fit]
+  > :not(.tip-magic-tour-image, .tip-magic-tour-video) {
+  contain: inline-size;
+}
+
+.tip-magic-tour-content[data-tip-magic-media-fit] .tip-magic-tour-image img,
+.tip-magic-tour-content[data-tip-magic-media-fit] .tip-magic-tour-video video {
+  width: auto;
+  height: auto;
+  margin-inline: auto;
+  max-width: min(
+    var(--tip-magic-tour-centered-max-width),
+    calc(var(--tip-magic-tour-media-max-width, 100vw) - 2 * var(--tip-magic-padding-x))
+  );
+  max-height: calc(
+    var(--tip-magic-tour-centered-max-height) - 2 * var(--tip-magic-padding-y) -
+      var(--tip-magic-tour-media-reserved-height)
+  );
+  object-fit: contain;
+}
+
+/* With at most a close button besides it, the media may take the panel's height */
+.tip-magic-tour-content[data-tip-magic-media-only] {
+  --tip-magic-tour-media-reserved-height: var(--tip-magic-tour-media-only-reserved-height);
+}
+
+/* Hidden until the media's size is known, so it does not open narrow and then jump */
+.tip-magic-tooltip.tip-magic-visible:has([data-tip-magic-media-loading]) {
+  opacity: 0;
+}
+
+/* The panel's padding is the gap at its edges: no part adds its own margin there */
+.tip-magic-tour-content > :first-child {
+  margin-top: 0;
+}
+
+.tip-magic-tour-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Media alone: as much space above and below it as beside it */
+.tip-magic-tour-content > .tip-magic-tour-image:only-child,
+.tip-magic-tour-content > .tip-magic-tour-video:only-child {
+  margin-block: calc(var(--tip-magic-padding-x) - var(--tip-magic-padding-y));
+}
+
+/* Flex items' margins do not collapse - keep the gap the block layout gave */
+.tip-magic-tour-header:has(+ .tip-magic-tour-image, + .tip-magic-tour-video) {
+  margin-bottom: 0;
 }
 
 /* =============================================================================
@@ -207,6 +327,10 @@
 
 .tip-magic-tour-body {
   margin: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  max-height: var(--tip-magic-tour-body-max-height, 60vh);
+  overflow-y: auto;
 }
 
 .tip-magic-tour-message {
@@ -214,6 +338,16 @@
   line-height: var(--tip-magic-tour-message-line-height);
   color: var(--tip-magic-tour-message-color);
   margin: 0;
+}
+
+/* The scrolling body stops margins collapsing through it, so a body of <p>s would get
+   its outer margins as extra space */
+.tip-magic-tour-message > :first-child {
+  margin-top: 0;
+}
+
+.tip-magic-tour-message > :last-child {
+  margin-bottom: 0;
 }
 
 /* =============================================================================
@@ -383,6 +517,133 @@
 [data-tip-magic-elevated] {
   position: relative;
   z-index: var(--tip-magic-tour-focus-z-index) !important;
+}
+
+/* =============================================================================
+   Media Beside The Text (mediaPlacement 'left' / 'right')
+
+   Two columns: the media in one, the title, body and footer in the other, the body
+   taking the height that is left and scrolling, the footer at the bottom. The close
+   button sits at the panel's top-right corner. The media keeps its aspect ratio, as
+   wide as its natural width allows within the panel's cap less the text column, and no
+   taller than the panel may be. Below a 640px viewport the media goes back on top -
+   a media query, since a custom property cannot hold a breakpoint.
+   ============================================================================= */
+
+@media (min-width: 640px) {
+  .tip-magic-tour-content[data-tip-magic-media-placement] {
+    --tip-magic-tour-panel-max-width: calc(100vw - 16px);
+    /* What the two columns share: the panel's cap, less its padding and the gap */
+    --tip-magic-tour-side-content-width: calc(
+      min(var(--tip-magic-tour-panel-max-width), var(--tip-magic-tour-media-max-width, 100vw)) - 3 *
+        var(--tip-magic-padding-x)
+    );
+    /* The text column takes up to half of it, within its 280-400px range */
+    --tip-magic-tour-side-text-width: clamp(
+      var(--tip-magic-tour-min-width),
+      calc(var(--tip-magic-tour-side-content-width) / 2),
+      var(--tip-magic-tour-side-text-max-width)
+    );
+    --tip-magic-tour-side-media-max-width: max(
+      0px,
+      calc(var(--tip-magic-tour-side-content-width) - var(--tip-magic-tour-side-text-width))
+    );
+    --tip-magic-tour-side-media-max-height: calc(
+      var(--tip-magic-available-height, 100vh) - 2 * var(--tip-magic-padding-y)
+    );
+
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: var(--tip-magic-padding-x);
+    width: fit-content;
+  }
+
+  .tip-magic-tooltip[data-tip-magic-centered]
+    .tip-magic-tour-content[data-tip-magic-media-placement] {
+    --tip-magic-tour-panel-max-width: var(--tip-magic-tour-centered-max-width);
+    --tip-magic-tour-side-media-max-height: calc(
+      var(--tip-magic-tour-centered-max-height) - 2 * var(--tip-magic-padding-y)
+    );
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement='left'] {
+    grid-template-columns: auto var(--tip-magic-tour-side-text-width);
+    grid-template-areas:
+      'media header'
+      'media body'
+      'media footer';
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement='right'] {
+    grid-template-columns: var(--tip-magic-tour-side-text-width) auto;
+    grid-template-areas:
+      'header media'
+      'body media'
+      'footer media';
+  }
+
+  /* The text wraps in its column rather than being kept out of the width */
+  .tip-magic-tour-content[data-tip-magic-media-placement]
+    > :not(.tip-magic-tour-image, .tip-magic-tour-video) {
+    contain: none;
+  }
+
+  /* Its next sibling is the media, but the media is not below it here */
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-header {
+    grid-area: header;
+    margin: var(--tip-magic-tour-header-margin);
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-image,
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-video {
+    grid-area: media;
+    align-self: center;
+    margin: 0;
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-body {
+    grid-area: body;
+    max-height: none;
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-footer,
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-nav {
+    grid-area: footer;
+  }
+
+  /* At the panel's corner, over whichever column is there */
+  .tip-magic-tour-content[data-tip-magic-media-placement] .tip-magic-tour-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  /* Over the media, it needs a backdrop of its own to stay visible */
+  .tip-magic-tour-content[data-tip-magic-media-placement='right'] .tip-magic-tour-close {
+    background: var(--tip-magic-tour-close-on-media-bg);
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement='left'] > .tip-magic-tour-header {
+    padding-inline-end: calc(var(--tip-magic-tour-close-size) + 8px);
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement] .tip-magic-tour-image img,
+  .tip-magic-tour-content[data-tip-magic-media-placement] .tip-magic-tour-video video {
+    width: auto;
+    height: auto;
+    max-width: var(--tip-magic-tour-side-media-max-width);
+    max-height: var(--tip-magic-tour-side-media-max-height);
+    object-fit: contain;
+  }
+
+  /* An embed has no size of its own: as wide as the media may be, at 16:9 */
+  .tip-magic-tour-content[data-tip-magic-media-placement] .tip-magic-tour-video-embed {
+    width: min(480px, var(--tip-magic-tour-side-media-max-width));
+    height: auto;
+    padding-bottom: 0;
+    aspect-ratio: 16 / 9;
+  }
 }
 
 /* =============================================================================

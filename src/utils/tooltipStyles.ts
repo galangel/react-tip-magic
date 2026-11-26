@@ -120,3 +120,30 @@ export function getArrowStyles(
     [staticSide]: '-4px',
   };
 }
+
+/**
+ * A width and height
+ */
+export interface Size {
+  width: number;
+  height: number;
+}
+
+/**
+ * Where to put a floating element so it sits in the middle of the viewport
+ *
+ * @param viewport - The viewport's size
+ * @param floating - The floating element's size
+ * @returns Its top-left corner, relative to the viewport
+ *
+ * @example
+ * ```ts
+ * getCenteredPosition({ width: 1000, height: 800 }, { width: 300, height: 200 }); // { x: 350, y: 300 }
+ * ```
+ */
+export function getCenteredPosition(viewport: Size, floating: Size): { x: number; y: number } {
+  return {
+    x: (viewport.width - floating.width) / 2,
+    y: (viewport.height - floating.height) / 2,
+  };
+}

@@ -1,38 +1,95 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { TooltipShowOptions } from '../../types';
 import type {
   CurrentTourStep,
   TourDirection,
   TourOptions,
   TourProgress,
+  TourStep,
   TourTargetMissingAction,
   UseTourReturn,
 } from '../../types/tour';
 import { generateTooltipId } from '../../utils/parseDataAttributes';
+import { haveSameTooltipOptions } from '../../utils/tooltipOptions';
+import { useTipMagicContext } from '../../context/TipMagicContext';
+import type { FlowStep } from '../../types';
 import { useTipMagic } from '../useTipMagic';
 import { TOUR_ACTIONS, TOUR_DATA_ATTRIBUTES } from './constants';
+import { LiveTourPanel, type TourPanelProps } from './TourPanel';
 import {
   buildCurrentStep,
-  buildTourContent,
+  buildFlowSteps,
   calculateProgress,
   createBackdropManager,
   createHighlightManager,
   createTargetWatcher,
+  createTourPanelStore,
   filterVisibleSteps,
+  findStep,
+  fitsPanelToMedia,
   getMergedNavigation,
   getMergedProgress,
+  hasMessage,
   hasNavigationFeatures,
+  haveSameFlowSteps,
+  haveSameStepOrder,
   resolveFocus,
-  resolveStepContent,
+  resolveMediaPlacement,
+  resolveStepBody,
   resolveTargetElement,
+  type ResolvedStepBody,
+  type TourPanelStore,
 } from './utils';
+
+/** useLayoutEffect, without React 18's warning when rendered on the server */
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
  * A step that can render, and the element it renders against
  */
 interface ResolvedStep {
   index: number;
-  element: HTMLElement;
+  /** null for a step without a target, which is centered in the viewport */
+  element: HTMLElement | null;
+}
+
+/**
+ * What a step shows
+ */
+interface StepView {
+  step: TourStep;
+  body: ResolvedStepBody;
+  /** The panel's props, or null when the step is a plain tooltip */
+  panel: TourPanelProps | null;
+}
+
+/**
+ * The step on screen
+ */
+interface ShownStep {
+  index: number;
+  step: TourStep;
+  /** The visible steps it was found in */
+  steps: TourStep[];
+  /** Its target, or null when it is centered */
+  element: HTMLElement | null;
+  /** The store its panel reads from, or null when it is a plain tooltip */
+  store: TourPanelStore | null;
+  /** What the tooltip was given as content */
+  content: ReactNode;
+  /** Minted per show, so the tooltip can be told to be this tour's even by equal text */
+  owner: object;
+  /** The options it was shown with */
+  options: TooltipShowOptions;
 }
 
 /**
@@ -146,11 +203,13 @@ export function useTour(options: TourOptions): UseTourReturn {
     autoScroll = true,
     highlightClass,
     navigation,
-    focus: tourFocus = false,
+    focus: tourFocus,
     progress: tourProgress,
+    mediaPlacement: tourMediaPlacement,
   } = options;
 
   const { tooltip, helper, config } = useTipMagic();
+  const { dispatch } = useTipMagicContext();
 
   // Internal state
   const [isActive, setIsActive] = useState(false);
@@ -168,20 +227,34 @@ export function useTour(options: TourOptions): UseTourReturn {
     createHighlightManager(highlightClass ?? config.tourHighlightClass)
   );
   const targetWatcherRef = useRef(createTargetWatcher());
+  // The step on screen, null when there is none
+  const shownRef = useRef<ShownStep | null>(null);
+  // Counts presented steps, to key each panel uniquely
+  const presentCountRef = useRef(0);
+  // The steps handed to the helper flow, which identify it as this tour's
+  const flowStepsRef = useRef<FlowStep[] | null>(null);
 
-  // One id per tour instance for the panel's aria-labelledby. Generated rather than
-  // hardcoded so it cannot collide with an id the host page already owns, and held for
-  // the instance rather than per step so the label does not churn between steps.
-  const titleIdRef = useRef('');
-  if (!titleIdRef.current) {
-    titleIdRef.current = `${generateTooltipId()}-title`;
+  // One id base per tour instance for the title and message, which the panel's
+  // aria-labelledby points at. Generated rather than hardcoded so it cannot collide with
+  // an id the host page already owns, and held for the instance so it does not churn.
+  const idRef = useRef('');
+  if (!idRef.current) {
+    idRef.current = generateTooltipId();
   }
+  const titleId = `${idRef.current}-title`;
+  const messageId = `${idRef.current}-message`;
+  const mediaId = `${idRef.current}-media`;
+
+  // Whether the hook is mounted, cleared during the unmount commit
+  const mountedRef = useRef(false);
 
   // Refs for navigation handlers to avoid stale closures
   const nextRef = useRef<() => void>(() => {});
   const prevRef = useRef<() => void>(() => {});
   const endRef = useRef<() => void>(() => {});
   const targetLostRef = useRef<() => void>(() => {});
+  const abandonRef = useRef<() => void>(() => {});
+  const followStepsRef = useRef<() => void>(() => {});
 
   // Compute visible steps (filter out steps with condition returning false)
   const visibleSteps = useMemo(() => filterVisibleSteps(steps), [steps]);
@@ -225,7 +298,13 @@ export function useTour(options: TourOptions): UseTourReturn {
   const findResolvableStep = useCallback(
     (fromIndex: number, delta: 1 | -1, allowSkip: boolean): ResolvedStep | null => {
       for (let index = fromIndex; index >= 0 && index < visibleSteps.length; index += delta) {
-        const element = resolveTargetElement(visibleSteps[index].target);
+        const { target } = visibleSteps[index];
+        // A step without a target needs nothing from the page: it is centered
+        if (target === undefined) {
+          return { index, element: null };
+        }
+
+        const element = resolveTargetElement(target);
         if (element) {
           return { index, element };
         }
@@ -247,19 +326,151 @@ export function useTour(options: TourOptions): UseTourReturn {
   );
 
   /**
+   * Resolve what a step shows: its body, and the panel's props if it renders the panel
+   */
+  const describeStep = useCallback(
+    (stepIndex: number): StepView | null => {
+      const step = visibleSteps[stepIndex];
+      const stepInfo = buildCurrentStep(visibleSteps, stepIndex);
+      if (!step || !stepInfo) return null;
+
+      const mergedNav = getMergedNavigation(navigation, step);
+      const progressOptions = getMergedProgress(tourProgress, step);
+      const body = resolveStepBody(step, stepInfo);
+      const maxWidth = step.tooltipOptions?.maxWidth ?? tooltipOptions?.maxWidth;
+
+      const panel = hasNavigationFeatures(mergedNav, step, progressOptions.show, body)
+        ? {
+            step,
+            stepInfo,
+            navigation: mergedNav,
+            body,
+            progress: progressOptions,
+            titleId,
+            messageId,
+            mediaId,
+            fitMedia: fitsPanelToMedia(step),
+            mediaMaxWidth: typeof maxWidth === 'number' ? maxWidth : undefined,
+            mediaPlacement: resolveMediaPlacement(step, tourMediaPlacement, {
+              body,
+              navigation: mergedNav,
+              showProgress: progressOptions.show,
+            }),
+          }
+        : null;
+
+      return { step, body, panel };
+    },
+    [
+      visibleSteps,
+      navigation,
+      tourProgress,
+      tourMediaPlacement,
+      tooltipOptions,
+      titleId,
+      messageId,
+      mediaId,
+    ]
+  );
+
+  /**
+   * Tooltip options for a step: tour panel defaults < tour options < step overrides <
+   * the values the step cannot function without
+   */
+  const buildTooltipOptions = useCallback(
+    ({ step, body, panel }: StepView, content: ReactNode, owner: object): TooltipShowOptions => ({
+      // The panel holds prose, a header row and a nav row - it has to be able to wrap.
+      // Overridable, unlike the forced values below.
+      ...(panel && { wordWrap: true }),
+      ...tooltipOptions,
+      ...step.tooltipOptions,
+      content,
+      owner,
+      placement: step.placement ?? tooltipOptions?.placement,
+      // A step without a target has nothing to sit beside
+      ...(step.target === undefined && { centered: true }),
+      // ...and its media, when it has some with a size or sits beside the text, sets its
+      // width
+      ...((panel?.fitMedia || (panel && panel.mediaPlacement !== 'top')) &&
+        step.tooltipOptions?.maxWidth === undefined &&
+        tooltipOptions?.maxWidth === undefined && { maxWidth: 'none' as const }),
+      // A step with no panel hands its body to the tooltip as-is: `content` is HTML unless
+      // the consumer explicitly said otherwise, and `text` never is
+      ...(body.kind === 'html' && {
+        html: step.tooltipOptions?.html ?? tooltipOptions?.html ?? true,
+      }),
+      ...(body.kind === 'text' && { html: false }),
+      // Make the panel interactive and present it as a dialog - role="tooltip" is a
+      // description, so screen readers would not expose the buttons inside it
+      ...(panel && {
+        interactive: true,
+        role: 'dialog' as const,
+        // The dialog takes focus, so it needs a name: the title, or else the message, or
+        // for a step that is only a video, the video's title
+        ariaLabelledBy: step.title
+          ? titleId
+          : hasMessage(body) || !step.video
+            ? messageId
+            : mediaId,
+        autoFocus: panel.navigation.autoFocus,
+      }),
+    }),
+    [tooltipOptions, titleId, messageId, mediaId]
+  );
+
+  /**
+   * Put a step's content in the tooltip, and record it as the step on screen
+   */
+  const present = useCallback(
+    (view: StepView, stepIndex: number, element: HTMLElement | null) => {
+      // A store of its own, and a key of its own, so every step mounts a fresh panel that
+      // never renders another step's props - see CLAUDE.md, "Each tour step mounts a new
+      // panel"
+      const store = view.panel ? createTourPanelStore() : null;
+      if (store && view.panel) {
+        store.set(view.panel);
+      }
+      presentCountRef.current += 1;
+      const content = store
+        ? createElement(LiveTourPanel, { key: presentCountRef.current, store })
+        : view.body.value;
+
+      const owner = {};
+      const options = buildTooltipOptions(view, content, owner);
+      shownRef.current = {
+        index: stepIndex,
+        step: view.step,
+        steps: visibleSteps,
+        element,
+        store,
+        content,
+        owner,
+        options,
+      };
+      tooltip.show(element ?? document.body, options);
+    },
+    [visibleSteps, buildTooltipOptions, tooltip]
+  );
+
+  /**
    * Show tooltip for a step
    *
    * The target element is resolved by the caller, so this is only ever reached for a
-   * step that can actually render.
+   * step that can actually render. It is null for a step without a target, which is
+   * centered: nothing to highlight, watch or scroll to.
    */
   const showStepTooltip = useCallback(
-    (stepIndex: number, targetElement: HTMLElement) => {
-      const step = visibleSteps[stepIndex];
-      const currentStepData = buildCurrentStep(visibleSteps, stepIndex);
-      if (!step || !currentStepData) return;
+    (stepIndex: number, targetElement: HTMLElement | null) => {
+      const view = describeStep(stepIndex);
+      if (!view) return;
+      const { step } = view;
 
       // Highlight element
-      highlightManagerRef.current.highlight(targetElement);
+      if (targetElement) {
+        highlightManagerRef.current.highlight(targetElement);
+      } else {
+        highlightManagerRef.current.clear();
+      }
 
       // Handle focus/backdrop
       const focusOptions = resolveFocus(tourFocus, step);
@@ -270,6 +481,12 @@ export function useTour(options: TourOptions): UseTourReturn {
         });
       } else {
         backdropManagerRef.current.hide();
+      }
+
+      if (!targetElement) {
+        targetWatcherRef.current.unwatch();
+        present(view, stepIndex, null);
+        return;
       }
 
       // Notice when the target is unmounted, and - only when there is a consumer class
@@ -292,64 +509,9 @@ export function useTour(options: TourOptions): UseTourReturn {
         });
       }
 
-      // Get merged navigation config
-      const mergedNav = getMergedNavigation(navigation, step);
-
-      // Get merged progress options for this step
-      const progressOptions = getMergedProgress(tourProgress, step);
-      const showProgress = progressOptions.show;
-
-      // Resolve content
-      const resolvedContent = resolveStepContent(step, currentStepData);
-
-      // Build tour content with navigation if needed
-      const hasNavFeatures = hasNavigationFeatures(mergedNav, step, showProgress);
-      const finalContent = hasNavFeatures
-        ? buildTourContent(
-            step,
-            currentStepData,
-            mergedNav,
-            resolvedContent,
-            showProgress ? progressOptions : null,
-            titleIdRef.current
-          )
-        : resolvedContent;
-
-      // Merge tooltip options: tour panel defaults < tour options < step overrides <
-      // the values the tour panel cannot function without
-      const mergedOptions: TooltipShowOptions = {
-        // The panel holds prose, a header row and a nav row - it has to be able to wrap.
-        // Overridable, unlike the forced values below.
-        ...(hasNavFeatures && { wordWrap: true }),
-        ...tooltipOptions,
-        ...step.tooltipOptions,
-        content: finalContent,
-        placement: step.placement ?? tooltipOptions?.placement,
-        // Enable html and interactive when using navigation features, and present the
-        // panel as a dialog - role="tooltip" is a description, so screen readers would
-        // not expose the buttons inside it
-        ...(hasNavFeatures && {
-          html: true,
-          interactive: true,
-          role: 'dialog' as const,
-          ariaLabelledBy: step.title ? titleIdRef.current : undefined,
-          autoFocus: mergedNav.autoFocus,
-        }),
-      };
-
-      // Show the tooltip
-      tooltip.show(targetElement, mergedOptions);
+      present(view, stepIndex, targetElement);
     },
-    [
-      visibleSteps,
-      tooltip,
-      tooltipOptions,
-      autoScroll,
-      tourFocus,
-      tourProgress,
-      navigation,
-      effectiveHighlightClass,
-    ]
+    [describeStep, present, autoScroll, tourFocus, effectiveHighlightClass]
   );
 
   /**
@@ -363,31 +525,57 @@ export function useTour(options: TourOptions): UseTourReturn {
   }, [tooltip]);
 
   /**
+   * Forget the running tour
+   */
+  const resetTourState = useCallback(() => {
+    shownRef.current = null;
+    flowStepsRef.current = null;
+    setIsActive(false);
+    isActiveRef.current = false;
+    setCurrentIndex(-1);
+    currentIndexRef.current = -1;
+  }, []);
+
+  /**
+   * Take the tour off screen and reset its state, without calling any consumer callback
+   */
+  const teardown = useCallback(() => {
+    cleanup();
+    helper.endFlow();
+    resetTourState();
+  }, [cleanup, helper, resetTourState]);
+
+  /**
+   * Teardown for a tour whose component has unmounted: the tooltip and the helper flow
+   * are released only if this tour still owns them, since the component that replaced
+   * it may already have started a tour of its own
+   */
+  const abandon = useCallback(() => {
+    const shown = shownRef.current;
+    if (shown) {
+      dispatch({ type: 'HIDE_TOOLTIP', payload: { onlyIfOwner: shown.owner } });
+    }
+    if (flowStepsRef.current) {
+      dispatch({ type: 'END_FLOW', payload: { onlyIfSteps: flowStepsRef.current } });
+    }
+    resetTourState();
+  }, [dispatch, resetTourState]);
+
+  /**
    * Tear the tour down and report the outcome
    */
   const finishTour = useCallback(
     (completed: boolean) => {
-      // Use ref for current index to always get latest value
-      const idx = currentIndexRef.current;
+      // The step on screen, which `steps` may no longer hold
+      shownRef.current?.step.onExit?.();
 
-      // Call onExit for current step
-      const currentStep = visibleSteps[idx];
-      if (currentStep?.onExit) {
-        currentStep.onExit();
-      }
-
-      cleanup();
-      helper.endFlow();
-      setIsActive(false);
-      isActiveRef.current = false;
-      setCurrentIndex(-1);
-      currentIndexRef.current = -1;
+      teardown();
 
       if (onEnd) {
         onEnd(completed);
       }
     },
-    [visibleSteps, cleanup, helper, onEnd]
+    [teardown, onEnd]
   );
 
   /**
@@ -417,15 +605,12 @@ export function useTour(options: TourOptions): UseTourReturn {
 
       const { index: targetIndex, element: targetElement } = resolved;
 
-      // Use ref for current index to get the previous step
-      const prevIdx = currentIndexRef.current;
-      const previousStep = visibleSteps[prevIdx];
+      // The step on screen, which `steps` may no longer hold
+      const previousStep = shownRef.current?.step;
       const nextStep = visibleSteps[targetIndex];
 
       // Call onExit for previous step
-      if (previousStep?.onExit) {
-        previousStep.onExit();
-      }
+      previousStep?.onExit?.();
 
       // Update state
       setCurrentIndex(targetIndex);
@@ -472,17 +657,21 @@ export function useTour(options: TourOptions): UseTourReturn {
 
     const { index: startIndex, element: targetElement } = resolved;
 
+    // A first step with no panel and an empty body - `body: notes && <Notes />` before
+    // the notes exist - shows nothing, so the tour has not started
+    const firstView = describeStep(startIndex);
+    if (!firstView || (!firstView.panel && firstView.body.value === '')) {
+      return false;
+    }
+
     setIsActive(true);
     isActiveRef.current = true;
     setCurrentIndex(startIndex);
     currentIndexRef.current = startIndex;
 
     // Sync with helper flow state
-    const flowSteps = visibleSteps.map((step, index) => ({
-      id: `tour-step-${index}`,
-      targetId: step.target,
-      message: step.text ?? (typeof step.content === 'string' ? step.content : ''),
-    }));
+    const flowSteps = buildFlowSteps(visibleSteps);
+    flowStepsRef.current = flowSteps;
     helper.startFlow(flowSteps);
     // startFlow always opens at 0; a skipped first step means we are elsewhere
     if (startIndex !== 0) {
@@ -510,7 +699,15 @@ export function useTour(options: TourOptions): UseTourReturn {
     }
 
     return true;
-  }, [visibleSteps, helper, showStepTooltip, onStart, onStepChange, findResolvableStep]);
+  }, [
+    visibleSteps,
+    helper,
+    describeStep,
+    showStepTooltip,
+    onStart,
+    onStepChange,
+    findResolvableStep,
+  ]);
 
   /**
    * End the tour (incomplete)
@@ -557,7 +754,9 @@ export function useTour(options: TourOptions): UseTourReturn {
    * Recover from the current step's target leaving the DOM
    */
   const handleTargetLost = useCallback(() => {
-    if (!isActiveRef.current) return;
+    // A target that left with this component is not a missing target: the unmount
+    // cleanup ends the tour silently
+    if (!isActiveRef.current || !mountedRef.current) return;
 
     const idx = currentIndexRef.current;
     const stepData = buildCurrentStep(visibleSteps, idx);
@@ -576,6 +775,7 @@ export function useTour(options: TourOptions): UseTourReturn {
   prevRef.current = prev;
   endRef.current = end;
   targetLostRef.current = handleTargetLost;
+  abandonRef.current = abandon;
 
   /**
    * Jump to a specific step
@@ -617,6 +817,84 @@ export function useTour(options: TourOptions): UseTourReturn {
     (): TourProgress => calculateProgress(isActive, currentIndex, visibleSteps.length),
     [isActive, currentIndex, visibleSteps.length]
   );
+
+  /**
+   * Bring the step on screen in line with new `steps` or options
+   *
+   * When the order of the steps changed, the step on screen is found again by its `id`,
+   * or by its `target` if no other step shares it, so a step filtered out ahead of it does
+   * not swap in another step's content. A shown step that is gone, or ambiguous, is
+   * replaced by whatever now holds its place, as a navigation; past the end, the tour
+   * ends.
+   */
+  const followSteps = () => {
+    const shown = shownRef.current;
+    if (!isActiveRef.current || !shown) return;
+
+    // The helper flow is a copy of the steps; keep it on the same list
+    const flowSteps = buildFlowSteps(visibleSteps);
+    const flowRebuilt = !haveSameFlowSteps(flowSteps, flowStepsRef.current);
+    if (flowRebuilt) {
+      flowStepsRef.current = flowSteps;
+      helper.startFlow(flowSteps);
+    }
+
+    let index = shown.index;
+    if (!haveSameStepOrder(shown.steps, visibleSteps)) {
+      const found = findStep(visibleSteps, shown.step, index);
+      if (found === null || found < 0) {
+        // Gone, or not to be told apart from another step on its target: show whatever
+        // now holds its place, as a navigation would
+        if (index < visibleSteps.length) {
+          navigateToStep(index, 'next');
+        } else {
+          finishTour(false);
+        }
+        return;
+      }
+
+      if (found !== index) {
+        index = found;
+        setCurrentIndex(index);
+        currentIndexRef.current = index;
+      }
+    }
+    if (flowRebuilt || index !== shown.index) {
+      helper.goToStep(index);
+    }
+
+    const view = describeStep(index);
+    if (!view) return;
+
+    // Gaining or losing the panel changes what the tooltip holds, so show it again
+    if (!view.panel !== !shown.store) {
+      present(view, index, shown.element);
+      return;
+    }
+
+    shownRef.current = { ...shown, index, step: view.step, steps: visibleSteps };
+    if (shown.store && view.panel) {
+      shown.store.set(view.panel);
+    }
+
+    // Show again only when what the tooltip displays changed - placement, a title's
+    // label, a plain step's text - since showing re-renders every useTipMagic consumer,
+    // this one included. A panel's content is its store, already updated above.
+    const content = shown.store ? shown.content : view.body.value;
+    const options = buildTooltipOptions(view, content, shown.owner);
+    if (content !== shown.content || !haveSameTooltipOptions(options, shown.options)) {
+      shownRef.current = { ...shownRef.current, content, options };
+      tooltip.show(shown.element ?? document.body, options);
+    }
+  };
+  followStepsRef.current = followSteps;
+
+  // A running step follows changes to `steps` - a body whose data arrived after start(),
+  // say - in place: the tooltip is not shown again, so focus, scroll and the step
+  // callbacks are left alone
+  useEffect(() => {
+    followStepsRef.current();
+  }, [describeStep]);
 
   // Handle navigation button activation via data-tour-action attributes
   useEffect(() => {
@@ -689,15 +967,30 @@ export function useTour(options: TourOptions): UseTourReturn {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isActive]);
 
-  // Cleanup on unmount
-  useEffect(() => {
+  // Cleanup on unmount. A layout effect, so `mountedRef` is cleared before the
+  // MutationObserver reports a target that unmounted in the same commit - see
+  // handleTargetLost.
+  useIsomorphicLayoutEffect(() => {
+    mountedRef.current = true;
     const backdropManager = backdropManagerRef.current;
     const highlightManager = highlightManagerRef.current;
     const targetWatcher = targetWatcherRef.current;
     return () => {
-      targetWatcher.destroy();
-      backdropManager.destroy();
-      highlightManager.destroy();
+      mountedRef.current = false;
+      // Deferred, and skipped if the hook has mounted again: StrictMode's simulated
+      // unmount remounts within the same task, and must not end a running tour
+      queueMicrotask(() => {
+        if (mountedRef.current) return;
+
+        // A running tour must not outlive its component as a panel with dead buttons.
+        // No onEnd: the consumer that would hear it has unmounted too.
+        if (isActiveRef.current) {
+          abandonRef.current();
+        }
+        targetWatcher.destroy();
+        backdropManager.destroy();
+        highlightManager.destroy();
+      });
     };
   }, []);
 

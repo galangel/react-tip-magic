@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Placement, TooltipAutoFocus, TooltipShowOptions } from './index';
 
 // =============================================================================
@@ -85,6 +86,8 @@ export interface TourNavigation {
   finishLabel?: string;
   /** Whether to show the close button (default: true when showControls is true) */
   showClose?: boolean;
+  /** Accessible name of the close button, which shows only "×" (default: 'Close') */
+  closeLabel?: string;
   /**
    * Where keyboard focus lands when the step opens (default: `'panel'`).
    *
@@ -95,8 +98,9 @@ export interface TourNavigation {
    * `false` is an escape hatch: focus stays behind the panel, so a screen reader is not
    * told the dialog opened. Prefer `'panel'` unless you are moving focus yourself.
    *
-   * Only applies to steps that render as a dialog. A step with no navigation features,
-   * media or progress is a plain tooltip and never moves focus, whatever this is set to.
+   * Only applies to steps that render as a dialog. A `text` or `content` step with no
+   * title, navigation features, media or progress is a plain tooltip and never moves
+   * focus, whatever this is set to.
    *
    * @example
    * ```tsx
@@ -113,13 +117,13 @@ export interface TourNavigation {
 export interface CurrentTourStep {
   /** 0-based index of the current step */
   index: number;
-  /** Target element's data-tip-id value */
-  target: string;
+  /** Target element's data-tip-id value; undefined for a centered step */
+  target?: string;
   /** Optional step title */
   title?: string;
   /**
-   * Resolved content, exactly as rendered. If the step used `text`, this is the
-   * HTML-escaped form of that string.
+   * The step's body as an HTML string: `content` resolved, or `text` HTML-escaped, so it
+   * is always safe to inject. Empty for a `body` step, which has no HTML form.
    */
   content: string;
   /** Whether this is the first step */
@@ -128,6 +132,37 @@ export interface CurrentTourStep {
   isLast: boolean;
   /** Total number of visible steps */
   total: number;
+}
+
+/**
+ * Where a step's image or video sits in its panel
+ *
+ * - `'top'`: above the title and text (the default)
+ * - `'left'` / `'right'`: in a column of its own beside them, with the title, text and
+ *   buttons in a text column on the other side. Below a 640px viewport, and for a step
+ *   with no title, text or buttons, the media goes back on top.
+ */
+export type TourMediaPlacement = 'top' | 'left' | 'right';
+
+/**
+ * A video shown above a step's content
+ */
+export interface TourVideo {
+  /** Video source URL (mp4, webm) or embed URL (YouTube, Vimeo) */
+  src: string;
+  /** Type of video: 'native' for mp4/webm, 'embed' for iframe embeds */
+  type?: 'native' | 'embed';
+  /** Whether to autoplay (native video only, default: true) */
+  autoplay?: boolean;
+  /** Whether to loop (native video only, default: true) */
+  loop?: boolean;
+  /** Whether to mute (native video only, default: true) */
+  muted?: boolean;
+  /**
+   * Accessible name of the video (default: 'Tour video'). Also names the step's panel
+   * when it has no title and no text.
+   */
+  title?: string;
 }
 
 /**
@@ -145,8 +180,19 @@ export interface CurrentTourStep {
  * ```
  */
 export interface TourStepBase {
-  /** Target element's data-tip-id value */
-  target: string;
+  /**
+   * Identifies the step while `steps` change under a running tour, so the step on screen
+   * is found again after one is added, removed or filtered out ahead of it. Unique among
+   * the steps. Without one a step is followed by its `target`, which only works while no
+   * other step shares that target.
+   */
+  id?: string;
+  /**
+   * Target element's data-tip-id value. Leave it out for a step that is not about any
+   * element - an announcement: it opens centered in the viewport, with no arrow, and the
+   * focus backdrop on unless `focus` says otherwise. `onTargetMissing` never fires for it.
+   */
+  target?: string;
   /** Optional step title (escaped by the library) */
   title?: string;
   /** Tooltip placement for this step */
@@ -162,51 +208,29 @@ export interface TourStepBase {
   /** Image URL to display above content (Pokemon card style) - supports GIFs */
   image?: string;
   /** Video to display above content */
-  video?: {
-    /** Video source URL (mp4, webm) or embed URL (YouTube, Vimeo) */
-    src: string;
-    /** Type of video: 'native' for mp4/webm, 'embed' for iframe embeds */
-    type?: 'native' | 'embed';
-    /** Whether to autoplay (native video only, default: true) */
-    autoplay?: boolean;
-    /** Whether to loop (native video only, default: true) */
-    loop?: boolean;
-    /** Whether to mute (native video only, default: true) */
-    muted?: boolean;
-  };
+  video?: TourVideo;
   /** Override tour-level navigation config for this step */
   navigation?: Partial<TourNavigation>;
   /** Override tour-level focus setting for this step */
   focus?: TourFocus;
   /** Override tour-level progress options for this step */
   progress?: Partial<ProgressOptions>;
+  /** Override the tour-level media placement for this step */
+  mediaPlacement?: TourMediaPlacement;
 }
 
 /**
- * The body of a step: raw HTML via `content`, or plain text via `text`.
+ * The body of a step: plain text via `text`, React content via `body`, or raw HTML via
+ * `content` - or none of them, for a step that is only its `image` or `video`.
  *
- * Exactly one is required. Expressing it as a union rather than two optionals means a
- * step with neither does not compile, and a step with both does not either - so there is
- * no precedence rule to remember.
+ * At most one is allowed, and a step without one must have media. Expressing it as a
+ * union rather than optionals means a step with nothing to show does not compile, and a
+ * step with two bodies does not either - so there is no precedence rule to remember.
  */
 export type TourStepContent =
   | {
       /**
-       * Tooltip content - a string or a function that receives current step info.
-       *
-       * @remarks
-       * **This value is injected as HTML.** Steps are rendered with
-       * `dangerouslySetInnerHTML` so that titles, media and navigation controls work,
-       * which means any interpolated value - a user-supplied name, an account label -
-       * must be escaped by the caller. The exported `escapeHtml` helper is there for
-       * interpolating into markup; prefer `text` when the whole body is plain text.
-       */
-      content: string | ((step: CurrentTourStep) => string);
-      text?: never;
-    }
-  | {
-      /**
-       * Plain-text body, escaped by the library before it is rendered.
+       * Plain-text body, rendered as text - never parsed as HTML.
        *
        * @example
        * ```tsx
@@ -214,8 +238,46 @@ export type TourStepContent =
        * ```
        */
       text: string;
+      body?: never;
       content?: never;
-    };
+    }
+  | {
+      /**
+       * React body - a node, or a function that receives the current step info and
+       * returns one. Event handlers inside it work as anywhere else in your app. A `body`
+       * step always renders the tour panel, so it is interactive and scrolls - unless the
+       * body renders nothing (`null`, `undefined`, a boolean, `''`, or an empty fragment
+       * or array), when the step is treated as having no body at all. A first step left
+       * with nothing to show at all makes `start()` return `false`.
+       *
+       * @remarks
+       * It renders inside `TipMagicProvider`, not inside the component that called
+       * `useTour`, so it sees only the context providers that wrap `TipMagicProvider`.
+       *
+       * @example
+       * ```tsx
+       * { target: 'news', title: "What's new", body: <Markdown source={notes} /> }
+       * ```
+       */
+      body: Exclude<NonNullable<ReactNode>, boolean> | ((step: CurrentTourStep) => ReactNode);
+      text?: never;
+      content?: never;
+    }
+  | {
+      /**
+       * Raw HTML body - a string or a function that receives current step info.
+       *
+       * @remarks
+       * **This value is injected as HTML** with `dangerouslySetInnerHTML`, which means
+       * any interpolated value - a user-supplied name, an account label - must be escaped
+       * by the caller. The exported `escapeHtml` helper is there for interpolating into
+       * markup; prefer `text` for plain text and `body` for anything richer.
+       */
+      content: string | ((step: CurrentTourStep) => string);
+      text?: never;
+      body?: never;
+    }
+  | ({ text?: never; body?: never; content?: never } & ({ image: string } | { video: TourVideo }));
 
 /**
  * Tour step definition
@@ -310,7 +372,11 @@ export interface TourOptions {
   steps: TourStep[];
   /** Callback when tour starts */
   onStart?: () => void;
-  /** Callback when tour ends (completed = true if finished all steps, false if exited early) */
+  /**
+   * Callback when tour ends (completed = true if finished all steps, false if exited
+   * early). Not called when the component running the tour unmounts mid-tour - the
+   * panel is taken down silently.
+   */
   onEnd?: (completed: boolean) => void;
   /** Callback when step changes */
   onStepChange?: (step: CurrentTourStep, direction: TourDirection) => void;
@@ -346,6 +412,11 @@ export interface TourOptions {
   focus?: TourFocus;
   /** Progress indicator options */
   progress?: ProgressOptions;
+  /**
+   * Where a step's image or video sits in its panel (default: `'top'`). Overridable per
+   * step. See {@link TourMediaPlacement}.
+   */
+  mediaPlacement?: TourMediaPlacement;
 }
 
 /**

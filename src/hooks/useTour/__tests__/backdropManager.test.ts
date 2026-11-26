@@ -35,6 +35,14 @@ describe('BackdropManager', () => {
   });
 
   describe('show', () => {
+    it('should show a backdrop with nothing elevated when there is no target', () => {
+      manager.show(null);
+
+      expect(document.querySelector(`.${TOUR_CSS_CLASSES.BACKDROP}`)).not.toBeNull();
+      expect(document.querySelector(`[${TOUR_DATA_ATTRIBUTES.FOCUS}]`)).toBeNull();
+      expect(manager.currentFocusTarget).toBeNull();
+    });
+
     it('should create backdrop element in DOM', () => {
       manager.show(targetElement);
 

@@ -21,7 +21,7 @@ const preview: Preview = {
     options: {
       // Sort stories with Welcome first
       storySort: {
-        order: ['Welcome', 'The Tooltip', 'The Tourtip', 'The TipAdvisor', 'Tooltip', '*'],
+        order: ['Welcome', 'The Tooltip', 'The TipAdvisor', 'The Tourtip', 'Tooltip', '*'],
       },
     },
   },

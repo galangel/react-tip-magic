@@ -80,6 +80,7 @@ const tour = useTour({
   navigation: {...},      // Optional: Navigation configuration
   progress: {...},        // Optional: Progress indicator options
   focus: false,           // Optional: Backdrop - boolean, or { block, dismissOnClick }
+  mediaPlacement: 'top',  // Optional: Where media sits - 'top' | 'left' | 'right'
   onStart: () => {},      // Optional: Called when tour starts
   onEnd: (completed) => {},  // Optional: Called when tour ends
   onStepChange: (step, direction) => {},  // Optional: Called on navigation
@@ -148,12 +149,23 @@ Each step in the `steps` array can have the following properties:
   <tbody>
     <tr>
       <td>
+        <code>id</code>
+      </td>
+      <td>string</td>
+      <td>No</td>
+      <td>
+        Unique id that keeps the step on screen when <code>steps</code> change while the tour runs
+      </td>
+    </tr>
+    <tr>
+      <td>
         <code>target</code>
       </td>
       <td>string</td>
-      <td>Yes</td>
+      <td>No</td>
       <td>
-        The <code>data-tip-id</code> of the target element
+        The <code>data-tip-id</code> of the target element. Leave it out for a step that opens
+        centered in the viewport
       </td>
     </tr>
     <tr>
@@ -163,8 +175,9 @@ Each step in the `steps` array can have the following properties:
       <td>string | function</td>
       <td>Yes*</td>
       <td>
-        Step content, injected as <strong>HTML</strong> (can be dynamic). Escape any interpolated
-        value - the exported <code>escapeHtml</code> helper is there for it.
+        Step body, injected as <strong>HTML</strong> (can be dynamic). Escape any interpolated value
+        with the exported <code>escapeHtml</code> helper, or prefer <code>text</code> and{' '}
+        <code>body</code>.
       </td>
     </tr>
     <tr>
@@ -173,8 +186,17 @@ Each step in the `steps` array can have the following properties:
       </td>
       <td>string</td>
       <td>Yes*</td>
+      <td>Plain-text body, rendered as text - never parsed as HTML.</td>
+    </tr>
+    <tr>
       <td>
-        Plain-text body, escaped by the library. Use instead of <code>content</code>.
+        <code>body</code>
+      </td>
+      <td>ReactNode | function</td>
+      <td>Yes*</td>
+      <td>
+        React body - a node, or a function of the current step returning one. Its event handlers
+        work as anywhere else in your app.
       </td>
     </tr>
     <tr>
@@ -208,6 +230,14 @@ Each step in the `steps` array can have the following properties:
       <td>object</td>
       <td>No</td>
       <td>Video configuration (embed or native)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>mediaPlacement</code>
+      </td>
+      <td>'top' | 'left' | 'right'</td>
+      <td>No</td>
+      <td>Where the image or video sits for this step - see Media Placement</td>
     </tr>
     <tr>
       <td>
@@ -260,17 +290,112 @@ Each step in the `steps` array can have the following properties:
   </tbody>
 </table>
 
-\* Exactly one of `content` or `text` is required. The types enforce it: a step with
-neither, or with both, will not compile.
+\* At most one of `text`, `body` or `content`, and a step without one must have an `image`
+or a `video` - a step that is only media. The types enforce it: a step with nothing to
+show, or with two bodies, will not compile.
+
+### A step without a target opens centered
+
+A step that is not about any element - an announcement, a welcome, a closing note - leaves
+out `target`. It opens centered in the viewport and stays there as the page scrolls or
+resizes, with no arrow, and with the focus backdrop on (nothing is cut out of it). Set
+`focus: false` on the step or the tour to turn the backdrop off, or
+`focus: { dismissOnClick: true }` to let a click on it end the tour.
+
+```tsx
+const announcement = useTour({
+  steps: [
+    {
+      id: 'whats-new',
+      title: "What's new",
+      image: '/release.png',
+      body: <Markdown source={releaseNotes} />,
+    },
+  ],
+  navigation: { showControls: true, finishLabel: 'Got it' },
+  tooltipOptions: { maxWidth: 420 },
+});
+```
+
+A centered panel is at most 80% of the viewport's height
+(`--tip-magic-tour-centered-max-height`); its body scrolls past that.
+
+**Its image sets its width.** A centered step with an `image` or a native `video` takes
+the media's natural width, capped at 70% of the viewport (`--tip-magic-tour-centered-max-width`,
+and an explicit `tooltipOptions.maxWidth` if you set one); the title, body and footer wrap
+inside it. The media is never cropped or distorted: when it would leave too little height
+for the title, a few lines of body and the footer
+(`--tip-magic-tour-media-reserved-height`), it is scaled down uniformly. The panel is never
+narrower than 280px (`--tip-magic-tour-min-width`) - a smaller image is centered at its
+natural size, not stretched. The panel stays hidden until the media's size is known, so it
+does not open narrow and then widen. Without media, or with an embedded video, which has no
+size of its own, the width comes from `maxWidth` as for any tooltip.
+
+A step can also be only its media: `{ video: { src, title } }`, with no title or text.
+Its panel is named by `video.title` (default `'Tour video'`), and with nothing else in
+the panel the media may take nearly all of the 80% height. With
+`navigation: { showControls: false, showClose: false }` and
+`focus: { dismissOnClick: true }` it has no buttons at all: a click outside it or Escape
+closes it.
+
+Everything else works as for an anchored step: the same panel, media, `text` / `body` /
+`content`, navigation, progress, `autoFocus` and Escape. With no target there is nothing to
+highlight, scroll to or watch, so `onTargetMissing` never fires for it. Centered and
+anchored steps mix freely - a centered intro, anchored steps, a centered outro - and the
+arrow comes back for the anchored ones. Give a centered step an `id` if `steps` can change
+while it is on screen: with no target, it can only be told apart by its position.
+
+See the **[Announcement](?path=/story/tooltip-flow-tours--announcement)** story.
+
+### React content
+
+`body` takes any React node, so a step can render your own components - markdown, a
+link, a button with its own `onClick`:
+
+```tsx
+const tour = useTour({
+  steps: [
+    {
+      target: 'whats-new',
+      title: "What's new",
+      body: <Markdown source={releaseNotes} />,
+    },
+  ],
+});
+```
+
+The panel is React too, so its title, button labels and `text` are escaped by React; only
+`content` is injected as HTML.
+
+`body` renders inside `TipMagicProvider`, not inside the component that called `useTour`,
+so it sees only the context providers that wrap `TipMagicProvider`. Put providers the body
+needs (a theme, a router) above it.
+
+A running step follows changes to `steps`: re-render with a new `body` - release notes
+that arrived after `start()`, say - and the panel on screen updates in place, without
+moving focus or firing `onStepChange` again. A changed `placement` or other tooltip
+option is applied too, and the helper flow (`useTipMagic().helper`) follows the new list.
+
+When steps are added, removed or filtered out, the step on screen is found again by its
+`id`, or by its `target` when no other step shares it. If a `condition` filters out an
+earlier step, it stays on screen at its new position. If it is removed - or it has no `id`
+and shares its `target` with another step, so it cannot be told apart - the tour moves on
+to the step now at its place, with `onExit`, `onEnter` and `onStepChange` firing as for
+`next()`; if there is none, the tour ends. **Give steps an `id`, or unique targets, if
+`steps` can change while the tour runs.**
+
+A long body scrolls: `.tip-magic-tour-body` stops growing at
+`--tip-magic-tour-body-max-height` (`60vh` by default), and the panel shrinks the body
+further when there is less room beside the target.
 
 ### Dynamic Content
 
-Step content can be a function that receives step info:
+`body` and `content` can be functions that receive step info:
 
 ```tsx
 {
   target: 'sidebar',
-  content: (step) => `Step ${step.index + 1} of ${step.total}: Welcome!`
+  body: (step) => <p>Step {step.index + 1} of {step.total}: Welcome!</p>
 }
 ```
 
@@ -377,6 +502,7 @@ Configure built-in navigation controls:
 navigation: {
   showControls: true,      // Show Next/Back buttons in tooltip
   showClose: true,         // Show close (×) button
+  closeLabel: 'Close',     // Accessible name of the close button
   nextLabel: 'Next',       // Custom label for Next button
   backLabel: 'Back',       // Custom label for Back button
   finishLabel: 'Finish',   // Label for last step's button
@@ -450,8 +576,9 @@ steps: [
 ];
 ```
 
-Steps that render as a plain tooltip rather than a dialog — no navigation controls, close
-button, media or progress — never move focus, whatever `autoFocus` is set to.
+Steps that render as a plain tooltip rather than a dialog — a `text` or `content` step
+with no title, navigation controls, close button, media or progress — never move focus,
+whatever `autoFocus` is set to. A `body` step always renders the panel.
 
 ---
 
@@ -570,7 +697,8 @@ Add images, GIFs, or videos to tour steps:
   content: 'Watch how it works:',
   video: {
     src: 'https://www.youtube.com/embed/VIDEO_ID',
-    type: 'embed'
+    type: 'embed',
+    title: 'Setting up alerts' // The iframe's accessible name (default: 'Tour video')
   }
 }
 
@@ -587,6 +715,36 @@ Add images, GIFs, or videos to tour steps:
   }
 }
 ```
+
+---
+
+### Media Placement
+
+`mediaPlacement` puts a step's image or video above its text (`'top'`, the default) or in a
+column of its own to the `'left'` or `'right'` of it. Set it for the whole tour, and
+override it per step:
+
+```tsx
+const tour = useTour({
+  steps: [
+    { title: "What's new", image: '/release.png', body: <ReleaseNotes /> },
+    { target: 'search', title: 'Search', image: '/search.gif', text: 'Find anything' },
+  ],
+  mediaPlacement: 'left',
+});
+```
+
+Beside the text, the panel is two columns: the media, and a text column with the title,
+the body - which takes the height left and scrolls - and the buttons at the bottom. The
+close button stays at the panel's top-right corner. The text column takes up to half of
+the panel, between 280px (`--tip-magic-tour-min-width`) and 400px
+(`--tip-magic-tour-side-text-max-width`); the media gets the rest, keeping its aspect ratio
+and never taller than the panel may be. A centered panel stays within 70% of the viewport's
+width and 80% of its height; an anchored one within the viewport, the room beside its target
+and an explicit `maxWidth`.
+
+Below a 640px viewport the media goes back on top, and a step with no media, or with
+nothing but media, ignores the option.
 
 ---
 
@@ -622,6 +780,9 @@ const tour = useTour({
   ],
 });
 ```
+
+If the component that called `useTour` unmounts while the tour is running, the panel,
+backdrop and highlight are taken down without calling `onExit` or `onEnd`.
 
 ---
 
@@ -711,10 +872,11 @@ Enable focus mode on key steps to draw attention without overwhelming users.
 
 - Tooltips are keyboard accessible
 - Respects `prefers-reduced-motion` for animations
-- Close button has proper ARIA labels
-- The tour panel is a `role="dialog"` labelled by the step title, and focus moves into it
-  when a step opens so it is announced. Pick which element receives that focus with
-  [`navigation.autoFocus`](#where-focus-lands)
+- The close button is named by `navigation.closeLabel` (default `'Close'`), and an embedded
+  video by `video.title` (default `'Tour video'`)
+- The tour panel is a `role="dialog"` labelled by the step title - or, for a step without
+  one, by its message - and focus moves into it when a step opens so it is announced. Pick
+  which element receives that focus with [`navigation.autoFocus`](#where-focus-lands)
 - The panel is deliberately non-modal: the app behind it stays interactive and there is no
   focus trap, so `Escape` always exits
 - Focus returns to whatever held it before the tour when the tour ends
@@ -725,6 +887,9 @@ Enable focus mode on key steps to draw attention without overwhelming users.
 
 - See the **[Simple Tour](?path=/story/tooltip-flow-tours--simple-tour)** story for a basic example
 - See the **[Built-in Navigation](?path=/story/tooltip-flow-tours--built-in-navigation)** for in-tooltip controls
+- See the **[Auto Focus](?path=/story/tooltip-flow-tours--auto-focus)** story for where focus lands when a step opens
+- See the **[React Body](?path=/story/tooltip-flow-tours--react-body)** story for a step whose body is a React component
+- See the **[Announcement](?path=/story/tooltip-flow-tours--announcement)** story for a centered step without a target
 - See the **[Focus Mode](?path=/story/tooltip-flow-tours--focus-mode)** for backdrop highlighting
 - See the **[Always Visible Elements](?path=/story/tooltip-flow-tours--always-visible-elements)** for keeping elements accessible during focus
 - See the **[Complete Tour](?path=/story/tooltip-flow-tours--complete-tour)** for a full-featured example

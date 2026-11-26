@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import type { TipMagicAction } from '../context/TipMagicContext';
 import type { ParsedTooltipData, TipMagicState, TooltipAPI, TooltipShowOptions } from '../types';
 import { parseDataAttributes } from '../utils/parseDataAttributes';
@@ -32,7 +32,7 @@ export function useTooltipAPI(
       const parsedData = parseDataAttributes(element);
 
       // Handle string content or options object
-      let tooltipContent: string;
+      let tooltipContent: ReactNode;
       let options: TooltipShowOptions = {};
 
       if (typeof contentOrOptions === 'string') {
@@ -52,7 +52,7 @@ export function useTooltipAPI(
       // Merge parsed data with options (options take precedence)
       const mergedData: ParsedTooltipData = {
         ...parsedData,
-        content: tooltipContent,
+        ...(typeof tooltipContent === 'string' && { content: tooltipContent }),
         ...(options.placement !== undefined && { placement: options.placement }),
         ...(options.showDelay !== undefined && { delay: options.showDelay }),
         ...(options.hideDelay !== undefined && { hideDelay: options.hideDelay }),
@@ -74,6 +74,7 @@ export function useTooltipAPI(
         ...(options.role !== undefined && { role: options.role }),
         ...(options.ariaLabelledBy !== undefined && { ariaLabelledBy: options.ariaLabelledBy }),
         ...(options.autoFocus !== undefined && { autoFocus: options.autoFocus }),
+        ...(options.centered !== undefined && { centered: options.centered }),
       };
 
       if (state.tooltip.visible) {
@@ -88,6 +89,7 @@ export function useTooltipAPI(
               target: element,
               content: tooltipContent,
               parsedData: mergedData,
+              owner: options.owner,
             },
           });
         } else {
@@ -98,6 +100,7 @@ export function useTooltipAPI(
               target: element,
               content: tooltipContent,
               parsedData: mergedData,
+              owner: options.owner,
             },
           });
         }
@@ -108,6 +111,7 @@ export function useTooltipAPI(
             target: element,
             content: tooltipContent,
             parsedData: mergedData,
+            owner: options.owner,
           },
         });
       }
@@ -134,7 +138,7 @@ export function useTooltipAPI(
       show: tooltipShow,
       hide: tooltipHide,
       isVisible: state.tooltip.visible,
-      content: state.tooltip.content || null,
+      content: typeof state.tooltip.content === 'string' ? state.tooltip.content || null : null,
       target: state.tooltip.target,
       updateContent: tooltipUpdateContent,
     }),

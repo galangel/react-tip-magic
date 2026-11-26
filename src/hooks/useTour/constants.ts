@@ -9,6 +9,7 @@ export const DEFAULT_NAVIGATION: Required<TourNavigation> = {
   backLabel: 'Back',
   finishLabel: 'Finish',
   showClose: true,
+  closeLabel: 'Close',
   autoFocus: 'panel',
 };
 
@@ -62,6 +63,14 @@ export const TOUR_DATA_ATTRIBUTES = {
   ELEVATED: 'data-tip-magic-elevated',
   /** Applied to the backdrop when it should capture pointer events */
   BACKDROP_INTERACTIVE: 'data-tip-magic-backdrop-interactive',
+  /** On a centered panel whose image or video sets its width */
+  MEDIA_FIT: 'data-tip-magic-media-fit',
+  /** On such a panel that shows nothing but its media - no title, text or footer */
+  MEDIA_ONLY: 'data-tip-magic-media-only',
+  /** On a panel whose media sits beside its text: `'left'` or `'right'` */
+  MEDIA_PLACEMENT: 'data-tip-magic-media-placement',
+  /** On such a panel until its media's size is known; the stylesheet hides it meanwhile */
+  MEDIA_LOADING: 'data-tip-magic-media-loading',
 } as const;
 
 /**

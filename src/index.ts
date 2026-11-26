@@ -44,6 +44,7 @@ export type {
   TourDirection,
   TourFocus,
   TourFocusOptions,
+  TourMediaPlacement,
   TourNavigation,
   TourOptions,
   TourProgress,
@@ -51,6 +52,7 @@ export type {
   TourStepBase,
   TourStepContent,
   TourTargetMissingAction,
+  TourVideo,
   UseTipMagicReturn,
   UseTourReturn,
   // TipAdvisor types
