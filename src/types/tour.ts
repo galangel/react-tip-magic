@@ -135,6 +135,16 @@ export interface CurrentTourStep {
 }
 
 /**
+ * Where a step's image or video sits in its panel
+ *
+ * - `'top'`: above the title and text (the default)
+ * - `'left'` / `'right'`: in a column of its own beside them, with the title, text and
+ *   buttons in a text column on the other side. Below a 640px viewport, and for a step
+ *   with no title, text or buttons, the media goes back on top.
+ */
+export type TourMediaPlacement = 'top' | 'left' | 'right';
+
+/**
  * A video shown above a step's content
  */
 export interface TourVideo {
@@ -205,6 +215,8 @@ export interface TourStepBase {
   focus?: TourFocus;
   /** Override tour-level progress options for this step */
   progress?: Partial<ProgressOptions>;
+  /** Override the tour-level media placement for this step */
+  mediaPlacement?: TourMediaPlacement;
 }
 
 /**
@@ -400,6 +412,11 @@ export interface TourOptions {
   focus?: TourFocus;
   /** Progress indicator options */
   progress?: ProgressOptions;
+  /**
+   * Where a step's image or video sits in its panel (default: `'top'`). Overridable per
+   * step. See {@link TourMediaPlacement}.
+   */
+  mediaPlacement?: TourMediaPlacement;
 }
 
 /**

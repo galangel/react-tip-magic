@@ -181,6 +181,10 @@ A step can be only its media — `{ video: { src, title } }` — in which case t
 
 Centered and anchored steps mix in one tour. With no target there is nothing to highlight, scroll to or watch, and `onTargetMissing` never fires for it.
 
+### Media beside the text
+
+`mediaPlacement: 'left' | 'right'` (tour-level, overridable per step) puts a step's image or video in a column beside its text, instead of above it (`'top'`, the default). The text column is 280–400px, its body scrolls, and its buttons sit at the bottom; the media keeps its aspect ratio. Below a 640px viewport it falls back to `'top'`.
+
 ### When a target isn't there
 
 `start()` returns `false` and changes nothing—no `onStart`, no `onStepChange`—if no step's target is in the DOM, so a tour that can't render never reports itself as shown. Supply `onTargetMissing` to handle it yourself (and to keep the library off `console.warn`):
@@ -231,6 +235,8 @@ The tour panel is now rendered by React instead of injected as an HTML string. T
 - A panel without a `title` is labelled by its message, so `aria-labelledby` is now always set on a tour dialog.
 - `start()` also returns `false` when the first step has nothing to show (an empty body and no panel features).
 - A step may be only its `image` or `video`, with no `text`, `body` or `content`; the video's type is exported as `TourVideo`, and `video.title` now names native videos too.
+- `mediaPlacement` (`TourOptions` and `TourStep`, type `TourMediaPlacement`) is new and defaults to `'top'`, the existing layout.
+- An anchored panel's height cap never drops below `--tip-magic-tour-min-height` (240px): with less room beside its target it flips to another side.
 - `TourStep.target` is optional: a step without one opens centered. `CurrentTourStep.target` is `undefined` for such a step, so code that reads it as a `string` must handle that.
 
 Type changes, for code that uses the exported context (`useTipMagicContext`, `TipMagicState`, `TipMagicAction`):

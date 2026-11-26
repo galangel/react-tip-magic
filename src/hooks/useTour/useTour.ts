@@ -38,10 +38,12 @@ import {
   fitsPanelToMedia,
   getMergedNavigation,
   getMergedProgress,
+  hasMessage,
   hasNavigationFeatures,
   haveSameFlowSteps,
   haveSameStepOrder,
   resolveFocus,
+  resolveMediaPlacement,
   resolveStepBody,
   resolveTargetElement,
   type ResolvedStepBody,
@@ -203,6 +205,7 @@ export function useTour(options: TourOptions): UseTourReturn {
     navigation,
     focus: tourFocus,
     progress: tourProgress,
+    mediaPlacement: tourMediaPlacement,
   } = options;
 
   const { tooltip, helper, config } = useTipMagic();
@@ -348,12 +351,26 @@ export function useTour(options: TourOptions): UseTourReturn {
             mediaId,
             fitMedia: fitsPanelToMedia(step),
             mediaMaxWidth: typeof maxWidth === 'number' ? maxWidth : undefined,
+            mediaPlacement: resolveMediaPlacement(step, tourMediaPlacement, {
+              body,
+              navigation: mergedNav,
+              showProgress: progressOptions.show,
+            }),
           }
         : null;
 
       return { step, body, panel };
     },
-    [visibleSteps, navigation, tourProgress, tooltipOptions, titleId, messageId, mediaId]
+    [
+      visibleSteps,
+      navigation,
+      tourProgress,
+      tourMediaPlacement,
+      tooltipOptions,
+      titleId,
+      messageId,
+      mediaId,
+    ]
   );
 
   /**
@@ -372,8 +389,9 @@ export function useTour(options: TourOptions): UseTourReturn {
       placement: step.placement ?? tooltipOptions?.placement,
       // A step without a target has nothing to sit beside
       ...(step.target === undefined && { centered: true }),
-      // ...and its media, when it has some with a size, sets its width
-      ...(panel?.fitMedia &&
+      // ...and its media, when it has some with a size or sits beside the text, sets its
+      // width
+      ...((panel?.fitMedia || (panel && panel.mediaPlacement !== 'top')) &&
         step.tooltipOptions?.maxWidth === undefined &&
         tooltipOptions?.maxWidth === undefined && { maxWidth: 'none' as const }),
       // A step with no panel hands its body to the tooltip as-is: `content` is HTML unless
@@ -391,7 +409,7 @@ export function useTour(options: TourOptions): UseTourReturn {
         // for a step that is only a video, the video's title
         ariaLabelledBy: step.title
           ? titleId
-          : body.kind === 'node' || body.value !== '' || !step.video
+          : hasMessage(body) || !step.video
             ? messageId
             : mediaId,
         autoFocus: panel.navigation.autoFocus,

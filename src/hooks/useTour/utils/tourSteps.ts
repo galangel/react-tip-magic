@@ -1,6 +1,11 @@
 import { Fragment, isValidElement, type ReactNode } from 'react';
 import type { FlowStep } from '../../../types';
-import type { CurrentTourStep, TourStep } from '../../../types/tour';
+import type {
+  CurrentTourStep,
+  TourMediaPlacement,
+  TourNavigation,
+  TourStep,
+} from '../../../types/tour';
 import { escapeHtml } from '../../../utils/escapeHtml';
 import { TOUR_DATA_ATTRIBUTES } from '../constants';
 
@@ -180,6 +185,42 @@ export function findStep(steps: TourStep[], step: TourStep, index: number): numb
     return null;
   }
   return matches.length === 1 ? matches[0] : -1;
+}
+
+/**
+ * Whether a resolved body shows anything
+ *
+ * @param body - The step's body, resolved
+ * @returns False for an empty `text` or `content`, and for a step with no body at all
+ */
+export function hasMessage(body: ResolvedStepBody): boolean {
+  return body.kind === 'node' || body.value !== '';
+}
+
+/**
+ * Where a step's media goes, once the step's own and the tour's setting are applied
+ *
+ * Beside the text only when there is both media and text to put it beside: a step with no
+ * media, or nothing but media, keeps the default.
+ *
+ * @param step - The tour step
+ * @param tourPlacement - The tour-level setting
+ * @param panel - What else the panel shows
+ * @returns The placement to render
+ */
+export function resolveMediaPlacement(
+  step: TourStep,
+  tourPlacement: TourMediaPlacement | undefined,
+  panel: { body: ResolvedStepBody; navigation: Required<TourNavigation>; showProgress: boolean }
+): TourMediaPlacement {
+  const placement = step.mediaPlacement ?? tourPlacement ?? 'top';
+  if (placement === 'top' || (!step.image && !step.video)) {
+    return 'top';
+  }
+
+  const hasText =
+    !!step.title || hasMessage(panel.body) || panel.navigation.showControls || panel.showProgress;
+  return hasText ? placement : 'top';
 }
 
 /**

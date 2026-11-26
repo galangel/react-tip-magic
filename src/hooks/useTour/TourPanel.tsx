@@ -1,8 +1,13 @@
 import { memo, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { PRIMARY_ACTION_ATTRIBUTE } from '../../constants';
-import type { CurrentTourStep, TourNavigation, TourStep } from '../../types/tour';
+import type {
+  CurrentTourStep,
+  TourMediaPlacement,
+  TourNavigation,
+  TourStep,
+} from '../../types/tour';
 import { TOUR_ACTIONS, TOUR_CSS_CLASSES, TOUR_DATA_ATTRIBUTES } from './constants';
-import { getProgressRingGeometry, type TourPanelStore } from './utils';
+import { getProgressRingGeometry, hasMessage, type TourPanelStore } from './utils';
 import type { ResolvedProgressOptions, ResolvedStepBody } from './utils';
 
 /**
@@ -29,6 +34,8 @@ export interface TourPanelProps {
   fitMedia?: boolean;
   /** An explicit cap on the panel's width, in pixels, when it takes it from its media */
   mediaMaxWidth?: number;
+  /** Where the media sits, resolved (default: `'top'`) */
+  mediaPlacement?: TourMediaPlacement;
 }
 
 type TourAction = (typeof TOUR_ACTIONS)[keyof typeof TOUR_ACTIONS];
@@ -253,6 +260,7 @@ export function TourPanel({
   mediaId,
   fitMedia = false,
   mediaMaxWidth,
+  mediaPlacement = 'top',
 }: TourPanelProps) {
   const hasHeader = !!step.title || navigation.showClose;
 
@@ -261,9 +269,10 @@ export function TourPanel({
   const mediaSrc = step.video?.src ?? step.image;
   const [sizedSrc, setSizedSrc] = useState<string | undefined>();
   const mediaLoading = fitMedia && mediaSrc !== sizedSrc;
-  const hasMessage = body.kind === 'node' || body.value !== '';
+  const showMessage = hasMessage(body);
   const mediaOnly =
-    fitMedia && !step.title && !hasMessage && !navigation.showControls && !progress.show;
+    fitMedia && !step.title && !showMessage && !navigation.showControls && !progress.show;
+  const mediaBeside = mediaPlacement !== 'top';
   const showControls = navigation.showControls;
   const showProgress = progress.show;
 
@@ -275,8 +284,9 @@ export function TourPanel({
         ...(mediaLoading && { [TOUR_DATA_ATTRIBUTES.MEDIA_LOADING]: '' }),
         ...(mediaOnly && { [TOUR_DATA_ATTRIBUTES.MEDIA_ONLY]: '' }),
       })}
+      {...(mediaBeside && { [TOUR_DATA_ATTRIBUTES.MEDIA_PLACEMENT]: mediaPlacement })}
       style={
-        fitMedia && mediaMaxWidth !== undefined
+        (fitMedia || mediaBeside) && mediaMaxWidth !== undefined
           ? ({ [MEDIA_MAX_WIDTH_PROPERTY]: `${mediaMaxWidth}px` } as CSSProperties)
           : undefined
       }
@@ -308,7 +318,7 @@ export function TourPanel({
         id={mediaId}
         onSized={fitMedia ? setSizedSrc : undefined}
       />
-      {hasMessage && (
+      {showMessage && (
         <div className={TOUR_CSS_CLASSES.BODY}>
           <TourMessage body={body} id={messageId} />
         </div>

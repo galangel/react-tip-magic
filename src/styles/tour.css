@@ -37,6 +37,7 @@
   --tip-magic-tour-close-color: rgba(255, 255, 255, 0.7);
   --tip-magic-tour-close-hover-color: #ffffff;
   --tip-magic-tour-close-hover-bg: rgba(255, 255, 255, 0.15);
+  --tip-magic-tour-close-on-media-bg: rgba(0, 0, 0, 0.45);
 
   /* Message */
   --tip-magic-tour-message-font-size: 13px;
@@ -55,6 +56,9 @@
   /* A centered step with an image or native video takes its width from the media */
   --tip-magic-tour-min-width: 280px;
   --tip-magic-tour-centered-max-width: 70vw;
+
+  /* Media beside the text (mediaPlacement 'left' / 'right'): the text column's widest */
+  --tip-magic-tour-side-text-max-width: 400px;
   /* Height kept for the title, a few body lines and the footer below such media */
   --tip-magic-tour-media-reserved-height: 200px;
   /* ...and for at most a close button, when the panel is nothing but its media */
@@ -513,6 +517,133 @@
 [data-tip-magic-elevated] {
   position: relative;
   z-index: var(--tip-magic-tour-focus-z-index) !important;
+}
+
+/* =============================================================================
+   Media Beside The Text (mediaPlacement 'left' / 'right')
+
+   Two columns: the media in one, the title, body and footer in the other, the body
+   taking the height that is left and scrolling, the footer at the bottom. The close
+   button sits at the panel's top-right corner. The media keeps its aspect ratio, as
+   wide as its natural width allows within the panel's cap less the text column, and no
+   taller than the panel may be. Below a 640px viewport the media goes back on top -
+   a media query, since a custom property cannot hold a breakpoint.
+   ============================================================================= */
+
+@media (min-width: 640px) {
+  .tip-magic-tour-content[data-tip-magic-media-placement] {
+    --tip-magic-tour-panel-max-width: calc(100vw - 16px);
+    /* What the two columns share: the panel's cap, less its padding and the gap */
+    --tip-magic-tour-side-content-width: calc(
+      min(var(--tip-magic-tour-panel-max-width), var(--tip-magic-tour-media-max-width, 100vw)) - 3 *
+        var(--tip-magic-padding-x)
+    );
+    /* The text column takes up to half of it, within its 280-400px range */
+    --tip-magic-tour-side-text-width: clamp(
+      var(--tip-magic-tour-min-width),
+      calc(var(--tip-magic-tour-side-content-width) / 2),
+      var(--tip-magic-tour-side-text-max-width)
+    );
+    --tip-magic-tour-side-media-max-width: max(
+      0px,
+      calc(var(--tip-magic-tour-side-content-width) - var(--tip-magic-tour-side-text-width))
+    );
+    --tip-magic-tour-side-media-max-height: calc(
+      var(--tip-magic-available-height, 100vh) - 2 * var(--tip-magic-padding-y)
+    );
+
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: var(--tip-magic-padding-x);
+    width: fit-content;
+  }
+
+  .tip-magic-tooltip[data-tip-magic-centered]
+    .tip-magic-tour-content[data-tip-magic-media-placement] {
+    --tip-magic-tour-panel-max-width: var(--tip-magic-tour-centered-max-width);
+    --tip-magic-tour-side-media-max-height: calc(
+      var(--tip-magic-tour-centered-max-height) - 2 * var(--tip-magic-padding-y)
+    );
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement='left'] {
+    grid-template-columns: auto var(--tip-magic-tour-side-text-width);
+    grid-template-areas:
+      'media header'
+      'media body'
+      'media footer';
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement='right'] {
+    grid-template-columns: var(--tip-magic-tour-side-text-width) auto;
+    grid-template-areas:
+      'header media'
+      'body media'
+      'footer media';
+  }
+
+  /* The text wraps in its column rather than being kept out of the width */
+  .tip-magic-tour-content[data-tip-magic-media-placement]
+    > :not(.tip-magic-tour-image, .tip-magic-tour-video) {
+    contain: none;
+  }
+
+  /* Its next sibling is the media, but the media is not below it here */
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-header {
+    grid-area: header;
+    margin: var(--tip-magic-tour-header-margin);
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-image,
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-video {
+    grid-area: media;
+    align-self: center;
+    margin: 0;
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-body {
+    grid-area: body;
+    max-height: none;
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-footer,
+  .tip-magic-tour-content[data-tip-magic-media-placement] > .tip-magic-tour-nav {
+    grid-area: footer;
+  }
+
+  /* At the panel's corner, over whichever column is there */
+  .tip-magic-tour-content[data-tip-magic-media-placement] .tip-magic-tour-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  /* Over the media, it needs a backdrop of its own to stay visible */
+  .tip-magic-tour-content[data-tip-magic-media-placement='right'] .tip-magic-tour-close {
+    background: var(--tip-magic-tour-close-on-media-bg);
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement='left'] > .tip-magic-tour-header {
+    padding-inline-end: calc(var(--tip-magic-tour-close-size) + 8px);
+  }
+
+  .tip-magic-tour-content[data-tip-magic-media-placement] .tip-magic-tour-image img,
+  .tip-magic-tour-content[data-tip-magic-media-placement] .tip-magic-tour-video video {
+    width: auto;
+    height: auto;
+    max-width: var(--tip-magic-tour-side-media-max-width);
+    max-height: var(--tip-magic-tour-side-media-max-height);
+    object-fit: contain;
+  }
+
+  /* An embed has no size of its own: as wide as the media may be, at 16:9 */
+  .tip-magic-tour-content[data-tip-magic-media-placement] .tip-magic-tour-video-embed {
+    width: min(480px, var(--tip-magic-tour-side-media-max-width));
+    height: auto;
+    padding-bottom: 0;
+    aspect-ratio: 16 / 9;
+  }
 }
 
 /* =============================================================================

@@ -2340,3 +2340,77 @@ describe('a centered step that is only a video', () => {
     expect(count('.tip-magic-tooltip')).toBe(0);
   });
 });
+
+describe('mediaPlacement', () => {
+  const content = () => document.querySelector('.tip-magic-tour-content') as HTMLElement;
+  const placement = () => content().getAttribute('data-tip-magic-media-placement');
+
+  it('puts the media beside the text, for centered and anchored steps alike', () => {
+    const getTour = mountTour(
+      {
+        steps: [
+          { title: 'Centered', image: 'pic.png', text: 'A' },
+          { target: 'one', title: 'Anchored', image: 'pic.png', text: 'B' },
+        ],
+        mediaPlacement: 'right',
+        navigation: { showControls: true },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+    expect(placement()).toBe('right');
+    expect(tooltip()?.style.maxWidth).toBe('none');
+
+    act(() => {
+      getTour().next();
+    });
+    expect(placement()).toBe('right');
+    expect(tooltip()?.style.maxWidth).toBe('none');
+  });
+
+  it('lets a step override the tour, and ignores a step without media', () => {
+    const getTour = mountTour(
+      {
+        steps: [
+          { title: 'Top', image: 'pic.png', text: 'A', mediaPlacement: 'top' },
+          { title: 'No media', text: 'B' },
+        ],
+        mediaPlacement: 'left',
+        navigation: { showControls: true },
+      },
+      '<div id="app"></div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+    expect(placement()).toBeNull();
+
+    act(() => {
+      getTour().next();
+    });
+    expect(placement()).toBeNull();
+    expect(tooltip()?.style.maxWidth).toBe('300px');
+  });
+
+  it('keeps an explicit maxWidth as the cap', () => {
+    const getTour = mountTour(
+      {
+        steps: [{ target: 'one', title: 'News', image: 'pic.png', text: 'A' }],
+        mediaPlacement: 'left',
+        tooltipOptions: { maxWidth: 700 },
+      },
+      '<div data-tip-id="one">One</div>'
+    );
+
+    act(() => {
+      getTour().start();
+    });
+
+    expect(tooltip()?.style.maxWidth).toBe('700px');
+    expect(content().style.getPropertyValue('--tip-magic-tour-media-max-width')).toBe('700px');
+  });
+});

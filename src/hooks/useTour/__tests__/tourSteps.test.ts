@@ -1,5 +1,6 @@
 import { createElement, Fragment, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_NAVIGATION } from '../constants';
 import type { CurrentTourStep, TourStep } from '../../../types/tour';
 import {
   buildCurrentStep,
@@ -10,7 +11,9 @@ import {
   fitsPanelToMedia,
   haveSameFlowSteps,
   haveSameStepOrder,
+  hasMessage,
   rendersNothing,
+  resolveMediaPlacement,
   resolveStepBody,
   resolveStepContent,
   resolveTargetElement,
@@ -447,6 +450,60 @@ describe('tourSteps utilities', () => {
       });
       expect(video.video?.src).toBe('clip.mp4');
       expect(nothing.target).toBe('one');
+    });
+  });
+
+  describe('hasMessage', () => {
+    it('should be false only for an empty text or HTML body', () => {
+      expect(hasMessage({ kind: 'text', value: '' })).toBe(false);
+      expect(hasMessage({ kind: 'html', value: '' })).toBe(false);
+      expect(hasMessage({ kind: 'text', value: 'A' })).toBe(true);
+      expect(hasMessage({ kind: 'node', value: 'A' })).toBe(true);
+    });
+  });
+
+  describe('resolveMediaPlacement', () => {
+    const panel = {
+      body: { kind: 'text', value: 'Text' } as const,
+      navigation: DEFAULT_NAVIGATION,
+      showProgress: false,
+    };
+    const withImage: TourStep = { text: 'Text', image: 'pic.png' };
+
+    it('should default to top', () => {
+      expect(resolveMediaPlacement(withImage, undefined, panel)).toBe('top');
+    });
+
+    it('should take the tour setting, overridden by the step', () => {
+      expect(resolveMediaPlacement(withImage, 'left', panel)).toBe('left');
+      expect(resolveMediaPlacement({ ...withImage, mediaPlacement: 'right' }, 'left', panel)).toBe(
+        'right'
+      );
+      expect(resolveMediaPlacement({ ...withImage, mediaPlacement: 'top' }, 'left', panel)).toBe(
+        'top'
+      );
+    });
+
+    it('should put media beside a video, and ignore a step without media', () => {
+      expect(
+        resolveMediaPlacement({ text: 'Text', video: { src: 'clip.mp4' } }, 'left', panel)
+      ).toBe('left');
+      expect(resolveMediaPlacement({ text: 'Text' }, 'left', panel)).toBe('top');
+    });
+
+    it('should keep media on top when there is no text to put it beside', () => {
+      const nothingElse = { ...panel, body: { kind: 'html', value: '' } as const };
+
+      expect(resolveMediaPlacement({ image: 'pic.png' }, 'left', nothingElse)).toBe('top');
+      expect(resolveMediaPlacement({ image: 'pic.png', title: 'T' }, 'left', nothingElse)).toBe(
+        'left'
+      );
+      expect(
+        resolveMediaPlacement({ image: 'pic.png' }, 'left', {
+          ...nothingElse,
+          navigation: { ...DEFAULT_NAVIGATION, showControls: true },
+        })
+      ).toBe('left');
     });
   });
 

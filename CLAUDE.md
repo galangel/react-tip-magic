@@ -153,6 +153,18 @@ default 300px would clip it. The panel is hidden (`data-tip-magic-media-loading`
 `:has()` rule) until the media's size is known; without `:has()` it opens at the minimum
 width and widens on load.
 
+**A squeezed panel has to overflow for `flip()` to move it.** `size()` caps the panel at
+the room beside its target, and `flip()` measures the panel as it is - so a panel shrunk to
+fit never flips. The cap therefore never drops below `--tip-magic-tour-min-height`.
+`min-height: min-content` looks like the answer and is not: a scroll container's min-content
+height is its whole content, so the body stops shrinking at all.
+
+**Media beside the text is a grid, and its parts keep their DOM order.** The header, media,
+body and footer are placed with `grid-template-areas`, so the header's `:has(+ media)` margin
+rule (meant for media below it) is undone there, and the close button is positioned at the
+panel's corner. The 640px fallback is a media query: a custom property cannot hold a
+breakpoint.
+
 **`onStepChange` fires before the panel exists on the first step.** It is called from
 inside `start()`, so a consumer cannot use it to reach into the rendered panel.
 

@@ -542,3 +542,35 @@ describe('a panel sized by its media', () => {
     expect(content(container).hasAttribute('data-tip-magic-media-loading')).toBe(false);
   });
 });
+
+describe('media placement', () => {
+  const content = (container: HTMLElement) =>
+    container.querySelector('.tip-magic-tour-content') as HTMLElement;
+
+  it.each(['left', 'right'] as const)('marks a panel with its media to the %s', (placement) => {
+    const container = renderPanel({
+      step: { ...STEP, title: 'News', image: 'pic.png' },
+      mediaPlacement: placement,
+    });
+
+    expect(content(container).getAttribute('data-tip-magic-media-placement')).toBe(placement);
+  });
+
+  it('leaves a panel with its media on top unmarked', () => {
+    const container = renderPanel({ step: { ...STEP, image: 'pic.png' }, mediaPlacement: 'top' });
+
+    expect(content(container).hasAttribute('data-tip-magic-media-placement')).toBe(false);
+  });
+
+  it('passes an explicit width cap to the stylesheet for media beside the text', () => {
+    const container = renderPanel({
+      step: { ...STEP, image: 'pic.png' },
+      mediaPlacement: 'left',
+      mediaMaxWidth: 700,
+    });
+
+    expect(content(container).style.getPropertyValue('--tip-magic-tour-media-max-width')).toBe(
+      '700px'
+    );
+  });
+});

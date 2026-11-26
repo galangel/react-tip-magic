@@ -44,6 +44,7 @@ export type {
   TourDirection,
   TourFocus,
   TourFocusOptions,
+  TourMediaPlacement,
   TourNavigation,
   TourOptions,
   TourProgress,
